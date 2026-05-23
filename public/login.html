@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OriLink - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js" type="module"></script>
+  <style>
+    body { font-family: 'InstrumentSans', 'Noto Sans SC', sans-serif; }
+    input[type="checkbox"] { width: 18px; height: 18px; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
+  
+  <div class="bg-container">
+    <img src="imgs/bridge.jpg" alt="Network background">
+    <div class="bg-overlay"></div>
+  </div>
+
+  <div class="fixed top-8 left-8 md:top-12 md:left-12 z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-white/20 to-white/5 rounded-xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+        <img src="imgs/logo.svg" alt="OriLink Logo" class="w-8 h-8 md:w-10 md:h-10">
+      </div>
+      <div class="flex flex-col">
+        <span class="logo-text text-2xl md:text-3xl font-bold tracking-tight">OriLink</span>
+        <span class="text-white/70 text-sm md:text-base font-medium tracking-wide">元联</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-panel rounded-2xl p-8 md:p-10 w-full max-w-md relative z-10">
+    <div class="text-center mb-8">
+      <h1 class="text-white text-2xl md:text-3xl font-bold mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Welcome! 欢迎！</h1>
+      <p class="text-white/80 text-sm md:text-base" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Sprouting New Connections 新联系从这里萌发</p>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-5">
+      <div>
+        <label for="loginUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username</label>
+        <input 
+          type="text" 
+          id="loginUsername" 
+          name="username"
+          placeholder="Enter your username"
+          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+          required
+        >
+      </div>
+
+      <div>
+        <label for="loginPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password</label>
+        <div class="relative">
+          <input 
+            type="password" 
+            id="loginPassword" 
+            name="password"
+            placeholder="Enter your password"
+            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
+            required
+          >
+          <button 
+            type="button" 
+            id="toggleLoginPassword"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+          >
+            <svg id="loginEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg id="loginEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" class="block"></altcha-widget>
+
+      <button 
+        type="submit" 
+        class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
+      >
+        Sign In
+      </button>
+    </form>
+
+    <!-- Signup Form (hidden by default) -->
+    <form id="signupForm" class="hidden space-y-4">
+      <div>
+        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Full Name</label>
+        <input 
+          type="text" 
+          id="fullName" 
+          name="fullName"
+          placeholder="Enter your full name"
+          maxlength="20"
+          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+          required
+        >
+        <p class="text-white/50 text-xs mt-1">First and last name (required for account recovery)</p>
+      </div>
+
+      <div>
+        <label for="signupUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username</label>
+        <input 
+          type="text" 
+          id="signupUsername" 
+          name="username"
+          placeholder="Choose a username"
+          maxlength="20"
+          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+          required
+        >
+        <p class="text-white/50 text-xs mt-1">Start with a letter, letters/numbers/underscores/periods only</p>
+      </div>
+
+      <div>
+        <label for="signupPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password</label>
+        <div class="relative">
+          <input 
+            type="password" 
+            id="signupPassword" 
+            name="password"
+            placeholder="Create a password"
+            maxlength="20"
+            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
+            required
+          >
+          <button 
+            type="button" 
+            id="toggleSignupPassword"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+          >
+            <svg id="signupEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg id="signupEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="text-white/50 text-xs mt-1">At least 5 characters, letters/numbers/symbols</p>
+      </div>
+
+      <div>
+        <label for="confirmPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Confirm Password</label>
+        <input 
+          type="password" 
+          id="confirmPassword" 
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          maxlength="20"
+          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+          required
+        >
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="grade" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Grade</label>
+          <input 
+            type="text" 
+            id="grade" 
+            name="grade"
+            placeholder="9-12"
+            maxlength="2"
+            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+            required
+          >
+          <p class="text-white/50 text-xs mt-1">Type numerical (9-12)</p>
+        </div>
+        <div>
+          <label for="classNum" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Class</label>
+          <input 
+            type="text" 
+            id="classNum" 
+            name="classNum"
+            placeholder="1-10"
+            maxlength="2"
+            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
+            required
+          >
+          <p class="text-white/50 text-xs mt-1">Type numerical (1-10)</p>
+        </div>
+      </div>
+
+      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" class="block"></altcha-widget>
+
+      <div class="mt-4">
+        <label class="flex items-start gap-2 cursor-pointer">
+          <input type="checkbox" id="agreeTerms" required>
+          <span class="text-white text-xs">I agree to the <a href="#" id="showTerms" class="link-text underline">Terms and Conditions</a></span>
+        </label>
+      </div>
+
+      <div id="termsSection" class="hidden mt-3 p-3 rounded-lg bg-white/10 border border-white/20 max-h-48 overflow-y-auto">
+        <h4 class="text-white font-semibold text-sm mb-2">Terms and Conditions</h4>
+        <div id="termsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>
+      </div>
+
+      <button 
+        type="submit" 
+        class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
+      >
+        Sign Up
+      </button>
+
+      <p class="text-white/50 text-xs text-center">
+        Grade, class, and full name cannot be changed after registration.<br>
+        Required for account recovery.
+      </p>
+    </form>
+
+    <p id="authSwitch" class="text-center mt-6 text-sm text-white/80" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+      Don't have an account? 
+      <a href="#" id="showSignup" class="link-text font-semibold">Sign up</a>
+    </p>
+
+    <p id="authSwitchLoggedIn" class="text-center mt-6 text-sm text-white/80 hidden" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+      Already have an account? 
+      <a href="#" id="showLogin" class="link-text font-semibold">Sign in</a>
+    </p>
+
+    <p id="loginMessage" class="text-center mt-4 text-sm"></p>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const authSwitch = document.getElementById('authSwitch');
+    const authSwitchLoggedIn = document.getElementById('authSwitchLoggedIn');
+    const showSignup = document.getElementById('showSignup');
+    const showLogin = document.getElementById('showLogin');
+    const loginMessage = document.getElementById('loginMessage');
+
+    function showLoginPanel() {
+      loginForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+      authSwitch.classList.remove('hidden');
+      authSwitchLoggedIn.classList.add('hidden');
+      loginMessage.textContent = '';
+    }
+
+    function showSignupPanel() {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+      authSwitch.classList.add('hidden');
+      authSwitchLoggedIn.classList.remove('hidden');
+      loginMessage.textContent = '';
+    }
+
+    showSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSignupPanel();
+    });
+
+    showLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      showLoginPanel();
+    });
+
+    document.getElementById('toggleLoginPassword').addEventListener('click', function() {
+      const input = document.getElementById('loginPassword');
+      const eyeIcon = document.getElementById('loginEyeIcon');
+      const eyeOffIcon = document.getElementById('loginEyeOffIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('toggleSignupPassword').addEventListener('click', function() {
+      const input = document.getElementById('signupPassword');
+      const eyeIcon = document.getElementById('signupEyeIcon');
+      const eyeOffIcon = document.getElementById('signupEyeOffIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      }
+    });
+
+    function getAltchaSolution(form) {
+      const hiddenInput = form.querySelector('input[name="altcha"]');
+      const value = hiddenInput?.value || null;
+      console.log('Altcha solution from hidden input:', value ? value.substring(0, 30) + '...' : null);
+      return value;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginMessage.textContent = '';
+      loginMessage.className = 'text-center mt-4 text-sm';
+      
+      const loginBtn = loginForm.querySelector('button[type="submit"]');
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      let altcha = getAltchaSolution(loginForm);
+      console.log('Login - Altcha value:', altcha);
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, altcha })
+        });
+        const data = await res.json();
+        
+        console.log('Login - Response:', res.status, data);
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        loginMessage.textContent = err.message;
+        loginMessage.className = 'text-center mt-4 text-sm text-red-400';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginMessage.textContent = '';
+      loginMessage.className = 'text-center mt-4 text-sm';
+      
+      const signupBtn = signupForm.querySelector('button[type="submit"]');
+      const fullName = document.getElementById('fullName').value;
+      const username = document.getElementById('signupUsername').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const grade = document.getElementById('grade').value;
+      const classNum = document.getElementById('classNum').value;
+      
+      let altcha = getAltchaSolution(signupForm);
+      console.log('Signup - Altcha value:', altcha);
+
+      signupBtn.disabled = true;
+      signupBtn.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, altcha })
+        });
+        const data = await res.json();
+        
+        console.log('Signup - Response:', res.status, data);
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        loginMessage.textContent = err.message;
+        loginMessage.className = 'text-center mt-4 text-sm text-red-400';
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+      }
+    });
+
+    const termsTextContent = `Effective Date: {DATE}
+
+Welcome to the OriLink 元联 social platform. By creating an account, you agree to follow these rules. This platform is built for our community, and staying on it is a privilege, not a right.
+
+1. Security and "No Hacking" Policy
+We take the security of our community seriously. By using this site, you agree to the following:
+
+No Unauthorized Access: You may not attempt to access, "hack," or bypass any security features of this website. This includes trying to guess passwords, using automated "brute force" tools, or exploiting bugs.
+
+No Data Mining: You are prohibited from using scripts, crawlers, or "scrapers" to extract user data or site content.
+
+Reporting Vulnerabilities: If you find a security flaw or a "glitch," you must report it to the Site Administrator immediately. Exploiting a known flaw for fun or profit will result in an immediate permanent ban and referral to school administration.
+
+Account Integrity: You are responsible for your login credentials. Sharing your password or "lending" your account to others is strictly prohibited.
+
+2. Intellectual Property
+This website, including its layout, design, custom code, and graphics, is the property of OriLink元联.
+
+No Cloning: You may not copy the source code, CSS, or design elements to create a "clone" or a competing site.
+
+Content Ownership: While you own the posts you make, the "look and feel" of the platform belongs to us. Redistribution of any site assets without written permission is a violation of these terms.
+
+3. User Conduct
+Since this is a school-only platform, the school's Student Code of Conduct applies here 24/7.
+
+No Harassment: Cyberbullying, hate speech, and harassment will not be tolerated.
+
+School Use Only: This site is for Shanghai New Epoch Bilingual School students and staff. Do not invite or share access with people outside of our school.
+
+4. Consequences
+Failure to follow these rules—especially those regarding hacking or intellectual property theft—may result in:
+
+Immediate account suspension or deletion.
+
+Disciplinary action through the School Administration.
+
+Legal action, if the "hacking" results in data breaches or significant damage to the system.
+
+Note: By clicking "Sign Up," you acknowledge that you have read and agreed to these terms. Stay safe and be respectful!`;
+
+    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('termsText').textContent = termsTextContent.replace('{DATE}', currentDate);
+
+    document.getElementById('showTerms').addEventListener('click', function(e) {
+      e.preventDefault();
+      const termsSection = document.getElementById('termsSection');
+      if (termsSection.classList.contains('hidden')) {
+        termsSection.classList.remove('hidden');
+      } else {
+        termsSection.classList.add('hidden');
+      }
+    });
+
+    signupForm.addEventListener('submit', function(e) {
+      const agreeTerms = document.getElementById('agreeTerms');
+      if (!agreeTerms.checked) {
+        e.preventDefault();
+        loginMessage.textContent = 'You must agree to the Terms and Conditions';
+        loginMessage.className = 'text-center mt-4 text-sm text-red-400';
+      }
+    });
+  </script>
+</body>
+</html>
