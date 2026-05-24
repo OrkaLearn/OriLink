@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
   host: 'localhost',
   port: 3306,
-  user: 'root',
+  user: 'kevin',
   password: '0IsIs//',
   database: 'orilink',
   waitForConnections: true,
@@ -15,7 +15,7 @@ async function initDatabase() {
   const connection = await mysql.createConnection({
     host: 'localhost',
     port: 3306,
-    user: 'root',
+    user: 'kevin',
     password: '0IsIs//',
   });
 

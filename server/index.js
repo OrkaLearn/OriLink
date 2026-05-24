@@ -20,7 +20,7 @@ const io = new Server(server, {
   }
 });
 
-const PORT = 3000;
+const PORT = 3210;
 
 const ALTCHA_HMAC_KEY = '0IsIs//0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
