@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OriLink - Login</title>
+  <title>OriLink - 登录</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
@@ -17,14 +17,14 @@
 <body class="min-h-screen flex items-center justify-center p-4 md:p-8">
   
   <div class="bg-container">
-    <img src="imgs/bridge.jpg" alt="Network background">
+    <img src="imgs/bridge.jpg" alt="网络背景">
     <div class="bg-overlay"></div>
   </div>
 
   <div class="fixed top-8 left-8 md:top-12 md:left-12 z-10">
     <div class="flex items-center gap-3">
       <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-white/20 to-white/5 rounded-xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
-        <img src="imgs/logo.svg" alt="OriLink Logo" class="w-8 h-8 md:w-10 md:h-10">
+        <img src="imgs/logo.svg" alt="OriLink 标志" class="w-8 h-8 md:w-10 md:h-10">
       </div>
       <div class="flex flex-col">
         <span class="logo-text text-2xl md:text-3xl font-bold tracking-tight">OriLink</span>
@@ -42,25 +42,25 @@
     <!-- Login Form -->
     <form id="loginForm" class="space-y-5">
       <div>
-        <label for="loginUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username</label>
+        <label for="loginUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">用户名</label>
         <input 
           type="text" 
           id="loginUsername" 
           name="username"
-          placeholder="Enter your username"
+          placeholder="请输入用户名"
           class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
           required
         >
       </div>
 
       <div>
-        <label for="loginPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password</label>
+        <label for="loginPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">密码</label>
         <div class="relative">
           <input 
             type="password" 
             id="loginPassword" 
             name="password"
-            placeholder="Enter your password"
+            placeholder="请输入密码"
             class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
             required
           >
@@ -81,54 +81,54 @@
         </div>
       </div>
 
-      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" class="block"></altcha-widget>
+      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" verifyurl="/api/altcha/verify" class="block"></altcha-widget>
 
       <button 
         type="submit" 
         class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
       >
-        Sign In
+        登录
       </button>
     </form>
 
     <!-- Signup Form (hidden by default) -->
     <form id="signupForm" class="hidden space-y-4">
       <div>
-        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Full Name</label>
+        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">姓名</label>
         <input 
           type="text" 
           id="fullName" 
           name="fullName"
-          placeholder="Enter your full name"
+          placeholder="请输入姓名"
           maxlength="20"
           class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
           required
         >
-        <p class="text-white/50 text-xs mt-1">First and last name (required for account recovery)</p>
+        <p class="text-white/50 text-xs mt-1">姓和名（账号找回必需）</p>
       </div>
 
       <div>
-        <label for="signupUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username</label>
+        <label for="signupUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">用户名</label>
         <input 
           type="text" 
           id="signupUsername" 
           name="username"
-          placeholder="Choose a username"
+          placeholder="选择用户名"
           maxlength="20"
           class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
           required
         >
-        <p class="text-white/50 text-xs mt-1">Start with a letter, letters/numbers/underscores/periods only</p>
+        <p class="text-white/50 text-xs mt-1">以字母开头，仅限字母/数字/下划线/点</p>
       </div>
 
       <div>
-        <label for="signupPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password</label>
+        <label for="signupPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">密码</label>
         <div class="relative">
           <input 
             type="password" 
             id="signupPassword" 
             name="password"
-            placeholder="Create a password"
+            placeholder="创建密码"
             maxlength="20"
             class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
             required
@@ -148,16 +148,16 @@
             </svg>
           </button>
         </div>
-        <p class="text-white/50 text-xs mt-1">At least 5 characters, letters/numbers/symbols</p>
+        <p class="text-white/50 text-xs mt-1">至少5个字符，字母/数字/符号</p>
       </div>
 
       <div>
-        <label for="confirmPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Confirm Password</label>
+        <label for="confirmPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">确认密码</label>
         <input 
           type="password" 
           id="confirmPassword" 
           name="confirmPassword"
-          placeholder="Confirm your password"
+          placeholder="请确认密码"
           maxlength="20"
           class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
           required
@@ -166,7 +166,7 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="grade" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Grade</label>
+          <label for="grade" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">年级</label>
           <input 
             type="text" 
             id="grade" 
@@ -176,10 +176,10 @@
             class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
             required
           >
-          <p class="text-white/50 text-xs mt-1">Type numerical (9-12)</p>
+          <p class="text-white/50 text-xs mt-1">请输入数字（9-12）</p>
         </div>
         <div>
-          <label for="classNum" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Class</label>
+          <label for="classNum" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">班级</label>
           <input 
             type="text" 
             id="classNum" 
@@ -189,21 +189,21 @@
             class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
             required
           >
-          <p class="text-white/50 text-xs mt-1">Type numerical (1-10)</p>
+          <p class="text-white/50 text-xs mt-1">请输入数字（1-10）</p>
         </div>
       </div>
 
-      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" class="block"></altcha-widget>
+      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" verifyurl="/api/altcha/verify" class="block"></altcha-widget>
 
       <div class="mt-4">
         <label class="flex items-start gap-2 cursor-pointer">
           <input type="checkbox" id="agreeTerms" required>
-          <span class="text-white text-xs">I agree to the <a href="#" id="showTerms" class="link-text underline">Terms and Conditions</a></span>
+          <span class="text-white text-xs">我同意<a href="#" id="showTerms" class="link-text underline">条款和条件</a></span>
         </label>
       </div>
 
       <div id="termsSection" class="hidden mt-3 p-3 rounded-lg bg-white/10 border border-white/20 max-h-48 overflow-y-auto">
-        <h4 class="text-white font-semibold text-sm mb-2">Terms and Conditions</h4>
+        <h4 class="text-white font-semibold text-sm mb-2">条款和条件</h4>
         <div id="termsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>
       </div>
 
@@ -211,26 +211,123 @@
         type="submit" 
         class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
       >
-        Sign Up
+        注册
       </button>
 
-      <p class="text-white/50 text-xs text-center">
-        Grade, class, and full name cannot be changed after registration.<br>
-        Required for account recovery.
-      </p>
+      <div class="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+        <p class="text-amber-400 text-xs text-center font-medium">
+          <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          年级、班级和姓名注册后不可更改。<br>
+          用于账号找回。
+        </p>
+      </div>
     </form>
 
     <p id="authSwitch" class="text-center mt-6 text-sm text-white/80" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-      Don't have an account? 
-      <a href="#" id="showSignup" class="link-text font-semibold">Sign up</a>
+      还没有账号？ 
+      <a href="#" id="showSignup" class="link-text font-semibold">注册</a>
     </p>
 
     <p id="authSwitchLoggedIn" class="text-center mt-6 text-sm text-white/80 hidden" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-      Already have an account? 
-      <a href="#" id="showLogin" class="link-text font-semibold">Sign in</a>
+      已有账号？ 
+      <a href="#" id="showLogin" class="link-text font-semibold">登录</a>
     </p>
 
     <p id="loginMessage" class="text-center mt-4 text-sm"></p>
+  </div>
+
+  <!-- Hidden Admin Panel -->
+  <div id="adminPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div id="adminBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="glass-panel rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative z-10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-white text-xl font-bold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">管理面板</h2>
+        <button id="closeAdminPanel" class="text-white/70 hover:text-white transition-colors">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Admin Login Form -->
+      <div id="adminLoginForm" class="space-y-4">
+        <p class="text-white/70 text-sm text-center">输入管理员密码访问面板</p>
+        <div class="flex gap-3">
+          <input
+            type="password"
+            id="adminPassword"
+            placeholder="管理员密码"
+            class="input-field flex-1 px-4 py-3 rounded-xl text-sm"
+          >
+          <button id="adminLoginBtn" class="login-btn px-6 py-3 rounded-xl text-sm font-semibold">登录</button>
+        </div>
+        <p id="adminLoginError" class="text-center text-red-400 text-sm hidden"></p>
+      </div>
+
+      <!-- Admin Dashboard -->
+      <div id="adminDashboard" class="hidden flex flex-col flex-1 overflow-hidden gap-4">
+
+        <!-- Add User Form -->
+        <div class="bg-white/10 rounded-xl p-4">
+          <h3 class="text-white font-semibold text-sm mb-3">添加新用户</h3>
+          <form id="adminAddUserForm" class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+            <div class="col-span-2 md:col-span-1">
+              <input type="text" id="adminNewUsername" placeholder="用户名" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            </div>
+            <div>
+              <input type="password" id="adminNewPassword" placeholder="密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            </div>
+            <div>
+              <input type="text" id="adminNewGrade" placeholder="年级（9-12）" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            </div>
+            <div>
+              <input type="text" id="adminNewClass" placeholder="班级（1-10）" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            </div>
+            <button type="submit" class="login-btn px-4 py-2 rounded-lg text-sm font-semibold">添加用户</button>
+          </form>
+          <p id="adminAddUserMsg" class="text-center text-sm mt-2 hidden"></p>
+        </div>
+
+        <!-- User List -->
+        <div class="flex-1 overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-white font-semibold text-sm">已注册用户</h3>
+            <button id="adminRefreshUsers" class="text-white/60 hover:text-white text-xs transition-colors flex items-center gap-1">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              刷新
+            </button>
+          </div>
+          <div class="overflow-y-auto flex-1 rounded-xl border border-white/10">
+            <table class="w-full text-sm">
+              <thead class="sticky top-0 bg-white/10">
+                <tr class="text-white/60 text-xs uppercase">
+                  <th class="px-3 py-2 text-left">ID</th>
+                  <th class="px-3 py-2 text-left">用户名</th>
+                  <th class="px-3 py-2 text-left hidden md:table-cell">姓名</th>
+                  <th class="px-3 py-2 text-left">年级</th>
+                  <th class="px-3 py-2 text-left">班级</th>
+                  <th class="px-3 py-2 text-left hidden lg:table-cell">注册时间</th>
+                  <th class="px-3 py-2 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody id="adminUserList" class="text-white/90">
+                <!-- Users populated by JS -->
+              </tbody>
+            </table>
+            <p id="adminNoUsers" class="text-center text-white/50 text-sm py-6 hidden">暂无用户</p>
+          </div>
+          <p id="adminUserListError" class="text-center text-red-400 text-sm mt-2 hidden"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -318,7 +415,7 @@
       console.log('Login - Altcha value:', altcha);
 
       loginBtn.disabled = true;
-      loginBtn.textContent = 'Signing in...';
+      loginBtn.textContent = '登录中...';
 
       try {
         const res = await fetch('/api/login', {
@@ -331,7 +428,7 @@
         console.log('Login - Response:', res.status, data);
 
         if (!res.ok) {
-          throw new Error(data.error || 'Login failed');
+          throw new Error(data.error || '登录失败');
         }
 
         localStorage.setItem('token', data.token);
@@ -342,7 +439,7 @@
         loginMessage.className = 'text-center mt-4 text-sm text-red-400';
       } finally {
         loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
+        loginBtn.textContent = '登录';
       }
     });
 
@@ -363,7 +460,7 @@
       console.log('Signup - Altcha value:', altcha);
 
       signupBtn.disabled = true;
-      signupBtn.textContent = 'Creating account...';
+      signupBtn.textContent = '创建账号中...';
 
       try {
         const res = await fetch('/api/register', {
@@ -376,7 +473,7 @@
         console.log('Signup - Response:', res.status, data);
 
         if (!res.ok) {
-          throw new Error(data.error || 'Registration failed');
+          throw new Error(data.error || '注册失败');
         }
 
         localStorage.setItem('token', data.token);
@@ -387,7 +484,7 @@
         loginMessage.className = 'text-center mt-4 text-sm text-red-400';
       } finally {
         signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
+        signupBtn.textContent = '注册';
       }
     });
 
@@ -448,8 +545,294 @@ Note: By clicking "Sign Up," you acknowledge that you have read and agreed to th
       const agreeTerms = document.getElementById('agreeTerms');
       if (!agreeTerms.checked) {
         e.preventDefault();
-        loginMessage.textContent = 'You must agree to the Terms and Conditions';
+        loginMessage.textContent = '请先同意条款和条件';
         loginMessage.className = 'text-center mt-4 text-sm text-red-400';
+      }
+    });
+
+    // ============================================================
+    // Admin Panel
+    // ============================================================
+    const adminPanel = document.getElementById('adminPanel');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const adminDashboard = document.getElementById('adminDashboard');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminLoginError = document.getElementById('adminLoginError');
+    const adminUserList = document.getElementById('adminUserList');
+    const adminNoUsers = document.getElementById('adminNoUsers');
+    const adminUserListError = document.getElementById('adminUserListError');
+    const adminAddUserForm = document.getElementById('adminAddUserForm');
+    const adminAddUserMsg = document.getElementById('adminAddUserMsg');
+
+    function openAdminPanel() {
+      adminPanel.classList.remove('hidden');
+      if (localStorage.getItem('adminToken')) {
+        showAdminDashboard();
+      } else {
+        showAdminLogin();
+      }
+    }
+
+    function closeAdminPanel() {
+      adminPanel.classList.add('hidden');
+    }
+
+    function showAdminLogin() {
+      adminLoginForm.classList.remove('hidden');
+      adminDashboard.classList.add('hidden');
+      adminPasswordInput.value = '';
+      adminLoginError.classList.add('hidden');
+    }
+
+    function showAdminDashboard() {
+      adminLoginForm.classList.add('hidden');
+      adminDashboard.classList.remove('hidden');
+      loadAdminUsers();
+    }
+
+    document.getElementById('closeAdminPanel').addEventListener('click', closeAdminPanel);
+    document.getElementById('adminBackdrop').addEventListener('click', closeAdminPanel);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        if (adminPanel.classList.contains('hidden')) {
+          openAdminPanel();
+        } else {
+          closeAdminPanel();
+        }
+      }
+      if (e.key === 'Escape' && !adminPanel.classList.contains('hidden')) {
+        closeAdminPanel();
+      }
+    });
+
+    async function adminLogin(password) {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '登录失败');
+      localStorage.setItem('adminToken', data.token);
+      return data.token;
+    }
+
+    async function adminApi(endpoint, options = {}) {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`/api/admin${endpoint}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '请求失败');
+      return data;
+    }
+
+    adminLoginBtn.addEventListener('click', async () => {
+      const password = adminPasswordInput.value;
+      if (!password) return;
+      adminLoginBtn.disabled = true;
+      adminLoginBtn.textContent = '登录中...';
+      adminLoginError.classList.add('hidden');
+      try {
+        await adminLogin(password);
+        showAdminDashboard();
+      } catch (err) {
+        adminLoginError.textContent = err.message;
+        adminLoginError.classList.remove('hidden');
+      } finally {
+        adminLoginBtn.disabled = false;
+        adminLoginBtn.textContent = '登录';
+      }
+    });
+
+    adminPasswordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') adminLoginBtn.click();
+    });
+
+    document.getElementById('adminRefreshUsers').addEventListener('click', loadAdminUsers);
+
+    async function loadAdminUsers() {
+      adminUserListError.classList.add('hidden');
+      adminNoUsers.classList.add('hidden');
+      adminUserList.innerHTML = '<tr><td colspan="7" class="text-center text-white/50 py-6">加载中...</td></tr>';
+      try {
+        const users = await adminApi('/users');
+        adminUserList.innerHTML = '';
+        if (users.length === 0) {
+          adminNoUsers.classList.remove('hidden');
+          return;
+        }
+        users.forEach(user => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-t border-white/10 hover:bg-white/5';
+          const created = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const fullName = user.full_name || '-';
+          tr.innerHTML = `
+            <td class="px-3 py-2 text-white/60">${user.id}</td>
+            <td class="px-3 py-2">${escapeHtml(user.username)}</td>
+            <td class="px-3 py-2 hidden md:table-cell">${escapeHtml(fullName)}</td>
+            <td class="px-3 py-2">
+              <span class="editable-grade" data-id="${user.id}" data-value="${escapeHtml(user.grade)}">${escapeHtml(user.grade)}</span>
+            </td>
+            <td class="px-3 py-2">
+              <span class="editable-class" data-id="${user.id}" data-value="${escapeHtml(user.class)}">${escapeHtml(user.class)}</span>
+            </td>
+            <td class="px-3 py-2 text-white/50 text-xs hidden lg:table-cell">${created}</td>
+            <td class="px-3 py-2 text-right">
+              <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}">编辑</button>
+              <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">删除</button>
+            </td>
+          `;
+          adminUserList.appendChild(tr);
+        });
+        bindUserRowActions();
+      } catch (err) {
+        adminUserList.innerHTML = '';
+        adminUserListError.textContent = err.message;
+        adminUserListError.classList.remove('hidden');
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function bindUserRowActions() {
+      document.querySelectorAll('.admin-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const username = btn.dataset.username;
+          if (!confirm(`确定删除用户 "${username}"？此操作不可撤销。`)) return;
+          btn.disabled = true;
+          btn.textContent = '...';
+          try {
+            await adminApi(`/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+            loadAdminUsers();
+          } catch (err) {
+            alert('删除失败：' + err.message);
+            btn.disabled = false;
+            btn.textContent = '删除';
+          }
+        });
+      });
+
+      document.querySelectorAll('.admin-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const tr = btn.closest('tr');
+          const grade = tr.querySelector('.editable-grade').textContent.trim();
+          const cls = tr.querySelector('.editable-class').textContent.trim();
+          openEditModal(id, grade, cls);
+        });
+      });
+    }
+
+    function openEditModal(userId, currentGrade, currentClass) {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4';
+      modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="editModalBackdrop"></div>
+        <div class="glass-panel rounded-2xl p-6 w-full max-w-sm relative z-10">
+          <h3 class="text-white font-bold text-lg mb-4">编辑用户 #${userId}</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-white/70 text-xs mb-1">新密码（留空保持当前密码）</label>
+              <input type="password" id="editPassword" placeholder="新密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-white/70 text-xs mb-1">年级</label>
+                <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-white/70 text-xs mb-1">班级</label>
+                <input type="text" id="editClass" value="${escapeHtml(currentClass)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+              </div>
+            </div>
+          </div>
+          <div id="editError" class="text-red-400 text-sm mt-2 hidden"></div>
+          <div class="flex gap-3 mt-5">
+            <button id="editCancel" class="flex-1 py-2 rounded-lg text-sm font-semibold border border-white/30 text-white/70 hover:bg-white/10 transition-colors">取消</button>
+            <button id="editSave" class="flex-1 py-2 rounded-lg text-sm font-semibold login-btn" data-id="${userId}">保存更改</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      const closeModal = () => document.body.removeChild(modal);
+      document.getElementById('editModalBackdrop').addEventListener('click', closeModal);
+      document.getElementById('editCancel').addEventListener('click', closeModal);
+
+      document.getElementById('editSave').addEventListener('click', async () => {
+        const password = document.getElementById('editPassword').value;
+        const grade = document.getElementById('editGrade').value;
+        const cls = document.getElementById('editClass').value;
+        const editError = document.getElementById('editError');
+        const saveBtn = document.getElementById('editSave');
+
+        editError.classList.add('hidden');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+
+        const body = {};
+        if (password) body.password = password;
+        if (grade !== currentGrade) body.grade = grade;
+        if (cls !== currentClass) body.class = cls;
+
+        try {
+          await adminApi(`/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify(body)
+          });
+          closeModal();
+          loadAdminUsers();
+        } catch (err) {
+          editError.textContent = err.message;
+          editError.classList.remove('hidden');
+          saveBtn.disabled = false;
+          saveBtn.textContent = '保存更改';
+        }
+      });
+    }
+
+    adminAddUserForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('adminNewUsername').value.trim();
+      const password = document.getElementById('adminNewPassword').value;
+      const grade = document.getElementById('adminNewGrade').value.trim();
+      const cls = document.getElementById('adminNewClass').value.trim();
+
+      const msg = adminAddUserMsg;
+      msg.className = 'text-center text-sm mt-2 hidden';
+
+      const submitBtn = adminAddUserForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '添加中...';
+
+      try {
+        const data = await adminApi('/users', {
+          method: 'POST',
+          body: JSON.stringify({ username, password, grade, class: cls })
+        });
+        msg.textContent = `用户 "${data.user.username}" 创建成功！`;
+        msg.className = 'text-center text-sm mt-2 text-green-400';
+        adminAddUserForm.reset();
+        loadAdminUsers();
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'text-center text-sm mt-2 text-red-400';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '添加用户';
       }
     });
   </script>

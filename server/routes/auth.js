@@ -16,7 +16,8 @@ function getAltchaHmacKey(app) {
 
 router.post('/login', async (req, res) => {
   try {
-    const { username, password, altcha } = req.body;
+    const { username, password, altcha: altchaField, payload: payloadField } = req.body;
+    const altcha = altchaField || payloadField;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -69,7 +70,8 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, confirmPassword, fullName, grade, class: classNum, altcha } = req.body;
+    const { username, password, confirmPassword, fullName, grade, class: classNum, altcha: altchaField, payload: payloadField } = req.body;
+    const altcha = altchaField || payloadField;
 
     if (!username || !password || !confirmPassword || !fullName || !grade || !classNum) {
       return res.status(400).json({ error: 'All fields are required' });

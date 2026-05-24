@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OriLink - Dashboard</title>
+  <title>OriLink - 仪表板</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,14 +19,14 @@
 <body class="min-h-screen flex flex-col items-center justify-start p-4 md:p-8 pt-24 pb-24">
   
   <div class="bg-container">
-    <img src="imgs/bridge.jpg" alt="Bridge background">
+    <img src="imgs/bridge.jpg" alt="桥背景">
     <div class="bg-overlay"></div>
   </div>
 
   <div class="fixed top-8 left-8 md:top-12 md:left-12 z-10">
     <div class="flex items-center gap-3">
       <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-white/20 to-white/5 rounded-xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
-        <img src="imgs/logo.svg" alt="OriLink Logo" class="w-8 h-8 md:w-10 md:h-10">
+        <img src="imgs/logo.svg" alt="OriLink 标志" class="w-8 h-8 md:w-10 md:h-10">
       </div>
       <div class="flex flex-col">
         <span class="logo-text text-2xl md:text-3xl font-bold tracking-tight">OriLink</span>
@@ -40,14 +40,14 @@
       id="logoutBtn" 
       class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium transition-all"
     >
-      Sign Out
+      退出登录
     </button>
   </div>
 
   <div id="page-content" class="w-full max-w-md relative z-10">
     <div class="glass-panel rounded-2xl p-6 min-h-[400px] mb-24">
-      <h2 id="page-title" class="text-white text-xl md:text-2xl font-bold mb-4" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Others' Invitations</h2>
-      <div id="page-description" class="text-white/80 text-sm" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">View invitations from other users</div>
+      <h2 id="page-title" class="text-white text-xl md:text-2xl font-bold mb-4" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">他人邀请</h2>
+      <div id="page-description" class="text-white/80 text-sm" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">查看其他用户的邀请</div>
     </div>
   </div>
 
@@ -57,25 +57,25 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
         </svg>
-        <span>Invitations</span>
+        <span>Invitations 邀请</span>
       </button>
       <button class="nav-item px-4 py-2 rounded-xl text-white text-sm font-medium transition-all flex flex-col items-center gap-1" data-page="joined">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <span>Joined</span>
+        <span>Joined 参与</span>
       </button>
       <button class="nav-item px-4 py-2 rounded-xl text-white text-sm font-medium transition-all flex flex-col items-center gap-1" data-page="account">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
         </svg>
-        <span>Account</span>
+        <span>Account 账号</span>
       </button>
       <button class="nav-item px-4 py-2 rounded-xl text-white text-sm font-medium transition-all flex flex-col items-center gap-1" data-page="about">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span>About</span>
+        <span>About 关于</span>
       </button>
     </div>
   </div>
@@ -83,7 +83,12 @@
   <script>
     const MBTI_TYPES = ['INFJ', 'INFP', 'INTJ', 'INTP', 'ISFJ', 'ISFP', 'ISTJ', 'ISTP', 'ENFJ', 'ENFP', 'ENTJ', 'ENTP', 'ESFJ', 'ESFP', 'ESTJ', 'ESTP'];
     const MAX_CHARS = 20;
-    const INVITATION_TYPES = ['play/sports', 'teammate finding', 'tutoring', 'other'];
+    const INVITATION_TYPES = [
+      { value: 'play/sports', label: '运动/玩耍' },
+      { value: 'teammate finding', label: '寻找队友' },
+      { value: 'tutoring', label: '辅导' },
+      { value: 'other', label: '其他' }
+    ];
     const MAX_TITLE_LENGTH = 100;
     const MAX_DESCRIPTION_LENGTH = 300;
     const DESCRIPTION_TRUNCATE_LENGTH = 50;
@@ -95,21 +100,26 @@
       'other': 'bg-gray-500/80'
     };
 
+    function getTypeLabel(type) {
+      const t = INVITATION_TYPES.find(x => x.value === type);
+      return t ? t.label : type;
+    }
+
     const pages = {
       invitations: {
-        title: "Others' Invitations",
+        title: "Others' Invitations 他人邀请",
         render: renderInvitationsPage
       },
       joined: {
-        title: "Joined Invitations",
+        title: "Joined Invitations 参与邀请",
         render: renderJoinedPage
       },
       account: {
-        title: "My Account",
+        title: "My Account 账号",
         render: renderAccountPage
       },
       about: {
-        title: "About OriLink",
+        title: "About OriLink 关于元联",
         description: `OriLink or 元联 is an in-school 
         online social platform founded and developed by a student who sought the need to 
         develop a more efficient method to connect students with similar needs/wants and interests to promote 
@@ -117,7 +127,7 @@
         finding a student tutor or seeking teammates for competitions, you can do all these things on this platform. 
         <br></br>
         Founder & Maintainer: Kevin Chai <br>
-        Past Contributors: Maoyuan Sun, Renyong Huang, Jiayi Xiao
+        Past Contributors: Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
         <br></br>
         <h3 class="text-white font-semibold text-sm mt-4 mb-2">Terms and Conditions</h3>
         <div id="aboutTermsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>`
@@ -143,10 +153,10 @@
 
     function createInvitationCard(invitation, isOwn = false, showChat = false) {
       const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
-      const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${invitation.type}</span>`;
+      const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
       
       const descriptionHtml = truncated 
-        ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/50 hover:text-white">Show more</span></p>`
+        ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/50 hover:text-white">查看更多</span></p>`
         : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
       
       let metaInfo = '';
@@ -166,13 +176,13 @@
       if (isOwn) {
         actionButtons = `
           <div class="flex gap-2 mt-3">
-            <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">Chat</button>
-            <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete</button>
+            <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">聊天</button>
+            <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">删除</button>
           </div>`;
       } else if (showChat) {
-        actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">Chat</button>`;
+        actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">聊天</button>`;
       } else {
-        actionButtons = `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join</button>`;
+        actionButtons = `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">加入</button>`;
       }
 
       return `
@@ -184,7 +194,7 @@
               <div class="mt-2">${typeBadge}</div>
               ${metaInfo}
             </div>
-            <p class="text-white text-xs whitespace-nowrap">@${invitation.username || 'Unknown'}</p>
+            <p class="text-white text-xs whitespace-nowrap">@${invitation.username || '未知'}</p>
           </div>
           ${actionButtons}
         </div>
@@ -217,7 +227,7 @@
       });
       socket.on('error', (data) => {
         console.error('Socket error:', data.message);
-        alert(data.message || 'Chat error');
+        alert(data.message || '聊天出错');
       });
     }
 
@@ -234,7 +244,7 @@
 
     function renderInvitationsPage() {
       const container = document.getElementById('page-description');
-      container.innerHTML = '<div class="flex justify-center py-4"><p class="text-white/60 text-sm">Loading invitations...</p></div>';
+      container.innerHTML = '<div class="flex justify-center py-4"><p class="text-white/60 text-sm">加载邀请中...</p></div>';
 
       Promise.all([
         fetch('/api/invitations', { headers: getAuthHeader() }).then(res => res.json()),
@@ -242,7 +252,7 @@
       ])
         .then(([invitations, user]) => {
           if (invitations.length === 0) {
-            container.innerHTML = '<p class="text-white text-sm text-center py-4">No invitations yet. Be the first to post one!</p>';
+            container.innerHTML = '<p class="text-white text-sm text-center py-4">暂无邀请。来做第一个发布邀请的人吧！</p>';
             return;
           }
           container.innerHTML = invitations.map(inv => {
@@ -267,17 +277,17 @@
         })
         .catch(err => {
           console.error(err);
-          container.innerHTML = '<p class="text-red-400 text-sm">Error loading invitations</p>';
+          container.innerHTML = '<p class="text-red-400 text-sm">加载邀请出错</p>';
         });
     }
 
     function handleDelete(e, pageContext) {
       const btn = e.target;
       const invitationId = btn.dataset.id;
-      if (!confirm('Are you sure you want to delete this invitation?')) return;
+      if (!confirm('确定要删除此邀请吗？')) return;
       
       btn.disabled = true;
-      btn.textContent = 'Deleting...';
+      btn.textContent = '删除中...';
 
       fetch(`/api/invitations/${invitationId}`, {
         method: 'DELETE',
@@ -295,7 +305,7 @@
           }
         })
         .catch(err => {
-          btn.textContent = 'Delete';
+          btn.textContent = '删除';
           btn.disabled = false;
         });
     }
@@ -304,7 +314,7 @@
       const btn = e.target;
       const invitationId = btn.dataset.id;
       btn.disabled = true;
-      btn.textContent = 'Joining...';
+      btn.textContent = '加入中...';
 
       fetch(`/api/invitations/${invitationId}/join`, {
         method: 'POST',
@@ -317,7 +327,7 @@
             btn.classList.add('bg-red-500/80');
             return;
           }
-          btn.textContent = 'Joined!';
+          btn.textContent = '已加入！';
           btn.classList.add('bg-green-500/80');
           
           setTimeout(() => {
@@ -328,7 +338,7 @@
           }, 1000);
         })
         .catch(err => {
-          btn.textContent = 'Join';
+          btn.textContent = '加入';
           btn.disabled = false;
         });
     }
@@ -336,7 +346,7 @@
     function openChatModal(e) {
       const btn = e.target;
       const invitationId = btn.dataset.id;
-      const title = btn.dataset.title || 'Chat';
+      const title = btn.dataset.title || '聊天';
       currentChatInvitationId = invitationId;
       
       const modal = document.getElementById('chatModal');
@@ -344,7 +354,7 @@
       const chatMessages = document.getElementById('chatMessages');
       
       modalTitle.textContent = title;
-      chatMessages.innerHTML = '<div class="text-white/60 text-sm text-center py-4">Loading messages...</div>';
+      chatMessages.innerHTML = '<div class="text-white/60 text-sm text-center py-4">加载消息中...</div>';
       modal.classList.remove('hidden');
       
       if (socket) {
@@ -358,7 +368,7 @@
       fetch(`/api/messages/${invitationId}`, { headers: getAuthHeader() })
         .then(res => {
           if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.error || 'Failed to load messages'); });
+            return res.json().then(err => { throw new Error(err.error || '加载消息失败'); });
           }
           return res.json();
         })
@@ -367,7 +377,7 @@
           if (!container) return;
           
           if (messages.length === 0) {
-            container.innerHTML = '<p class="text-white/60 text-sm text-center py-4">No messages yet. Start the conversation!</p>';
+            container.innerHTML = '<p class="text-white/60 text-sm text-center py-4">暂无消息。开始聊天吧！</p>';
             return;
           }
           
@@ -377,7 +387,7 @@
             return `
               <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
                 <div class="inline-block max-w-[80%]">
-                  <p class="text-white/50 text-xs">${isOwn ? 'You' : '@' + msg.username} · ${time}</p>
+                  <p class="text-white/50 text-xs">${isOwn ? '你' : '@' + msg.username} · ${time}</p>
                   <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${msg.content}</p>
                 </div>
               </div>
@@ -389,7 +399,7 @@
         .catch(err => {
           const container = document.getElementById('chatMessages');
           if (container) {
-            container.innerHTML = `<p class="text-red-400 text-sm">${err.message || 'Error loading messages'}</p>`;
+            container.innerHTML = `<p class="text-red-400 text-sm">${err.message || '加载消息出错'}</p>`;
           }
         });
     }
@@ -403,7 +413,7 @@
       const html = `
         <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
           <div class="inline-block max-w-[80%]">
-            <p class="text-white/50 text-xs">${isOwn ? 'You' : '@' + data.username} · ${time}</p>
+            <p class="text-white/50 text-xs">${isOwn ? '你' : '@' + data.username} · ${time}</p>
             <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${data.content}</p>
           </div>
         </div>
@@ -437,7 +447,7 @@
       })
         .then(res => {
           if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.error || 'Failed to send message'); });
+            return res.json().then(err => { throw new Error(err.error || '发送消息失败'); });
           }
           return res.json();
         })
@@ -451,9 +461,9 @@
           });
         })
         .catch(err => {
-          console.error('Error sending message:', err);
+          console.error('发送消息出错：', err);
           input.value = originalValue;
-          alert(err.message || 'Failed to send message');
+          alert(err.message || '发送消息失败');
         });
     }
 
@@ -470,64 +480,64 @@
       const container = document.getElementById('page-description');
       container.innerHTML = `
         <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
-          + Post Invitation
+          + 发布邀请
         </button>
         <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20">
           <form id="invitationForm" class="space-y-3">
             <div>
-              <label class="block text-white/80 text-xs mb-1">Title (max 15 words or Chinese characters)</label>
+              <label class="block text-white/80 text-xs mb-1">标题（最多15个字）</label>
               <input type="text" id="invTitle" required
                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
-                placeholder="e.g., Tennis partner needed">
-              <p class="text-white/40 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words</p>
+                placeholder="例如：需要网球搭档">
+              <p class="text-white/40 text-xs text-right mt-1"><span id="titleCount">0</span>/15 字</p>
             </div>
             <div>
-              <label class="block text-white/80 text-xs mb-1">Description (max ${MAX_DESCRIPTION_LENGTH} chars)</label>
+              <label class="block text-white/80 text-xs mb-1">描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
               <textarea id="invDescription" required maxlength="${MAX_DESCRIPTION_LENGTH}" rows="3"
                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
-                placeholder="Describe your invitation..."></textarea>
+                placeholder="描述你的邀请..."></textarea>
               <p class="text-white/40 text-xs text-right mt-1"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
             </div>
             <div>
-              <label class="block text-white/80 text-xs mb-1">Type</label>
+              <label class="block text-white/80 text-xs mb-1">类型</label>
               <select id="invType" required
                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-                <option value="">Select type...</option>
-                ${INVITATION_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+                <option value="">选择类型...</option>
+                ${INVITATION_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
               </select>
             </div>
             <div>
-              <label class="block text-white/80 text-xs mb-1">People Needed (including you)</label>
+              <label class="block text-white/80 text-xs mb-1">所需人数（含自己）</label>
               <select id="invMaxParticipants"
                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-                ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} person${n > 1 ? 's' : ''}</option>`).join('')}
+                ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} 人</option>`).join('')}
               </select>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-white/80 text-xs mb-1">Event Start</label>
+                <label class="block text-white/80 text-xs mb-1">活动开始时间</label>
                 <input type="datetime-local" id="invEventStart"
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Event End</label>
+                <label class="block text-white/80 text-xs mb-1">活动结束时间</label>
                 <input type="datetime-local" id="invEventEnd"
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
             </div>
             <button type="submit" id="postBtn"
               class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-              Post Invitation
+              发布邀请
             </button>
             <p id="postMessage" class="text-center text-xs mt-2"></p>
           </form>
         </div>
         <div id="myInvitations">
-          <p class="text-white text-xs mb-2">Your Invitations</p>
+          <p class="text-white text-xs mb-2">我的邀请</p>
           <div id="myInvitationsList"></div>
         </div>
         <div id="joinedInvitations" class="mt-6">
-          <p class="text-white text-xs mb-2">Invitations You've Joined</p>
+          <p class="text-white text-xs mb-2">已参与的邀请</p>
           <div id="joinedInvitationsList"></div>
         </div>
       `;
@@ -556,10 +566,10 @@
         .then(invitations => {
           const container = document.getElementById('myInvitationsList');
           if (invitations.length === 0) {
-            container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet.</p>';
+            container.innerHTML = '<p class="text-white text-sm text-center py-4">你还没有发布任何邀请。</p>';
             return;
           }
-          container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You' }, true, true)).join('');
+          container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: '你' }, true, true)).join('');
           
           document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => handleDelete(e, 'joined'));
@@ -577,7 +587,7 @@
           });
         })
         .catch(err => {
-          document.getElementById('myInvitationsList').innerHTML = '<p class="text-red-400 text-sm">Error loading your invitations</p>';
+          document.getElementById('myInvitationsList').innerHTML = '<p class="text-red-400 text-sm">加载我的邀请出错</p>';
         });
     }
 
@@ -588,7 +598,7 @@
           const container = document.getElementById('joinedInvitationsList');
           if (!container) return;
           if (invitations.length === 0) {
-            container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t joined any invitations yet.</p>';
+            container.innerHTML = '<p class="text-white text-sm text-center py-4">你还没有参与任何邀请。</p>';
             return;
           }
           container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true)).join('');
@@ -607,7 +617,7 @@
         .catch(err => {
           const container = document.getElementById('joinedInvitationsList');
           if (container) {
-            container.innerHTML = '<p class="text-red-400 text-sm">Error loading joined invitations</p>';
+            container.innerHTML = '<p class="text-red-400 text-sm">加载已参与的邀请出错</p>';
           }
         });
     }
@@ -624,19 +634,19 @@
       const event_end = document.getElementById('invEventEnd').value || null;
 
       if (!title || !description || !type) {
-        messageEl.textContent = 'Please fill in all fields';
+        messageEl.textContent = '请填写所有必填字段';
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
         return;
       }
 
       if (countWords(title) > 15) {
-        messageEl.textContent = 'Title must be 15 words or fewer';
+        messageEl.textContent = '标题不能超过15个字';
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
         return;
       }
 
       postBtn.disabled = true;
-      postBtn.textContent = 'Posting...';
+      postBtn.textContent = '发布中...';
 
       fetch('/api/invitations', {
         method: 'POST',
@@ -645,7 +655,7 @@
       })
         .then(res => res.json())
         .then(data => {
-          messageEl.textContent = 'Invitation posted successfully!';
+          messageEl.textContent = '邀请发布成功！';
           messageEl.className = 'text-center text-xs mt-2 text-green-400';
           document.getElementById('invitationForm').reset();
           document.getElementById('titleCount').textContent = '0';
@@ -660,26 +670,26 @@
           renderJoinedPage();
         })
         .catch(err => {
-          messageEl.textContent = err.message || 'Failed to post invitation';
+          messageEl.textContent = err.message || '发布邀请失败';
           messageEl.className = 'text-center text-xs mt-2 text-red-400';
         })
         .finally(() => {
           postBtn.disabled = false;
-          postBtn.textContent = 'Post Invitation';
+          postBtn.textContent = '发布邀请';
         });
     }
 
     function showInviteModal(inv) {
       const modal = document.getElementById('inviteModal');
       const modalBody = document.getElementById('modalBody');
-      const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${inv.type}</span>`;
+      const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
       
       modalBody.innerHTML = `
-        <p class="text-white/50 text-xs">@${inv.username || 'Unknown'}</p>
+        <p class="text-white/50 text-xs">@${inv.username || '未知'}</p>
         <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
         <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
         <div class="mt-3">${typeBadge}</div>
-        <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close</button>
+        <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">关闭</button>
       `;
       modal.classList.remove('hidden');
       
@@ -695,7 +705,7 @@
     function renderAccountPage() {
       fetch('/api/account', { headers: getAuthHeader() })
         .then(res => {
-          if (!res.ok) throw new Error('Failed to load account');
+          if (!res.ok) throw new Error('加载账号信息失败');
           return res.json();
         })
         .then(user => {
@@ -705,32 +715,53 @@
 
           document.getElementById('page-description').innerHTML = `
             <form id="accountForm" class="space-y-4">
+              <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
+                <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">账号信息</h3>
+                <div>
+                  <label class="block text-white/30 text-xs mb-1">姓名</label>
+                  <input type="text" value="${user.full_name || '无'}" disabled
+                    class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-white/30 text-xs mb-1">年级</label>
+                    <input type="text" value="${user.grade || '无'}" disabled
+                      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                  </div>
+                  <div>
+                    <label class="block text-white/30 text-xs mb-1">班级</label>
+                    <input type="text" value="${user.class || '无'}" disabled
+                      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                  </div>
+                </div>
+                <p class="text-white/40 text-xs italic mt-2">请联系管理员修改这些信息。</p>
+              </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars)</label>
+                <label class="block text-white/80 text-xs mb-1">用户名（最多${MAX_CHARS}字）</label>
                 <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}"
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">New Password (max ${MAX_CHARS} chars, leave empty to keep current)</label>
+                <label class="block text-white/80 text-xs mb-1">新密码（最多${MAX_CHARS}字，留空保持当前密码）</label>
                 <input type="password" id="password" name="password" maxlength="${MAX_CHARS}"
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Personality Type (MBTI)</label>
+                <label class="block text-white/80 text-xs mb-1">性格类型（MBTI）</label>
                 <select id="personalityType" name="personalityType"
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-                  <option value="">Select type...</option>
+                  <option value="">选择类型...</option>
                   ${mbtiOptions}
                 </select>
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Current Password (required to save)</label>
+                <label class="block text-white/80 text-xs mb-1">当前密码（保存时必填）</label>
                 <input type="password" id="currentPassword" name="currentPassword" required
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
               <button type="submit" id="saveBtn"
                 class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-                Save Changes
+                保存更改
               </button>
               <p id="accountMessage" class="text-center text-xs mt-2"></p>
             </form>
@@ -739,7 +770,7 @@
           document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
         })
         .catch(err => {
-          document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account data</p>`;
+          document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">加载账号信息出错</p>`;
         });
     }
 
@@ -754,7 +785,7 @@
       const currentPassword = document.getElementById('currentPassword').value;
 
       if (!currentPassword) {
-        messageEl.textContent = 'Current password required';
+        messageEl.textContent = '请输入当前密码';
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
         return;
       }
@@ -763,19 +794,19 @@
       const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
 
       if (username && !usernameRegex.test(username)) {
-        messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores, or periods (max 20 characters)';
+        messageEl.textContent = '用户名必须以字母开头，只能包含字母、数字、下划线或点（最多20个字符）';
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
         return;
       }
 
       if (password && !passwordRegex.test(password)) {
-        messageEl.textContent = 'Password must be at least 5 characters and contain only letters, numbers, and common symbols';
+        messageEl.textContent = '密码至少5个字符，只能包含字母、数字和常用符号';
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
         return;
       }
 
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving...';
+      saveBtn.textContent = '保存中...';
 
       try {
         const res = await fetch('/api/account', {
@@ -786,10 +817,10 @@
         const data = await res.json();
         
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to update');
+          throw new Error(data.error || '更新失败');
         }
         
-        messageEl.textContent = 'Account updated successfully!';
+        messageEl.textContent = '账号更新成功！';
         messageEl.className = 'text-center text-xs mt-2 text-green-400';
         document.getElementById('password').value = '';
         document.getElementById('currentPassword').value = '';
@@ -798,7 +829,7 @@
         messageEl.className = 'text-center text-xs mt-2 text-red-400';
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Changes';
+        saveBtn.textContent = '保存更改';
       }
     }
 
@@ -908,21 +939,21 @@ Note: By clicking "Sign Up," you acknowledge that you have read and agreed to th
     <div id="chatModalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="relative glass-panel rounded-2xl p-4 w-full max-w-md mx-4 h-[70vh] flex flex-col">
       <div class="flex items-center justify-between mb-3">
-        <h3 id="chatModalTitle" class="text-white font-semibold text-lg">Chat</h3>
+        <h3 id="chatModalTitle" class="text-white font-semibold text-lg">聊天</h3>
         <button id="closeChatModal" onclick="closeChatModal()" class="text-white/60 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div id="chatMessages" class="flex-1 overflow-y-auto mb-3 p-2 bg-white/5 rounded-lg">
-        <p class="text-white/60 text-sm text-center py-4">Loading messages...</p>
+        <p class="text-white/60 text-sm text-center py-4">加载消息中...</p>
       </div>
       <div class="flex gap-2">
         <textarea id="chatInput" rows="1"
           class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
-          placeholder="Type a message..."></textarea>
+          placeholder="输入消息..."></textarea>
         <button id="sendChatBtn" onclick="sendChatMessage()"
           class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-          Send
+          发送
         </button>
       </div>
     </div>
