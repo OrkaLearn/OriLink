@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "altcha": "^2.3.0",
-    "altcha-lib": "^1.4.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.5",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "svg-captcha": "^1.4.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

@@ -139,19 +139,26 @@ body {
   display: none;
 }
 
-/* Altcha CAPTCHA Widget - Border radius only */
-altcha-widget {
-  --altcha-border-radius: 0.75rem;
-  width: 100%;
-  box-sizing: border-box;
-  display: flex;
+/* SVG CAPTCHA styles */
+.captcha-container {
   margin-top: 1rem;
   margin-bottom: 1rem;
-  color: #ffffff;
 }
 
-.altcha {
-  max-width: 100% !important;
+.captcha-container svg text {
+  fill: #ffffff !important;
+  opacity: 0.9;
+}
+
+.captcha-container svg rect {
+  fill: rgba(255, 255, 255, 0.05) !important;
+}
+
+#loginCaptchaSvg svg,
+#signupCaptchaSvg svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 .invitation-card {

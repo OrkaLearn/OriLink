@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
+const captchaStore = require('../captcha-store');
 
 const router = express.Router();
 
@@ -10,36 +11,20 @@ const JWT_SECRET = 'orilink-secret-key-change-in-production';
 const USERNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
 const PASSWORD_REGEX = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
 
-function getAltchaHmacKey(app) {
-  return app.locals.altchaHmacKey || process.env.ALTCHA_HMAC_KEY;
-}
-
 router.post('/login', async (req, res) => {
   try {
-    const { username, password, altcha: altchaField, payload: payloadField } = req.body;
-    const altcha = altchaField || payloadField;
+    const { username, password, captchaToken, captchaInput } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    const hmacKey = getAltchaHmacKey(req.app);
-    console.log('Login - HMAC Key exists:', !!hmacKey);
-    console.log('Login - Altcha payload received:', !!altcha);
-    console.log('Login - Altcha payload:', altcha ? altcha.substring(0, 50) + '...' : 'null');
+    if (!captchaToken || !captchaInput) {
+      return res.status(400).json({ error: 'CAPTCHA verification required' });
+    }
 
-    if (hmacKey) {
-      if (!altcha) {
-        return res.status(400).json({ error: 'ALTCHA verification required - please complete the captcha' });
-      }
-
-      const { verifySolution } = require('altcha-lib');
-      const verified = await verifySolution(altcha, hmacKey);
-      console.log('Login - Altcha verification result:', verified);
-
-      if (!verified) {
-        return res.status(400).json({ error: 'ALTCHA verification failed - please try again' });
-      }
+    if (!captchaStore.verify(captchaToken, captchaInput)) {
+      return res.status(400).json({ error: 'CAPTCHA verification failed - please try again' });
     }
 
     const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
@@ -70,8 +55,7 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, confirmPassword, fullName, grade, class: classNum, altcha: altchaField, payload: payloadField } = req.body;
-    const altcha = altchaField || payloadField;
+    const { username, password, confirmPassword, fullName, grade, class: classNum, captchaToken, captchaInput } = req.body;
 
     if (!username || !password || !confirmPassword || !fullName || !grade || !classNum) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -104,23 +88,12 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Please enter your full name' });
     }
 
-    const hmacKey = getAltchaHmacKey(req.app);
-    console.log('Register - HMAC Key exists:', !!hmacKey);
-    console.log('Register - Altcha payload received:', !!altcha);
-    console.log('Register - Altcha payload:', altcha ? altcha.substring(0, 50) + '...' : 'null');
+    if (!captchaToken || !captchaInput) {
+      return res.status(400).json({ error: 'CAPTCHA verification required' });
+    }
 
-    if (hmacKey) {
-      if (!altcha) {
-        return res.status(400).json({ error: 'ALTCHA verification required - please complete the captcha' });
-      }
-
-      const { verifySolution } = require('altcha-lib');
-      const verified = await verifySolution(altcha, hmacKey);
-      console.log('Register - Altcha verification result:', verified);
-
-      if (!verified) {
-        return res.status(400).json({ error: 'ALTCHA verification failed - please try again' });
-      }
+    if (!captchaStore.verify(captchaToken, captchaInput)) {
+      return res.status(400).json({ error: 'CAPTCHA verification failed - please try again' });
     }
 
     const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);

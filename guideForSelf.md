@@ -4,62 +4,72 @@ Quick commands to run the OriLink backend server.
 
 ---
 
-## 1. Start the Server
+## 1. Local Development
 
-Before starting, make sure MariaDB is running:
+Start the server from the `server/` directory:
 
 ```bash
-sudo systemctl start mariadb
+cd /home/kevin/projects/orilink/server
+node index.js
 ```
 
-Then, from the project root, start the server:
+For auto-restart on file changes:
 
 ```bash
-cd /home/orka/Documents/projects/orilink/server
-npm start
+cd /home/kevin/projects/orilink/server
+npx nodemon index.js
 ```
 
-The website will be available at: `http://localhost:3000`
-
----
-
-## 2. Stop the Server
-
-If the server is running on port 3000 and you need to kill it:
+Stop the server (port 3210):
 
 ```bash
-fuser -k 3000/tcp
+fuser -k 3210/tcp
 ```
 
 Or press `Ctrl + C` in the terminal where it's running.
 
 ---
 
-## 3. Development Mode (Auto-Restart)
+## 2. Production Server (esshasrv003)
 
-Use this when coding so the server restarts automatically on file changes:
+OriLink runs as a systemd service named **`kevin-orilink.service`** (user `kevin`, port 3210).
+
+### Preferred (web CLI)
 
 ```bash
-cd /home/orka/Documents/projects/orilink/server
-npm run dev
+web start kevin-orilink
+web restart orilink
+web status kevin-orilink
+web logs orilink
 ```
 
-- `npm run dev` — Auto-restart on changes (development)
-- `npm start` — Start normally (production)
+### Alternative (systemctl)
+
+```bash
+sudo systemctl start kevin-orilink
+sudo systemctl restart kevin-orilink
+sudo systemctl status kevin-orilink
+```
+
+### View logs
+
+```bash
+journalctl -u kevin-orilink -f
+```
+
+Service unit: `/etc/systemd/system/kevin-orilink.service`
+
+### Reload Nginx
+
+After editing nginx config (`/home/kevin/nginx/kevin.conf`):
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ---
 
-## 4. Access the Database (MySQL)
-
-```bash
-sudo mysql -u root -p
-```
-
-Password: `0IsIs//`
-
----
-
-## 5. Manage Users
+## 3. Manage Users
 
 Run from the `server/` directory:
 
@@ -79,13 +89,13 @@ node manage-users.js <command> [arguments]
 
 ---
 
-## 6. Admin Panel (Hidden)
+## 4. Admin Panel (Hidden)
 
 A hidden admin panel is built into the login page for managing users.
 
-**Shortcut:** Press `Ctrl + Shift + A` on the login page (`http://localhost:3000/login.html`) to open it.
+**Shortcut:** Press `Ctrl + Shift + A` on the login page to open it.
 
-**Admin password:** `0IsIs//` (same as MySQL)
+**Admin password:** `0IsIs//`
 
 **Features:**
 - View all registered users in a table
@@ -95,7 +105,7 @@ A hidden admin panel is built into the login page for managing users.
 
 ---
 
-## 7. Transfer Database to Another Computer
+## 5. Transfer Database to Another Computer
 
 Use MySQL dump to export and import the database.
 

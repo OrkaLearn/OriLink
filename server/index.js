@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto');
 const http = require('http');
 const os = require('os');
 const { Server } = require('socket.io');
@@ -10,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const accountRoutes = require('./routes/account');
 const invitationRoutes = require('./routes/invitations');
 const adminRoutes = require('./routes/admin');
+const captchaStore = require('./captcha-store');
 
 const app = express();
 const server = http.createServer(app);
@@ -22,8 +22,6 @@ const io = new Server(server, {
 
 const PORT = 3210;
 
-const ALTCHA_HMAC_KEY = '0IsIs//0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-
 app.use(cors());
 app.use(express.json());
 
@@ -33,39 +31,25 @@ const { router: invitationRouter, setSocketIO, cleanupExpiredInvitations } = inv
 app.use('/api', invitationRouter);
 app.use('/api/admin', adminRoutes);
 
-// Serve static files from /public only, not the repo root
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/api/altcha/challenge', async (req, res) => {
-  const { createChallenge } = require('altcha-lib');
-  const challenge = await createChallenge({ hmacKey: ALTCHA_HMAC_KEY });
-  res.json(challenge);
-});
-
-app.post('/api/altcha/verify', async (req, res) => {
-  const { verifySolution } = require('altcha-lib');
-  const payload = req.body.payload || req.body.altcha;
-  if (!payload) {
-    return res.status(400).json({ error: 'ALTCHA payload required' });
-  }
-  try {
-    const verified = await verifySolution(payload, ALTCHA_HMAC_KEY);
-    if (verified) {
-      res.json({ verified: true, payload });
-    } else {
-      res.status(400).json({ verified: false, error: 'Verification failed' });
-    }
-  } catch (err) {
-    console.error('ALTCHA verify error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
+app.get('/api/captcha', (req, res) => {
+  const svgCaptcha = require('svg-captcha');
+  const captcha = svgCaptcha.create({
+    size: 4,
+    ignoreChars: '0oO1iIlL',
+    noise: 3,
+    color: true,
+    background: 'rgba(255,255,255,0.15)',
+    fontPath: undefined,
+  });
+  const token = captchaStore.create(captcha.text);
+  res.json({ svg: captcha.data, token });
 });
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
-
-app.locals.altchaHmacKey = ALTCHA_HMAC_KEY;
 
 setSocketIO(io);
 
@@ -165,7 +149,6 @@ async function startServer() {
       console.log(`Server running at http://${localIp}:${PORT}`);
       console.log(`Login page: http://localhost:${PORT}/login.html`);
       console.log(`Login page: http://${localIp}:${PORT}/login.html`);
-      console.log(`ALTCHA HMAC key: ${ALTCHA_HMAC_KEY.substring(0, 8)}...`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OriLink - 登录</title>
+  <title>OriLink 元联 - 登录</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js" type="module"></script>
   <style>
     body { font-family: 'InstrumentSans', 'Noto Sans SC', sans-serif; }
     input[type="checkbox"] { width: 18px; height: 18px; }
@@ -81,7 +80,21 @@
         </div>
       </div>
 
-      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" verifyurl="/api/altcha/verify" class="block"></altcha-widget>
+      <div class="captcha-container">
+        <div id="loginCaptchaSvg" class="captcha-box flex items-center justify-center rounded-xl p-3 cursor-pointer" title="点击刷新验证码" onclick="loadCaptcha('login')">
+          <span class="text-white/50 text-sm">加载中...</span>
+        </div>
+        <input type="hidden" name="captchaToken" id="loginCaptchaToken">
+        <div class="flex gap-2 mt-2">
+          <input type="text" name="captchaInput" id="loginCaptchaInput" placeholder="请输入上方验证码" maxlength="4" autocomplete="off" class="input-field flex-1 px-3 py-2 rounded-lg text-sm" required>
+          <button type="button" id="refreshLoginCaptchaBtn" class="refresh-btn text-white rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-1">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <button 
         type="submit" 
@@ -193,7 +206,21 @@
         </div>
       </div>
 
-      <altcha-widget name="altcha" challengeurl="/api/altcha/challenge" verifyurl="/api/altcha/verify" class="block"></altcha-widget>
+      <div class="captcha-container">
+        <div id="signupCaptchaSvg" class="captcha-box flex items-center justify-center rounded-xl p-3 cursor-pointer" title="点击刷新验证码" onclick="loadCaptcha('signup')">
+          <span class="text-white/50 text-sm">加载中...</span>
+        </div>
+        <input type="hidden" name="captchaToken" id="signupCaptchaToken">
+        <div class="flex gap-2 mt-2">
+          <input type="text" name="captchaInput" id="signupCaptchaInput" placeholder="请输入上方验证码" maxlength="4" autocomplete="off" class="input-field flex-1 px-3 py-2 rounded-lg text-sm" required>
+          <button type="button" id="refreshSignupCaptchaBtn" class="refresh-btn text-white rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-1">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <div class="mt-4">
         <label class="flex items-start gap-2 cursor-pointer">
@@ -355,14 +382,21 @@
       loginMessage.textContent = '';
     }
 
+    function initCaptchas() {
+      loadCaptcha('login');
+      loadCaptcha('signup');
+    }
+
     showSignup.addEventListener('click', (e) => {
       e.preventDefault();
       showSignupPanel();
+      loadCaptcha('signup');
     });
 
     showLogin.addEventListener('click', (e) => {
       e.preventDefault();
       showLoginPanel();
+      loadCaptcha('login');
     });
 
     document.getElementById('toggleLoginPassword').addEventListener('click', function() {
@@ -395,11 +429,33 @@
       }
     });
 
-    function getAltchaSolution(form) {
-      const hiddenInput = form.querySelector('input[name="altcha"]');
-      const value = hiddenInput?.value || null;
-      console.log('Altcha solution from hidden input:', value ? value.substring(0, 30) + '...' : null);
-      return value;
+    async function loadCaptcha(form) {
+      const svgEl = document.getElementById(form + 'CaptchaSvg');
+      const tokenEl = document.getElementById(form + 'CaptchaToken');
+      const inputEl = document.getElementById(form + 'CaptchaInput');
+      if (!svgEl || !tokenEl) return;
+      svgEl.innerHTML = '<span class="text-white/50 text-sm">加载中...</span>';
+      if (inputEl) inputEl.value = '';
+      try {
+        const res = await fetch('/api/captcha');
+        const data = await res.json();
+        tokenEl.value = data.token;
+        svgEl.innerHTML = data.svg;
+        svgEl.querySelector('svg').style.width = '100%';
+        svgEl.querySelector('svg').style.height = 'auto';
+        svgEl.querySelector('svg').style.display = 'block';
+      } catch (err) {
+        svgEl.innerHTML = '<span class="text-red-400 text-sm">加载失败，点击重试</span>';
+      }
+    }
+
+    function getCaptchaValue(form) {
+      const tokenEl = document.getElementById(form + 'CaptchaToken');
+      const inputEl = document.getElementById(form + 'CaptchaInput');
+      return {
+        captchaToken: tokenEl?.value || '',
+        captchaInput: inputEl?.value || ''
+      };
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -411,8 +467,8 @@
       const username = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
       
-      let altcha = getAltchaSolution(loginForm);
-      console.log('Login - Altcha value:', altcha);
+      const captcha = getCaptchaValue('login');
+      console.log('Login - CAPTCHA token:', !!captcha.captchaToken);
 
       loginBtn.disabled = true;
       loginBtn.textContent = '登录中...';
@@ -421,7 +477,7 @@
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, altcha })
+          body: JSON.stringify({ username, password, ...captcha })
         });
         const data = await res.json();
         
@@ -456,8 +512,8 @@
       const grade = document.getElementById('grade').value;
       const classNum = document.getElementById('classNum').value;
       
-      let altcha = getAltchaSolution(signupForm);
-      console.log('Signup - Altcha value:', altcha);
+      const captcha = getCaptchaValue('signup');
+      console.log('Signup - CAPTCHA token:', !!captcha.captchaToken);
 
       signupBtn.disabled = true;
       signupBtn.textContent = '创建账号中...';
@@ -466,7 +522,7 @@
         const res = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, altcha })
+          body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, ...captcha })
         });
         const data = await res.json();
         
@@ -541,14 +597,10 @@ Note: By clicking "Sign Up," you acknowledge that you have read and agreed to th
       }
     });
 
-    signupForm.addEventListener('submit', function(e) {
-      const agreeTerms = document.getElementById('agreeTerms');
-      if (!agreeTerms.checked) {
-        e.preventDefault();
-        loginMessage.textContent = '请先同意条款和条件';
-        loginMessage.className = 'text-center mt-4 text-sm text-red-400';
-      }
-    });
+    document.getElementById('refreshLoginCaptchaBtn').addEventListener('click', () => loadCaptcha('login'));
+    document.getElementById('refreshSignupCaptchaBtn').addEventListener('click', () => loadCaptcha('signup'));
+
+    initCaptchas();
 
     // ============================================================
     // Admin Panel
