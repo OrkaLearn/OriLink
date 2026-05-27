@@ -47,6 +47,11 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+.nav-item {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .input-field {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
