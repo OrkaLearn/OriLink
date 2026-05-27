@@ -74,7 +74,7 @@ async function loadCaptcha(form) {
   const tokenEl = document.getElementById(form + 'CaptchaToken');
   const inputEl = document.getElementById(form + 'CaptchaInput');
   if (!svgEl || !tokenEl) return;
-  svgEl.innerHTML = '<span class="text-white/50 text-sm">加载中...</span>';
+  svgEl.innerHTML = '<span class="text-white/50 text-sm">Loading... 加载中...</span>';
   if (inputEl) inputEl.value = '';
   try {
     const res = await fetch('/api/captcha');
@@ -259,15 +259,16 @@ const adminAddUserMsg = document.getElementById('adminAddUserMsg');
 
 function openAdminPanel() {
   adminPanel.classList.remove('hidden');
-  if (localStorage.getItem('adminToken')) {
-    showAdminDashboard();
-  } else {
-    showAdminLogin();
-  }
+  adminLogout();
 }
 
 function closeAdminPanel() {
   adminPanel.classList.add('hidden');
+}
+
+function adminLogout() {
+  localStorage.removeItem('adminToken');
+  showAdminLogin();
 }
 
 function showAdminLogin() {
@@ -285,6 +286,7 @@ function showAdminDashboard() {
 
 document.getElementById('closeAdminPanel').addEventListener('click', closeAdminPanel);
 document.getElementById('adminBackdrop').addEventListener('click', closeAdminPanel);
+document.getElementById('adminLogoutBtn').addEventListener('click', adminLogout);
 
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.shiftKey && e.key === 'A') {
@@ -323,7 +325,7 @@ async function adminApi(endpoint, options = {}) {
     }
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '请求失败');
+  if (!res.ok) throw new Error(data.error || 'Request failed 请求失败');
   return data;
 }
 
@@ -354,7 +356,7 @@ document.getElementById('adminRefreshUsers').addEventListener('click', loadAdmin
 async function loadAdminUsers() {
   adminUserListError.classList.add('hidden');
   adminNoUsers.classList.add('hidden');
-  adminUserList.innerHTML = '<tr><td colspan="7" class="text-center text-white/50 py-6">加载中...</td></tr>';
+  adminUserList.innerHTML = '<tr><td colspan="7" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
   try {
     const users = await adminApi('/users');
     adminUserList.innerHTML = '';
@@ -379,8 +381,8 @@ async function loadAdminUsers() {
         </td>
         <td class="px-3 py-2 text-white/50 text-xs hidden lg:table-cell">${created}</td>
         <td class="px-3 py-2 text-right">
-          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}">编辑</button>
-          <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">删除</button>
+          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}">Edit 编辑</button>
+          <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete 删除</button>
         </td>
       `;
       adminUserList.appendChild(tr);
@@ -410,7 +412,7 @@ function bindUserRowActions() {
         await adminApi(`/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
         loadAdminUsers();
       } catch (err) {
-        alert('Delete failed: ' + err.message || '删除失败');
+        alert('Delete failed: ' + err.message || 'Delete failed 删除失败');
         btn.disabled = false;
         btn.textContent = '删除 Delete';
       }

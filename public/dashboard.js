@@ -73,18 +73,23 @@ function createInvitationCard(invitation, isOwn = false, showChat = false) {
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
   
   const descriptionHtml = truncated 
-    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/50 hover:text-white">查看更多</span></p>`
+    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/50 hover:text-white">View More 查看更多</span></p>`
     : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
   
   let metaInfo = '';
   if (invitation.max_participants || invitation.event_start || invitation.event_end) {
     metaInfo += '<div class="mt-2 flex flex-wrap gap-2">';
     if (invitation.max_participants) {
-      metaInfo += `<span class="text-white/60 text-xs">👤 ${invitation.joined_count || 0}/${invitation.max_participants}</span>`;
+      const joinedCount = (invitation.joined_count || 0) + 1;
+      const isFull = joinedCount >= invitation.max_participants;
+      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</span>`;
     }
-    if (invitation.event_start) {
+    if (invitation.event_start && invitation.event_end) {
       const startDate = new Date(invitation.event_start);
-      metaInfo += `<span class="text-white/60 text-xs">📅 ${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+      const endDate = new Date(invitation.event_end);
+      const startStr = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      const endStr = `${endDate.toLocaleDateString()} ${endDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      metaInfo += `<span class="text-white/60 text-xs">📅 Start 开始: ${startStr} - End 结束: ${endStr}</span>`;
     }
     metaInfo += '</div>';
   }
@@ -99,7 +104,11 @@ function createInvitationCard(invitation, isOwn = false, showChat = false) {
   } else if (showChat) {
     actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">Chat 聊天</button>`;
   } else {
-    actionButtons = `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>`;
+    const joinedCount = (invitation.joined_count || 0) + 1;
+    const isFull = joinedCount >= invitation.max_participants;
+    actionButtons = isFull
+      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/50 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>`
+      : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>`;
   }
 
   return `
@@ -111,7 +120,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false) {
           <div class="mt-2">${typeBadge}</div>
           ${metaInfo}
         </div>
-        <p class="text-white text-xs whitespace-nowrap">@${invitation.username || '未知'}</p>
+        <p class="text-white text-xs whitespace-nowrap">@${invitation.username || 'Unknown 未知'}</p>
       </div>
       ${actionButtons}
     </div>
@@ -230,6 +239,9 @@ function handleDelete(e, pageContext) {
 function handleJoin(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
+  
+  if (btn.disabled) return;
+  
   btn.disabled = true;
   btn.textContent = 'Joining... 加入中...';
 
@@ -255,7 +267,7 @@ function handleJoin(e) {
       }, 1000);
     })
     .catch(err => {
-      btn.textContent = '加入 Join';
+      btn.textContent = 'Join 加入';
       btn.disabled = false;
     });
 }
@@ -304,7 +316,7 @@ function loadChatMessages(invitationId) {
         return `
           <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
             <div class="inline-block max-w-[80%]">
-              <p class="text-white/50 text-xs">${isOwn ? '你' : '@' + msg.username} · ${time}</p>
+              <p class="text-white/50 text-xs">${isOwn ? 'You 你' : '@' + msg.username} · ${time}</p>
               <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${msg.content}</p>
             </div>
           </div>
@@ -330,7 +342,7 @@ function appendMessageToChat(data) {
   const html = `
     <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
       <div class="inline-block max-w-[80%]">
-        <p class="text-white/50 text-xs">${isOwn ? '你' : '@' + data.username} · ${time}</p>
+        <p class="text-white/50 text-xs">${isOwn ? 'You 你' : '@' + data.username} · ${time}</p>
         <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${data.content}</p>
       </div>
     </div>
@@ -364,18 +376,9 @@ function sendChatMessage() {
   })
     .then(res => {
       if (!res.ok) {
-        return res.json().then(err => { throw new Error(err.error || '发送消息失败'); });
+        return res.json().then(err => { throw new Error(err.error || 'Failed to send message 发送消息失败'); });
       }
       return res.json();
-    })
-    .then(() => {
-      appendMessageToChat({
-        invitationId: currentChatInvitationId,
-        userId: currentUserId,
-        username: currentUsername,
-        content: content,
-        created_at: new Date().toISOString()
-      });
     })
     .catch(err => {
       console.error('Error sending message:', err || '发送消息出错');
@@ -402,11 +405,11 @@ function renderJoinedPage() {
     <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20">
       <form id="invitationForm" class="space-y-3">
         <div>
-          <label class="block text-white/80 text-xs mb-1">标题（最多 15 个字）</label>
+          <label class="block text-white/80 text-xs mb-1">Title (max 15 words) 标题（最多 15 个字）</label>
           <input type="text" id="invTitle" required
             class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
-            placeholder="例如：需要网球搭档">
-          <p class="text-white/40 text-xs text-right mt-1"><span id="titleCount">0</span>/15 字</p>
+            placeholder="e.g., Need tennis partner 例如：需要网球搭档">
+          <p class="text-white/40 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words 字</p>
         </div>
         <div>
           <label class="block text-white/80 text-xs mb-1">Description (max ${MAX_DESCRIPTION_LENGTH} chars) 描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
@@ -427,24 +430,24 @@ function renderJoinedPage() {
           <label class="block text-white/80 text-xs mb-1">Participants (incl. yourself) 所需人数（含自己）</label>
           <select id="invMaxParticipants"
             class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} 人</option>`).join('')}
+            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
           </select>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event Start Time 活动开始时间</label>
-            <input type="datetime-local" id="invEventStart"
+            <label class="block text-white/80 text-xs mb-1">Event Start Time (Required) 活动开始时间（必填）</label>
+            <input type="datetime-local" id="invEventStart" required
               class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event End Time 活动结束时间</label>
-            <input type="datetime-local" id="invEventEnd"
+            <label class="block text-white/80 text-xs mb-1">Event End Time (Required) 活动结束时间（必填）</label>
+            <input type="datetime-local" id="invEventEnd" required
               class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
           </div>
         </div>
         <button type="submit" id="postBtn"
           class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-  发布邀请 Post Invitation
+          Post Invitation 发布邀请
         </button>
         <p id="postMessage" class="text-center text-xs mt-2"></p>
       </form>
@@ -486,7 +489,7 @@ function loadMyInvitations() {
         container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: '你' }, true, true)).join('');
+      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true)).join('');
       
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => handleDelete(e, 'joined'));
@@ -515,7 +518,7 @@ function loadJoinedInvitations() {
       const container = document.getElementById('joinedInvitationsList');
       if (!container) return;
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">你还没有参与任何邀请。</p>';
+        container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t joined any invitations yet. 你还没有参与任何邀请。</p>';
         return;
       }
       container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true)).join('');
@@ -547,8 +550,8 @@ function handlePostInvitation(e) {
   const description = document.getElementById('invDescription').value.trim();
   const type = document.getElementById('invType').value;
   const max_participants = parseInt(document.getElementById('invMaxParticipants').value);
-  const event_start = document.getElementById('invEventStart').value || null;
-  const event_end = document.getElementById('invEventEnd').value || null;
+  const event_start = document.getElementById('invEventStart').value;
+  const event_end = document.getElementById('invEventEnd').value;
 
   if (!title || !description || !type) {
     messageEl.textContent = 'Please fill in all required fields 请填写所有必填字段';
@@ -556,8 +559,29 @@ function handlePostInvitation(e) {
     return;
   }
 
+  if (!event_start || !event_end) {
+    messageEl.textContent = 'Event start and end times are required 活动开始和结束时间为必填项';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
+  const startDate = new Date(event_start);
+  const endDate = new Date(event_end);
+
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    messageEl.textContent = 'Invalid date format 日期格式无效';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
+  if (endDate <= startDate) {
+    messageEl.textContent = 'Event end time must be after start time 活动结束时间必须在开始时间之后';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
   if (countWords(title) > 15) {
-    messageEl.textContent = '标题不能超过 15 个字';
+    messageEl.textContent = 'Title cannot exceed 15 words 标题不能超过 15 个字';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
   }
@@ -592,7 +616,7 @@ function handlePostInvitation(e) {
     })
     .finally(() => {
       postBtn.disabled = false;
-      postBtn.textContent = '发布邀请 Post Invitation';
+      postBtn.textContent = 'Post Invitation 发布邀请';
     });
 }
 
@@ -602,7 +626,7 @@ function showInviteModal(inv) {
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
   
   modalBody.innerHTML = `
-    <p class="text-white/50 text-xs">@${inv.username || '未知'}</p>
+    <p class="text-white/50 text-xs">@${inv.username || 'Unknown 未知'}</p>
     <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
     <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
@@ -636,25 +660,25 @@ function renderAccountPage() {
             <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
             <div>
               <label class="block text-white/30 text-xs mb-1">Full Name 姓名</label>
-              <input type="text" value="${user.full_name || '无'}" disabled
+              <input type="text" value="${user.full_name || 'N/A 无'}" disabled
                 class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-white/30 text-xs mb-1">Grade 年级</label>
-                <input type="text" value="${user.grade || '无'}" disabled
+                <input type="text" value="${user.grade || 'N/A 无'}" disabled
                   class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
               </div>
               <div>
                 <label class="block text-white/30 text-xs mb-1">Class 班级</label>
-                <input type="text" value="${user.class || '无'}" disabled
+                <input type="text" value="${user.class || 'N/A 无'}" disabled
                   class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
               </div>
             </div>
             <p class="text-white/40 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">用户名（最多${MAX_CHARS}字）</label>
+            <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
             <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}"
               class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
           </div>
@@ -717,7 +741,7 @@ async function handleAccountSubmit(e) {
   }
 
   if (password && !passwordRegex.test(password)) {
-    messageEl.textContent = '密码至少 5 个字符，只能包含字母、数字和常用符号';
+    messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 密码至少 5 个字符，只能包含字母、数字和常用符号';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
   }
@@ -734,7 +758,7 @@ async function handleAccountSubmit(e) {
     const data = await res.json();
     
     if (!res.ok) {
-      throw new Error(data.error || '更新失败');
+      throw new Error(data.error || 'Update failed 更新失败');
     }
     
     messageEl.textContent = 'Account updated successfully! 账号更新成功！';
