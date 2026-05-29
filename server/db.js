@@ -42,6 +42,14 @@ async function initDatabase() {
     await connection.query('ALTER TABLE users ADD COLUMN full_name VARCHAR(100) NOT NULL DEFAULT ""');
   }
 
+  if (!colNames.includes('email_verified')) {
+    await connection.query('ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE');
+  }
+
+  if (!colNames.includes('email')) {
+    await connection.query('ALTER TABLE users ADD COLUMN email VARCHAR(255) NOT NULL DEFAULT ""');
+  }
+
   await connection.query(`
     CREATE TABLE IF NOT EXISTS invitations (
       id INT AUTO_INCREMENT PRIMARY KEY,

@@ -89,6 +89,11 @@ router.post('/invitations', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    const [users] = await pool.query('SELECT email_verified FROM users WHERE id = ?', [currentUserId]);
+    if (users.length === 0 || !users[0].email_verified) {
+      return res.status(403).json({ error: 'Please verify your email before posting invitations 请先验证您的邮箱再发布邀请' });
+    }
+
     const { title, description, type, max_participants, event_start, event_end } = req.body;
 
     if (!title || !description || !type) {
@@ -152,6 +157,11 @@ router.post('/invitations/:id/join', async (req, res) => {
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const [users] = await pool.query('SELECT email_verified FROM users WHERE id = ?', [currentUserId]);
+    if (users.length === 0 || !users[0].email_verified) {
+      return res.status(403).json({ error: 'Please verify your email before joining invitations 请先验证您的邮箱再加入邀请' });
     }
 
     const invitationId = req.params.id;
