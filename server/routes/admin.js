@@ -157,6 +157,23 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+router.get('/invitations', authenticateAdmin, async (req, res) => {
+  try {
+    const [invitations] = await pool.query(
+      `SELECT i.id, i.title, i.description, i.type, i.max_participants,
+              i.event_start, i.event_end, i.created_at,
+              u.username
+       FROM invitations i
+       JOIN users u ON i.user_id = u.id
+       ORDER BY i.created_at DESC`
+    );
+    res.json(invitations);
+  } catch (error) {
+    console.error('Get invitations error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.delete('/users/:username', authenticateAdmin, async (req, res) => {
   try {
     const { username } = req.params;

@@ -276,11 +276,15 @@ function showAdminLogin() {
   adminDashboard.classList.add('hidden');
   adminPasswordInput.value = '';
   adminLoginError.classList.add('hidden');
+  document.getElementById('adminProfanityCheckBtn').classList.add('hidden');
+  document.getElementById('adminLogoutBtn').classList.add('hidden');
 }
 
 function showAdminDashboard() {
   adminLoginForm.classList.add('hidden');
   adminDashboard.classList.remove('hidden');
+  document.getElementById('adminProfanityCheckBtn').classList.remove('hidden');
+  document.getElementById('adminLogoutBtn').classList.remove('hidden');
   loadAdminUsers();
 }
 
@@ -527,5 +531,114 @@ adminAddUserForm.addEventListener('submit', async (e) => {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add User 添加用户';
+  }
+});
+
+const PROFANITY_LIST = [
+  'fuck', 'shit', 'bitch', 'ass', 'damn', 'dick', 'pussy', 'bastard', 'crap', 'hell',
+  '操', '他妈的', '傻逼', '草泥马', '日', '贱', '滚', '死', '废物', '脑残'
+];
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightProfanity(text) {
+  let result = escapeHtml(text);
+  let found = [];
+  PROFANITY_LIST.forEach(word => {
+    const regex = new RegExp(escapeRegExp(word), 'gi');
+    if (regex.test(result)) {
+      found.push(word);
+      result = result.replace(regex, match => `<span class="text-red-400 font-bold bg-red-500/20 px-1 rounded">${match}</span>`);
+    }
+  });
+  return { html: result, flagged: found };
+}
+
+async function scanInvitations() {
+  const results = document.getElementById('profanityResults');
+  const summary = document.getElementById('profanitySummary');
+  const scanBtn = document.getElementById('scanInvitationsBtn');
+
+  scanBtn.disabled = true;
+  scanBtn.textContent = 'Scanning... 扫描中...';
+  results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">Loading invitations... 加载邀请中...</p>';
+  summary.classList.add('hidden');
+
+  try {
+    const invitations = await adminApi('/invitations');
+
+    if (invitations.length === 0) {
+      results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No invitations found. 暂无邀请。</p>';
+      return;
+    }
+
+    let flaggedCount = 0;
+    let cleanCount = 0;
+    let html = '';
+
+    invitations.forEach(inv => {
+      const titleCheck = highlightProfanity(inv.title);
+      const descCheck = highlightProfanity(inv.description);
+      const isFlagged = titleCheck.flagged.length > 0 || descCheck.flagged.length > 0;
+
+      if (isFlagged) {
+        flaggedCount++;
+        html += `
+          <div class="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/30 text-red-300">⚠️ Flagged 标记</span>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
+            <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+            <p class="text-red-400/70 text-xs mt-2">Flagged words: ${[...new Set([...titleCheck.flagged, ...descCheck.flagged])].join(', ')}</p>
+          </div>
+        `;
+      } else {
+        cleanCount++;
+        html += `
+          <div class="mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">✓ Clean 正常</span>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
+            <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+          </div>
+        `;
+      }
+    });
+
+    results.innerHTML = html;
+    summary.textContent = `Total 总计: ${invitations.length} | Flagged 标记: ${flaggedCount} | Clean 正常: ${cleanCount}`;
+    summary.classList.remove('hidden');
+
+  } catch (err) {
+    results.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${err.message}</p>`;
+  } finally {
+    scanBtn.disabled = false;
+    scanBtn.textContent = 'Scan Invitations 扫描邀请';
+  }
+}
+
+document.getElementById('adminProfanityCheckBtn').addEventListener('click', () => {
+  document.getElementById('profanityPanel').classList.remove('hidden');
+});
+
+document.getElementById('closeProfanityPanel').addEventListener('click', () => {
+  document.getElementById('profanityPanel').classList.add('hidden');
+});
+
+document.getElementById('profanityBackdrop').addEventListener('click', () => {
+  document.getElementById('profanityPanel').classList.add('hidden');
+});
+
+document.getElementById('scanInvitationsBtn').addEventListener('click', scanInvitations);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !document.getElementById('profanityPanel').classList.contains('hidden')) {
+    document.getElementById('profanityPanel').classList.add('hidden');
   }
 });
