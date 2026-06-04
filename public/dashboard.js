@@ -418,7 +418,16 @@ function renderJoinedPage() {
     <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
       Post Invitation 发布邀请
     </button>
-    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20">
+    <div id="emailVerifyMessage" class="hidden mb-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+      <p class="text-yellow-300 text-sm mb-3">Please verify your email to post invitations. 请验证邮箱以发布邀请。</p>
+      <button id="goVerifyEmail" class="w-full py-2 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-sm font-medium transition-all">
+        Verify Email 验证邮箱
+      </button>
+    </div>
+    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20 relative">
+      <button id="closePostForm" class="absolute top-3 right-3 text-white/60 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
       <form id="invitationForm" class="space-y-3">
         <div>
           <label class="block text-white/80 text-xs mb-1">Title (max 15 words) 标题（最多 15 个字）</label>
@@ -478,9 +487,32 @@ function renderJoinedPage() {
     </div>
   `;
 
-  document.getElementById('showPostForm').addEventListener('click', () => {
-    document.getElementById('postForm').classList.remove('hidden');
-    document.getElementById('showPostForm').classList.add('hidden');
+  document.getElementById('showPostForm').addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/account', { headers: getAuthHeader() });
+      const user = await res.json();
+      if (!user.email_verified) {
+        document.getElementById('emailVerifyMessage').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('postForm').classList.remove('hidden');
+      document.getElementById('showPostForm').classList.add('hidden');
+    } catch (err) {
+      console.error('Error checking email verification:', err);
+    }
+  });
+
+  document.getElementById('closePostForm').addEventListener('click', () => {
+    document.getElementById('postForm').classList.add('hidden');
+    document.getElementById('showPostForm').classList.remove('hidden');
+  });
+
+  document.getElementById('goVerifyEmail').addEventListener('click', () => {
+    document.getElementById('emailVerifyMessage').classList.add('hidden');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-page="account"]').classList.add('active');
+    document.getElementById('page-title').innerHTML = pages.account.title;
+    renderAccountPage();
   });
 
   document.getElementById('invTitle').addEventListener('input', function() {
