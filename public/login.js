@@ -638,6 +638,7 @@ function bindWarnDeleteButtons() {
           body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation 不当内容' })
         });
         scanInvitations();
+        loadAdminUsers();
       } catch (err) {
         alert('Failed: ' + err.message);
         btn.disabled = false;

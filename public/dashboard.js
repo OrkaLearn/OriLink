@@ -765,6 +765,11 @@ function renderAccountPage() {
                   class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
               </div>
             </div>
+            <div>
+              <label class="block text-white/30 text-xs mb-1">Warning Count 警告次数</label>
+              <input type="text" value="${user.warning_count || 0}" disabled
+                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
+            </div>
             <p class="text-white/40 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
           </div>
           <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
