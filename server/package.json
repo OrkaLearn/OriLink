@@ -12,9 +12,11 @@
     "altcha": "^2.3.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.5",
+    "resend": "^4.0.0",
     "socket.io": "^4.8.3",
     "svg-captcha": "^1.4.0"
   },

@@ -37,7 +37,7 @@ function authenticateToken(req, res, next) {
 router.get('/account', authenticateToken, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, grade, class, personality_type, created_at FROM users WHERE id = ?',
+      'SELECT id, username, full_name, grade, class, personality_type, email, email_verified, warning_count, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     

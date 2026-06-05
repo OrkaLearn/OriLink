@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
 router.get('/users', authenticateAdmin, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, grade, class, personality_type, created_at FROM users ORDER BY id'
+      'SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users ORDER BY id'
     );
     res.json(users);
   } catch (error) {
@@ -88,7 +88,7 @@ router.post('/users', authenticateAdmin, async (req, res) => {
       [username, hashedPassword, '', gradeNum, classNumInt]
     );
 
-    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, created_at FROM users WHERE username = ?', [username]);
+    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users WHERE username = ?', [username]);
 
     res.json({ message: 'User created successfully', user: newUser[0] });
   } catch (error) {
@@ -140,6 +140,11 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
       params.push(classNumInt);
     }
 
+    if (req.body.email_verified !== undefined) {
+      updates.push('email_verified = ?');
+      params.push(req.body.email_verified ? 1 : 0);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
@@ -148,11 +153,28 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
 
-    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, created_at FROM users WHERE id = ?', [id]);
+    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users WHERE id = ?', [id]);
 
     res.json({ message: 'User updated successfully', user: updatedUser[0] });
   } catch (error) {
     console.error('Update user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/invitations', authenticateAdmin, async (req, res) => {
+  try {
+    const [invitations] = await pool.query(
+      `SELECT i.id, i.title, i.description, i.type, i.max_participants,
+              i.event_start, i.event_end, i.created_at, i.user_id,
+              u.username
+       FROM invitations i
+       JOIN users u ON i.user_id = u.id
+       ORDER BY i.created_at DESC`
+    );
+    res.json(invitations);
+  } catch (error) {
+    console.error('Get invitations error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -170,6 +192,47 @@ router.delete('/users/:username', authenticateAdmin, async (req, res) => {
     res.json({ message: `User '${username}' deleted successfully` });
   } catch (error) {
     console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/warn-and-delete', authenticateAdmin, async (req, res) => {
+  try {
+    const { userId, invitationId, reason } = req.body;
+
+    const [inv] = await pool.query('SELECT id, title, user_id FROM invitations WHERE id = ?', [invitationId]);
+    if (inv.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    const title = inv[0].title;
+    const actualUserId = inv[0].user_id;
+
+    await pool.query('UPDATE users SET warning_count = warning_count + 1 WHERE id = ?', [actualUserId]);
+
+    await pool.query(
+      'INSERT INTO warnings (user_id, invitation_id, invitation_title, reason) VALUES (?, ?, ?, ?)',
+      [actualUserId, invitationId, title, reason || 'Profanity violation']
+    );
+
+    await pool.query('DELETE FROM invitations WHERE id = ?', [invitationId]);
+
+    res.json({ message: 'Warning issued and invitation deleted' });
+  } catch (error) {
+    console.error('Warn and delete error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/warnings/:userId', authenticateAdmin, async (req, res) => {
+  try {
+    const [warnings] = await pool.query(
+      'SELECT id, invitation_id, invitation_title, reason, created_at FROM warnings WHERE user_id = ? ORDER BY created_at DESC',
+      [req.params.userId]
+    );
+    res.json(warnings);
+  } catch (error) {
+    console.error('Get warnings error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

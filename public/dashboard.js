@@ -241,21 +241,36 @@ function handleJoin(e) {
   const invitationId = btn.dataset.id;
   
   if (btn.disabled) return;
-  
-  btn.disabled = true;
-  btn.textContent = 'Joining... 加入中...';
 
-  fetch(`/api/invitations/${invitationId}/join`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
-  })
+  fetch('/api/account', { headers: getAuthHeader() })
     .then(res => res.json())
+    .then(user => {
+      if (!user.email_verified) {
+        showEmailVerifyModal();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Joining... 加入中...';
+
+      return fetch(`/api/invitations/${invitationId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+      });
+    })
+    .then(res => {
+      if (!res) return;
+      return res.json();
+    })
     .then(data => {
+      if (!data) return;
       if (data.error) {
+        const btn = e.target;
         btn.textContent = data.error;
         btn.classList.add('bg-red-500/80');
         return;
       }
+      const btn = e.target;
       btn.textContent = 'Joined! 已加入！';
       btn.classList.add('bg-green-500/80');
       
@@ -267,6 +282,7 @@ function handleJoin(e) {
       }, 1000);
     })
     .catch(err => {
+      const btn = e.target;
       btn.textContent = 'Join 加入';
       btn.disabled = false;
     });
@@ -402,7 +418,16 @@ function renderJoinedPage() {
     <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
       Post Invitation 发布邀请
     </button>
-    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20">
+    <div id="emailVerifyMessage" class="hidden mb-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+      <p class="text-yellow-300 text-sm mb-3">Please verify your email to post invitations. 请验证邮箱以发布邀请。</p>
+      <button id="goVerifyEmail" class="w-full py-2 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-sm font-medium transition-all">
+        Verify Email 验证邮箱
+      </button>
+    </div>
+    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20 relative">
+      <button id="closePostForm" class="absolute top-3 right-3 text-white/60 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
       <form id="invitationForm" class="space-y-3">
         <div>
           <label class="block text-white/80 text-xs mb-1">Title (max 15 words) 标题（最多 15 个字）</label>
@@ -462,9 +487,32 @@ function renderJoinedPage() {
     </div>
   `;
 
-  document.getElementById('showPostForm').addEventListener('click', () => {
-    document.getElementById('postForm').classList.remove('hidden');
-    document.getElementById('showPostForm').classList.add('hidden');
+  document.getElementById('showPostForm').addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/account', { headers: getAuthHeader() });
+      const user = await res.json();
+      if (!user.email_verified) {
+        document.getElementById('emailVerifyMessage').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('postForm').classList.remove('hidden');
+      document.getElementById('showPostForm').classList.add('hidden');
+    } catch (err) {
+      console.error('Error checking email verification:', err);
+    }
+  });
+
+  document.getElementById('closePostForm').addEventListener('click', () => {
+    document.getElementById('postForm').classList.add('hidden');
+    document.getElementById('showPostForm').classList.remove('hidden');
+  });
+
+  document.getElementById('goVerifyEmail').addEventListener('click', () => {
+    document.getElementById('emailVerifyMessage').classList.add('hidden');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-page="account"]').classList.add('active');
+    document.getElementById('page-title').innerHTML = pages.account.title;
+    renderAccountPage();
   });
 
   document.getElementById('invTitle').addEventListener('input', function() {
@@ -586,16 +634,29 @@ function handlePostInvitation(e) {
     return;
   }
 
-  postBtn.disabled = true;
-  postBtn.textContent = 'Posting... 发布中...';
-
-  fetch('/api/invitations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-    body: JSON.stringify({ title, description, type, max_participants, event_start, event_end })
-  })
+  fetch('/api/account', { headers: getAuthHeader() })
     .then(res => res.json())
+    .then(user => {
+      if (!user.email_verified) {
+        showEmailVerifyModal();
+        return;
+      }
+
+      postBtn.disabled = true;
+      postBtn.textContent = 'Posting... 发布中...';
+
+      return fetch('/api/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ title, description, type, max_participants, event_start, event_end })
+      });
+    })
+    .then(res => {
+      if (!res) return;
+      return res.json();
+    })
     .then(data => {
+      if (!data) return;
       messageEl.textContent = 'Invitation posted successfully! 邀请发布成功！';
       messageEl.className = 'text-center text-xs mt-2 text-green-400';
       document.getElementById('invitationForm').reset();
@@ -643,6 +704,31 @@ function hideInviteModal() {
   document.getElementById('inviteModal').classList.add('hidden');
 }
 
+function showEmailVerifyModal() {
+  document.getElementById('emailVerifyModal').classList.remove('hidden');
+}
+
+function hideEmailVerifyModal() {
+  document.getElementById('emailVerifyModal').classList.add('hidden');
+}
+
+function checkEmailVerified(callback) {
+  fetch('/api/account', { headers: getAuthHeader() })
+    .then(res => res.json())
+    .then(user => {
+      if (!user.email_verified) {
+        showEmailVerifyModal();
+        return false;
+      }
+      if (callback) callback();
+      return true;
+    })
+    .catch(err => {
+      console.error('Error checking email verification:', err);
+      return false;
+    });
+}
+
 function renderAccountPage() {
   fetch('/api/account', { headers: getAuthHeader() })
     .then(res => {
@@ -653,6 +739,10 @@ function renderAccountPage() {
       const mbtiOptions = MBTI_TYPES.map(t => 
         `<option value="${t}" ${user.personality_type === t ? 'selected' : ''}>${t}</option>`
       ).join('');
+
+      const emailVerifiedBadge = user.email_verified 
+        ? '<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Verified 已验证</span>'
+        : '<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">Not Verified 未验证</span>';
 
       document.getElementById('page-description').innerHTML = `
         <form id="accountForm" class="space-y-4">
@@ -675,7 +765,44 @@ function renderAccountPage() {
                   class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
               </div>
             </div>
+            <div>
+              <label class="block text-white/30 text-xs mb-1">Warning Count 警告次数</label>
+              <input type="text" value="${user.warning_count || 0}" disabled
+                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
+            </div>
             <p class="text-white/40 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
+            <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide flex items-center gap-2">Email Verification 邮箱验证 ${emailVerifiedBadge}</h3>
+            ${user.email_verified 
+              ? `<p class="text-green-400/70 text-sm">Your email has been verified. 您的邮箱已验证。</p>
+                 <div>
+                   <label class="block text-white/30 text-xs mb-1">Email Address 邮箱地址</label>
+                   <input type="email" value="${user.email || ''}" disabled
+                     class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                 </div>`
+              : `<div>
+                   <label class="block text-white/80 text-xs mb-1">Email Address 邮箱地址</label>
+                   <input type="email" id="emailInput" value="${user.email || ''}" placeholder="Enter email 输入邮箱"
+                     class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                 </div>
+                 <button type="button" id="sendCodeBtn"
+                   class="w-full py-2 rounded-lg bg-blue-500/40 hover:bg-blue-500/60 text-white text-sm font-medium transition-all">
+                   Send Verification Code 发送验证码
+                 </button>
+                 <div id="verifyCodeSection" class="hidden space-y-3">
+                   <div>
+                     <label class="block text-white/80 text-xs mb-1">Verification Code 验证码</label>
+                     <input type="text" id="verifyCodeInput" maxlength="6" placeholder="Enter 6-digit code 输入6位验证码"
+                       class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                   </div>
+                   <button type="button" id="verifyCodeBtn"
+                     class="w-full py-2 rounded-lg bg-green-500/40 hover:bg-green-500/60 text-white text-sm font-medium transition-all">
+                     Verify 验证
+                   </button>
+                 </div>
+                 <p id="emailMessage" class="text-center text-xs"></p>`
+            }
           </div>
           <div>
             <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
@@ -709,6 +836,10 @@ function renderAccountPage() {
     `;
 
       document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
+      const sendCodeBtn = document.getElementById('sendCodeBtn');
+      const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+      if (sendCodeBtn) sendCodeBtn.addEventListener('click', handleSendCode);
+      if (verifyCodeBtn) verifyCodeBtn.addEventListener('click', handleVerifyCode);
     })
     .catch(err => {
       document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
@@ -771,6 +902,88 @@ async function handleAccountSubmit(e) {
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = '保存更改 Save Changes';
+  }
+}
+
+async function handleSendCode() {
+  const emailInput = document.getElementById('emailInput');
+  const messageEl = document.getElementById('emailMessage');
+  const sendBtn = document.getElementById('sendCodeBtn');
+  const email = emailInput.value.trim();
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !EMAIL_REGEX.test(email)) {
+    messageEl.textContent = 'Please enter a valid email address 请输入有效的邮箱地址';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending... 发送中...';
+  messageEl.textContent = '';
+
+  try {
+    const res = await fetch('/api/email/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to send code 发送验证码失败');
+    }
+
+    messageEl.textContent = 'Verification code sent! Check your email. 验证码已发送！请检查邮箱';
+    messageEl.className = 'text-center text-xs mt-2 text-green-400';
+    document.getElementById('verifyCodeSection').classList.remove('hidden');
+  } catch (err) {
+    messageEl.textContent = err.message;
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send Verification Code 发送验证码';
+  }
+}
+
+async function handleVerifyCode() {
+  const codeInput = document.getElementById('verifyCodeInput');
+  const messageEl = document.getElementById('emailMessage');
+  const verifyBtn = document.getElementById('verifyCodeBtn');
+  const code = codeInput.value.trim();
+
+  if (!code || code.length !== 6) {
+    messageEl.textContent = 'Please enter a 6-digit verification code 请输入6位验证码';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
+  verifyBtn.disabled = true;
+  verifyBtn.textContent = 'Verifying... 验证中...';
+  messageEl.textContent = '';
+
+  try {
+    const res = await fetch('/api/email/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Verification failed 验证失败');
+    }
+
+    messageEl.textContent = 'Email verified successfully! 邮箱验证成功！';
+    messageEl.className = 'text-center text-xs mt-2 text-green-400';
+    document.getElementById('verifyCodeSection').classList.add('hidden');
+    setTimeout(() => renderAccountPage(), 1500);
+  } catch (err) {
+    messageEl.textContent = err.message;
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+  } finally {
+    verifyBtn.disabled = false;
+    verifyBtn.textContent = 'Verify 验证';
   }
 }
 
@@ -860,6 +1073,16 @@ document.getElementById('chatInput').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = this.scrollHeight + 'px';
 });
+
+document.getElementById('emailVerifyGoToAccountBtn').addEventListener('click', () => {
+  hideEmailVerifyModal();
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelector('[data-page="account"]').classList.add('active');
+  document.getElementById('page-title').innerHTML = pages.account.title;
+  renderAccountPage();
+});
+
+document.getElementById('emailVerifyBackdrop').addEventListener('click', hideEmailVerifyModal);
 
 getCurrentUser().then(user => {
   initSocket();
