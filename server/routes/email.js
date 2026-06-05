@@ -7,7 +7,14 @@ const { Resend } = require('resend');
 
 const JWT_SECRET = 'orilink-secret-key-change-in-production';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+let resendClient;
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  if (!resendClient) resendClient = new Resend(apiKey);
+  return resendClient;
+}
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -29,6 +36,11 @@ router.post('/email/send-code', authenticateToken, async (req, res) => {
     const { email } = req.body;
     if (!email || !EMAIL_REGEX.test(email)) {
       return res.status(400).json({ error: 'Valid email address is required 请输入有效的邮箱地址' });
+    }
+
+    const resend = getResend();
+    if (!resend) {
+      return res.status(503).json({ error: 'Email service not configured 邮件服务未配置' });
     }
 
     const code = emailStore.create(email);
