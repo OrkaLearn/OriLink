@@ -360,7 +360,7 @@ document.getElementById('adminRefreshUsers').addEventListener('click', loadAdmin
 async function loadAdminUsers() {
   adminUserListError.classList.add('hidden');
   adminNoUsers.classList.add('hidden');
-  adminUserList.innerHTML = '<tr><td colspan="7" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
+  adminUserList.innerHTML = '<tr><td colspan="9" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
   try {
     const users = await adminApi('/users');
     adminUserList.innerHTML = '';
@@ -384,8 +384,12 @@ async function loadAdminUsers() {
           <span class="editable-class" data-id="${user.id}" data-value="${escapeHtml(user.class)}">${escapeHtml(user.class)}</span>
         </td>
         <td class="px-3 py-2 text-white/50 text-xs hidden lg:table-cell">${created}</td>
+        <td class="px-3 py-2">
+          <span class="text-white/80">${user.warning_count || 0}</span>
+          <button class="view-profile-btn ml-1 text-xs text-blue-400 hover:text-blue-300" data-id="${user.id}">Profile 资料</button>
+        </td>
         <td class="px-3 py-2 text-right">
-          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}">Edit 编辑</button>
+          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-email-verified="${user.email_verified}">Edit 编辑</button>
           <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete 删除</button>
         </td>
       `;
@@ -429,12 +433,19 @@ function bindUserRowActions() {
       const tr = btn.closest('tr');
       const grade = tr.querySelector('.editable-grade').textContent.trim();
       const cls = tr.querySelector('.editable-class').textContent.trim();
-      openEditModal(id, grade, cls);
+      const emailVerified = btn.dataset.emailVerified;
+      openEditModal(id, grade, cls, emailVerified);
+    });
+  });
+
+  document.querySelectorAll('.view-profile-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openProfileModal(btn.dataset.id);
     });
   });
 }
 
-function openEditModal(userId, currentGrade, currentClass) {
+function openEditModal(userId, currentGrade, currentClass, emailVerified) {
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4';
   modal.innerHTML = `
@@ -456,6 +467,10 @@ function openEditModal(userId, currentGrade, currentClass) {
             <input type="text" id="editClass" value="${escapeHtml(currentClass)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
           </div>
         </div>
+        <div>
+          <label class="block text-white/70 text-xs mb-1">Email Verified (1=Yes, 0=No) 邮箱验证（1=是，0=否）</label>
+          <input type="text" id="editEmailVerified" value="${emailVerified}" maxlength="1" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+        </div>
       </div>
       <div id="editError" class="text-red-400 text-sm mt-2 hidden"></div>
       <div class="flex gap-3 mt-5">
@@ -474,6 +489,7 @@ function openEditModal(userId, currentGrade, currentClass) {
     const password = document.getElementById('editPassword').value;
     const grade = document.getElementById('editGrade').value;
     const cls = document.getElementById('editClass').value;
+    const emailVerified = document.getElementById('editEmailVerified').value === '1';
     const editError = document.getElementById('editError');
     const saveBtn = document.getElementById('editSave');
 
@@ -485,6 +501,7 @@ function openEditModal(userId, currentGrade, currentClass) {
     if (password) body.password = password;
     if (grade !== currentGrade) body.grade = grade;
     if (cls !== currentClass) body.class = cls;
+    body.email_verified = emailVerified;
 
     try {
       await adminApi(`/users/${userId}`, {
@@ -501,6 +518,55 @@ function openEditModal(userId, currentGrade, currentClass) {
     }
   });
 }
+
+async function openProfileModal(userId) {
+  try {
+    const users = await adminApi('/users');
+    const user = users.find(u => u.id == userId);
+    if (!user) return;
+
+    const warnings = await adminApi(`/warnings/${userId}`);
+    const daysSince = Math.floor((Date.now() - new Date(user.created_at)) / (1000 * 60 * 60 * 24));
+
+    document.getElementById('profileContent').innerHTML = `
+      <div class="space-y-4">
+        <div class="bg-white/5 rounded-lg p-4 space-y-2">
+          <p class="text-white/60 text-xs">Username 用户名</p>
+          <p class="text-white font-semibold">${escapeHtml(user.username)}</p>
+          <p class="text-white/60 text-xs">Grade 年级</p>
+          <p class="text-white">${escapeHtml(user.grade)} - Class 班级 ${escapeHtml(user.class)}</p>
+          <p class="text-white/60 text-xs">Days with OriLink 加入元联天数</p>
+          <p class="text-white">${daysSince} days 天</p>
+          <p class="text-white/60 text-xs">Warning Count 警告次数</p>
+          <p class="text-red-400 font-semibold">${user.warning_count || 0}</p>
+        </div>
+        ${warnings.length > 0 ? `
+          <div>
+            <p class="text-white/60 text-xs mb-2">Warning History 警告记录</p>
+            ${warnings.map(w => `
+              <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-2">
+                <p class="text-white text-xs font-medium">${escapeHtml(w.invitation_title)}</p>
+                <p class="text-red-400/70 text-xs">${escapeHtml(w.reason)}</p>
+                <p class="text-white/40 text-xs">${new Date(w.created_at).toLocaleDateString()}</p>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<p class="text-white/50 text-sm text-center py-4">No warnings 无警告</p>'}
+      </div>
+    `;
+
+    document.getElementById('profileModal').classList.remove('hidden');
+  } catch (err) {
+    alert('Failed to load profile: ' + err.message);
+  }
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModal').classList.add('hidden');
+}
+
+document.getElementById('closeProfileModal').addEventListener('click', closeProfileModal);
+document.getElementById('profileBackdrop').addEventListener('click', closeProfileModal);
 
 adminAddUserForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -556,6 +622,31 @@ function highlightProfanity(text) {
   return { html: result, flagged: found };
 }
 
+function bindWarnDeleteButtons() {
+  document.querySelectorAll('.warn-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const userId = btn.dataset.userId;
+      const invitationId = btn.dataset.invitationId;
+      if (!confirm('Warn this user and delete the invitation? 警告此用户并删除邀请？')) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Processing... 处理中...';
+
+      try {
+        await adminApi('/warn-and-delete', {
+          method: 'POST',
+          body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation 不当内容' })
+        });
+        scanInvitations();
+      } catch (err) {
+        alert('Failed: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Warn & Delete 警告并删除';
+      }
+    });
+  });
+}
+
 async function scanInvitations() {
   const results = document.getElementById('profanityResults');
   const summary = document.getElementById('profanitySummary');
@@ -594,6 +685,9 @@ async function scanInvitations() {
             <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
             <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
             <p class="text-red-400/70 text-xs mt-2">Flagged words: ${[...new Set([...titleCheck.flagged, ...descCheck.flagged])].join(', ')}</p>
+            <button class="warn-delete-btn mt-2 w-full py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
+              Warn & Delete 警告并删除
+            </button>
           </div>
         `;
       } else {
@@ -612,6 +706,7 @@ async function scanInvitations() {
     });
 
     results.innerHTML = html;
+    bindWarnDeleteButtons();
     summary.textContent = `Total 总计: ${invitations.length} | Flagged 标记: ${flaggedCount} | Clean 正常: ${cleanCount}`;
     summary.classList.remove('hidden');
 
@@ -638,7 +733,12 @@ document.getElementById('profanityBackdrop').addEventListener('click', () => {
 document.getElementById('scanInvitationsBtn').addEventListener('click', scanInvitations);
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !document.getElementById('profanityPanel').classList.contains('hidden')) {
-    document.getElementById('profanityPanel').classList.add('hidden');
+  if (e.key === 'Escape') {
+    if (!document.getElementById('profanityPanel').classList.contains('hidden')) {
+      document.getElementById('profanityPanel').classList.add('hidden');
+    }
+    if (!document.getElementById('profileModal').classList.contains('hidden')) {
+      closeProfileModal();
+    }
   }
 });

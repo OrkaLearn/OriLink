@@ -347,6 +347,7 @@
                   <th class="px-3 py-2 text-left">Grade 年级</th>
                   <th class="px-3 py-2 text-left">Class 班级</th>
                   <th class="px-3 py-2 text-left hidden lg:table-cell">Registered At 注册时间</th>
+                  <th class="px-3 py-2 text-left">Warnings 警告</th>
                   <th class="px-3 py-2 text-right">Actions 操作</th>
                 </tr>
               </thead>
@@ -359,6 +360,22 @@
           <p id="adminUserListError" class="text-center text-red-400 text-sm mt-2 hidden"></p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div id="profileBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="glass-panel rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative z-10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-white text-lg font-bold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">User Profile 用户资料</h2>
+        <button id="closeProfileModal" class="text-white/70 hover:text-white transition-colors">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div id="profileContent" class="flex-1 overflow-y-auto"></div>
     </div>
   </div>
 

@@ -3,9 +3,11 @@ const router = express.Router();
 const { pool } = require('../db');
 const jwt = require('jsonwebtoken');
 const emailStore = require('../email-store');
+const { Resend } = require('resend');
 
 const JWT_SECRET = 'orilink-secret-key-change-in-production';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -31,35 +33,22 @@ router.post('/email/send-code', authenticateToken, async (req, res) => {
 
     const code = emailStore.create(email);
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-      return res.status(500).json({ error: 'Email service not configured 邮件服务未配置' });
-    }
-
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'OriLink 元联 <onboarding@resend.dev>',
-        to: [email],
-        subject: 'OriLink Email Verification 元联邮箱验证',
-        html: `
-          <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #333;">OriLink Email Verification 元联邮箱验证</h2>
-            <p>Your verification code is 您的验证码是:</p>
-            <h1 style="color: #4F46E5; letter-spacing: 8px; font-size: 32px;">${code}</h1>
-            <p style="color: #666;">This code expires in 5 minutes. 此验证码将在5分钟后过期。</p>
-          </div>
-        `,
-      }),
+    const resendResponse = await resend.emails.send({
+      from: 'OriLink 元联 <onboarding@resend.dev>',
+      to: [email],
+      subject: 'OriLink Email Verification 元联邮箱验证',
+      html: `
+        <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+          <h2 style="color: #333;">OriLink Email Verification 元联邮箱验证</h2>
+          <p>Your verification code is 您的验证码是:</p>
+          <h1 style="color: #4F46E5; letter-spacing: 8px; font-size: 32px;">${code}</h1>
+          <p style="color: #666;">This code expires in 5 minutes. 此验证码将在5分钟后过期。</p>
+        </div>
+      `,
     });
 
-    if (!resendResponse.ok) {
-      const errorData = await resendResponse.json();
-      console.error('Resend API error:', errorData);
+    if (resendResponse.error) {
+      console.error('Resend API error:', resendResponse.error);
       return res.status(500).json({ error: 'Failed to send verification email 发送验证邮件失败' });
     }
 

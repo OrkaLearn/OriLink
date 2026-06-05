@@ -769,27 +769,35 @@ function renderAccountPage() {
           </div>
           <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
             <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide flex items-center gap-2">Email Verification 邮箱验证 ${emailVerifiedBadge}</h3>
-            <div>
-              <label class="block text-white/80 text-xs mb-1">Email Address 邮箱地址</label>
-              <input type="email" id="emailInput" value="${user.email || ''}" placeholder="Enter email 输入邮箱"
-                class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-            </div>
-            <button type="button" id="sendCodeBtn"
-              class="w-full py-2 rounded-lg bg-blue-500/40 hover:bg-blue-500/60 text-white text-sm font-medium transition-all">
-              Send Verification Code 发送验证码
-            </button>
-            <div id="verifyCodeSection" class="hidden space-y-3">
-              <div>
-                <label class="block text-white/80 text-xs mb-1">Verification Code 验证码</label>
-                <input type="text" id="verifyCodeInput" maxlength="6" placeholder="Enter 6-digit code 输入6位验证码"
-                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-              </div>
-              <button type="button" id="verifyCodeBtn"
-                class="w-full py-2 rounded-lg bg-green-500/40 hover:bg-green-500/60 text-white text-sm font-medium transition-all">
-                Verify 验证
-              </button>
-            </div>
-            <p id="emailMessage" class="text-center text-xs"></p>
+            ${user.email_verified 
+              ? `<p class="text-green-400/70 text-sm">Your email has been verified. 您的邮箱已验证。</p>
+                 <div>
+                   <label class="block text-white/30 text-xs mb-1">Email Address 邮箱地址</label>
+                   <input type="email" value="${user.email || ''}" disabled
+                     class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                 </div>`
+              : `<div>
+                   <label class="block text-white/80 text-xs mb-1">Email Address 邮箱地址</label>
+                   <input type="email" id="emailInput" value="${user.email || ''}" placeholder="Enter email 输入邮箱"
+                     class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                 </div>
+                 <button type="button" id="sendCodeBtn"
+                   class="w-full py-2 rounded-lg bg-blue-500/40 hover:bg-blue-500/60 text-white text-sm font-medium transition-all">
+                   Send Verification Code 发送验证码
+                 </button>
+                 <div id="verifyCodeSection" class="hidden space-y-3">
+                   <div>
+                     <label class="block text-white/80 text-xs mb-1">Verification Code 验证码</label>
+                     <input type="text" id="verifyCodeInput" maxlength="6" placeholder="Enter 6-digit code 输入6位验证码"
+                       class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                   </div>
+                   <button type="button" id="verifyCodeBtn"
+                     class="w-full py-2 rounded-lg bg-green-500/40 hover:bg-green-500/60 text-white text-sm font-medium transition-all">
+                     Verify 验证
+                   </button>
+                 </div>
+                 <p id="emailMessage" class="text-center text-xs"></p>`
+            }
           </div>
           <div>
             <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
@@ -823,8 +831,10 @@ function renderAccountPage() {
     `;
 
       document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
-      document.getElementById('sendCodeBtn').addEventListener('click', handleSendCode);
-      document.getElementById('verifyCodeBtn').addEventListener('click', handleVerifyCode);
+      const sendCodeBtn = document.getElementById('sendCodeBtn');
+      const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+      if (sendCodeBtn) sendCodeBtn.addEventListener('click', handleSendCode);
+      if (verifyCodeBtn) verifyCodeBtn.addEventListener('click', handleVerifyCode);
     })
     .catch(err => {
       document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
