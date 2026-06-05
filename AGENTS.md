@@ -118,7 +118,7 @@ After editing `/home/kevin/nginx/kevin.conf`, reload nginx:
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-The `kevin` user has passwordless sudo for only these two commands (see `/etc/sudoers.d/nginx-kevin`).
+Kevin sudo whitelist: [`/opt/users/kevin/projects/orilink/README.md`](/opt/users/kevin/projects/orilink/README.md) (`nginx-kevin`, `orilink-kevin`).
 
 The config proxies all paths (including `/api` and `/socket.io` WebSocket upgrades) to `http://127.0.0.1:3210/`.
 
