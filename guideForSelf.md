@@ -34,19 +34,13 @@ Or press `Ctrl + C` in the terminal where it's running.
 
 OriLink runs as a systemd service named **`kevin-orilink.service`** (user `kevin`, port 3210).
 
-### Preferred (web CLI)
+### Manage Service
+
+Sudoers: `/etc/sudoers.d/orilink-kevin`
 
 ```bash
-web start kevin-orilink
-web restart orilink
-web status kevin-orilink
-web logs orilink
-```
-
-### Alternative (systemctl)
-
-```bash
-sudo systemctl start kevin-orilink
+sudo systemctl start kevin-orilink        # or kevin-orilink.service
+sudo systemctl stop kevin-orilink
 sudo systemctl restart kevin-orilink
 sudo systemctl status kevin-orilink
 ```
@@ -66,6 +60,14 @@ After editing nginx config (`/home/kevin/nginx/kevin.conf`):
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+Or use:
+
+```bash
+sudo nginx -s reload
+```
+
+Sudoers: `/etc/sudoers.d/nginx-kevin`
 
 ---
 
