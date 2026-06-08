@@ -40,11 +40,11 @@ const pages = {
     description: `OriLink or 元联 is an in-school 
     online social platform founded and developed by a student who sought the need to 
     develop a more efficient method to connect students with similar needs/wants and interests to promote 
-    socializing and build a stronger community. Whether it's finding someone to play sports with, 
+    socializing and build a stronger community. Compared to other online social platforms, our platform is unique in that it prioritizes offline/real-world socializing, as stated in our motto: “Promote offline social interaction through online methods 用线上方式促进线下社交“. Whether it's finding someone to play sports with, 
     finding a student tutor or seeking teammates for competitions, you can do all these things on this platform. 
     <br></br>
-    Founder & Maintainer: Kevin Chai <br>
-    Past Contributors: Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
+    Founder, Developer & Maintainer: Kevin Kaiwen Chai <br>
+    Past Contributors (Planning & Surveying): Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
     <br></br>
     <h3 class="text-white font-semibold text-sm mt-4 mb-2">Terms and Conditions</h3>
     <div id="aboutTermsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>`
