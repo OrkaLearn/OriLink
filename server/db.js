@@ -42,8 +42,8 @@ async function initDatabase() {
     await connection.query('ALTER TABLE users ADD COLUMN full_name VARCHAR(100) NOT NULL DEFAULT ""');
   }
 
-  if (!colNames.includes('email_verified')) {
-    await connection.query('ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE');
+  if (colNames.includes('email_verified')) {
+    await connection.query('ALTER TABLE users DROP COLUMN email_verified');
   }
 
   if (!colNames.includes('email')) {

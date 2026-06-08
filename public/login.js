@@ -389,7 +389,7 @@ async function loadAdminUsers() {
           <button class="view-profile-btn ml-1 text-xs text-blue-400 hover:text-blue-300" data-id="${user.id}">Profile 资料</button>
         </td>
         <td class="px-3 py-2 text-right">
-          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-email-verified="${user.email_verified}">Edit 编辑</button>
+          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-grade="${escapeHtml(user.grade)}" data-class="${escapeHtml(user.class)}">Edit 编辑</button>
           <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete 删除</button>
         </td>
       `;
@@ -433,8 +433,7 @@ function bindUserRowActions() {
       const tr = btn.closest('tr');
       const grade = tr.querySelector('.editable-grade').textContent.trim();
       const cls = tr.querySelector('.editable-class').textContent.trim();
-      const emailVerified = btn.dataset.emailVerified;
-      openEditModal(id, grade, cls, emailVerified);
+      openEditModal(id, grade, cls);
     });
   });
 
@@ -445,7 +444,7 @@ function bindUserRowActions() {
   });
 }
 
-function openEditModal(userId, currentGrade, currentClass, emailVerified) {
+function openEditModal(userId, currentGrade, currentClass) {
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4';
   modal.innerHTML = `
@@ -467,10 +466,6 @@ function openEditModal(userId, currentGrade, currentClass, emailVerified) {
             <input type="text" id="editClass" value="${escapeHtml(currentClass)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
           </div>
         </div>
-        <div>
-          <label class="block text-white/70 text-xs mb-1">Email Verified (1=Yes, 0=No) 邮箱验证（1=是，0=否）</label>
-          <input type="text" id="editEmailVerified" value="${emailVerified}" maxlength="1" class="input-field w-full px-3 py-2 rounded-lg text-sm">
-        </div>
       </div>
       <div id="editError" class="text-red-400 text-sm mt-2 hidden"></div>
       <div class="flex gap-3 mt-5">
@@ -489,7 +484,6 @@ function openEditModal(userId, currentGrade, currentClass, emailVerified) {
     const password = document.getElementById('editPassword').value;
     const grade = document.getElementById('editGrade').value;
     const cls = document.getElementById('editClass').value;
-    const emailVerified = document.getElementById('editEmailVerified').value === '1';
     const editError = document.getElementById('editError');
     const saveBtn = document.getElementById('editSave');
 
@@ -501,7 +495,6 @@ function openEditModal(userId, currentGrade, currentClass, emailVerified) {
     if (password) body.password = password;
     if (grade !== currentGrade) body.grade = grade;
     if (cls !== currentClass) body.class = cls;
-    body.email_verified = emailVerified;
 
     try {
       await adminApi(`/users/${userId}`, {

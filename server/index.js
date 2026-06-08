@@ -10,7 +10,6 @@ const authRoutes = require('./routes/auth');
 const accountRoutes = require('./routes/account');
 const invitationRoutes = require('./routes/invitations');
 const adminRoutes = require('./routes/admin');
-const emailRoutes = require('./routes/email');
 const captchaStore = require('./captcha-store');
 
 const app = express();
@@ -29,7 +28,6 @@ app.use(express.json());
 
 app.use('/api', authRoutes);
 app.use('/api', accountRoutes);
-app.use('/api', emailRoutes);
 const { router: invitationRouter, setSocketIO, cleanupExpiredInvitations } = invitationRoutes;
 app.use('/api', invitationRouter);
 app.use('/api/admin', adminRoutes);

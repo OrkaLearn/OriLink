@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
 router.get('/users', authenticateAdmin, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users ORDER BY id'
+      'SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users ORDER BY id'
     );
     res.json(users);
   } catch (error) {
@@ -88,7 +88,7 @@ router.post('/users', authenticateAdmin, async (req, res) => {
       [username, hashedPassword, '', gradeNum, classNumInt]
     );
 
-    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users WHERE username = ?', [username]);
+    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users WHERE username = ?', [username]);
 
     res.json({ message: 'User created successfully', user: newUser[0] });
   } catch (error) {
@@ -140,11 +140,6 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
       params.push(classNumInt);
     }
 
-    if (req.body.email_verified !== undefined) {
-      updates.push('email_verified = ?');
-      params.push(req.body.email_verified ? 1 : 0);
-    }
-
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
@@ -153,7 +148,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
 
-    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, email_verified, warning_count, created_at FROM users WHERE id = ?', [id]);
+    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users WHERE id = ?', [id]);
 
     res.json({ message: 'User updated successfully', user: updatedUser[0] });
   } catch (error) {
