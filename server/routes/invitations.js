@@ -34,6 +34,7 @@ router.get('/invitations', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
+    const sort = req.query.sort === 'newest' ? 'i.created_at DESC' : 'i.event_start IS NULL, i.event_start ASC';
 
     let query = `
       SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username,
@@ -44,11 +45,13 @@ router.get('/invitations', async (req, res) => {
     let params = [];
 
     if (currentUserId) {
-      query += ' WHERE i.user_id != ?';
+      query += ' WHERE i.user_id != ? AND (i.event_end IS NULL OR i.event_end >= NOW())';
       params.push(currentUserId);
+    } else {
+      query += ' WHERE i.event_end IS NULL OR i.event_end >= NOW()';
     }
 
-    query += ' ORDER BY i.created_at DESC';
+    query += ` ORDER BY ${sort}`;
 
     const [rows] = await pool.query(query, params);
     res.json(rows);
@@ -62,6 +65,7 @@ router.get('/my-invitations', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
+    const sort = req.query.sort === 'newest' ? 'created_at DESC' : 'event_start IS NULL, event_start ASC';
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -70,7 +74,7 @@ router.get('/my-invitations', async (req, res) => {
     const [rows] = await pool.query(
       `SELECT id, title, description, type, max_participants, event_start, event_end, created_at,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = invitations.id) as joined_count
-      FROM invitations WHERE user_id = ? ORDER BY created_at DESC`,
+      FROM invitations WHERE user_id = ? AND (event_end IS NULL OR event_end >= NOW()) ORDER BY ${sort}`,
       [currentUserId]
     );
     res.json(rows);
@@ -129,8 +133,16 @@ router.post('/invitations', async (req, res) => {
       }
     }
 
+    if (startTime && startTime <= new Date()) {
+      return res.status(400).json({ error: 'event_start must be in the future' });
+    }
+
     if (startTime && endTime && endTime <= startTime) {
       return res.status(400).json({ error: 'event_end must be after event_start' });
+    }
+
+    if (startTime && endTime && (endTime - startTime) > 24 * 60 * 60 * 1000) {
+      return res.status(400).json({ error: 'Event duration cannot exceed 24 hours 活动时长不能超过24小时' });
     }
 
     const [result] = await pool.query(
@@ -210,6 +222,49 @@ router.post('/invitations/:id/join', async (req, res) => {
   }
 });
 
+router.post('/invitations/:id/report', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const currentUserId = await getUserIdFromToken(authHeader);
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const invitationId = req.params.id;
+
+    const [rows] = await pool.query(
+      'SELECT id, user_id FROM invitations WHERE id = ?',
+      [invitationId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    if (rows[0].user_id === currentUserId) {
+      return res.status(400).json({ error: 'Cannot report your own invitation' });
+    }
+
+    try {
+      await pool.query(
+        'INSERT INTO reported_invitations (invitation_id, reporter_id) VALUES (?, ?)',
+        [invitationId, currentUserId]
+      );
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ error: 'You have already reported this invitation' });
+      }
+      throw err;
+    }
+
+    res.json({ message: 'Invitation reported successfully' });
+  } catch (err) {
+    console.error('Error reporting invitation:', err);
+    res.status(500).json({ error: 'Failed to report invitation' });
+  }
+});
+
 router.delete('/invitations/:id', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -247,6 +302,7 @@ router.get('/invitations/joined', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
+    const sort = req.query.sort === 'newest' ? 'i.created_at DESC' : 'i.event_start IS NULL, i.event_start ASC';
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -258,8 +314,8 @@ router.get('/invitations/joined', async (req, res) => {
       FROM invitations i
       JOIN joined_invitations ji ON i.id = ji.invitation_id
       JOIN users u ON i.user_id = u.id
-      WHERE ji.user_id = ?
-      ORDER BY i.created_at DESC`,
+      WHERE ji.user_id = ? AND (i.event_end IS NULL OR i.event_end >= NOW())
+      ORDER BY ${sort}`,
       [currentUserId]
     );
     res.json(rows);

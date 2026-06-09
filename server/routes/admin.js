@@ -219,6 +219,26 @@ router.post('/warn-and-delete', authenticateAdmin, async (req, res) => {
   }
 });
 
+router.get('/reported', authenticateAdmin, async (req, res) => {
+  try {
+    const [reported] = await pool.query(
+      `SELECT i.id, i.title, i.description, i.type, i.max_participants,
+              i.event_start, i.event_end, i.created_at, i.user_id,
+              u.username,
+              COUNT(r.id) as report_count
+       FROM reported_invitations r
+       JOIN invitations i ON r.invitation_id = i.id
+       JOIN users u ON i.user_id = u.id
+       GROUP BY i.id
+       ORDER BY report_count DESC, i.created_at DESC`
+    );
+    res.json(reported);
+  } catch (error) {
+    console.error('Get reported invitations error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/warnings/:userId', authenticateAdmin, async (req, res) => {
   try {
     const [warnings] = await pool.query(

@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!captchaStore.verify(captchaToken, captchaInput)) {
-      return res.status(400).json({ error: 'CAPTCHA verification failed - please try again' });
+      return res.status(400).json({ error: 'Captcha failed, please refresh the captcha and try again' });
     }
 
     const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
@@ -49,6 +49,30 @@ router.post('/login', async (req, res) => {
     res.json({ token, username: user.username });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/check-username', async (req, res) => {
+  try {
+    const { username } = req.query;
+
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+
+    if (!USERNAME_REGEX.test(username)) {
+      return res.json({ available: false, error: 'Username must start with a letter and contain only letters, numbers, underscores, or periods (max 20 characters) 用户名必须以字母开头，仅限字母/数字/下划线/点（最多20个字符）' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+    if (existing.length > 0) {
+      return res.json({ available: false, error: 'Username already taken 用户名已被占用' });
+    }
+
+    res.json({ available: true });
+  } catch (error) {
+    console.error('Check username error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -93,7 +117,7 @@ router.post('/register', async (req, res) => {
     }
 
     if (!captchaStore.verify(captchaToken, captchaInput)) {
-      return res.status(400).json({ error: 'CAPTCHA verification failed - please try again' });
+      return res.status(400).json({ error: 'Captcha failed, please refresh the captcha and try again' });
     }
 
     const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);

@@ -136,7 +136,7 @@
       </div>
 
       <div>
-        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Full Name 姓名</label>
+        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Full Name (Both English or Chinese Is Okay) 姓名 (中英文均可)</label>
         <input 
           type="text" 
           id="fullName" 
@@ -161,6 +161,7 @@
           required
         >
         <p class="text-white/50 text-xs mt-1">Start with letter, letters/numbers/underscores/dots only 以字母开头，仅限字母/数字/下划线/点</p>
+        <p id="usernameStatus" class="text-xs mt-1 hidden"></p>
       </div>
 
       <div>
@@ -408,9 +409,18 @@
         </button>
       </div>
       <div class="mb-4">
-        <button id="scanInvitationsBtn" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-          Scan Invitations 扫描邀请
-        </button>
+        <div class="flex items-center gap-3 mb-3">
+          <button id="scanInvitationsBtn" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
+            Scan Invitations 扫描邀请
+          </button>
+          <button id="loadReportedBtn" class="px-4 py-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-white text-sm font-medium transition-all">
+            Reported Invitations 被举报邀请
+          </button>
+        </div>
+        <div id="reportedResults" class="hidden rounded-xl border border-yellow-500/20 p-4 mb-4">
+          <h3 class="text-white font-semibold text-sm mb-3">Reported Invitations 被举报邀请</h3>
+          <div id="reportedList"></div>
+        </div>
       </div>
       <div id="profanityResults" class="flex-1 overflow-y-auto rounded-xl border border-white/10 p-4">
         <p class="text-white/50 text-sm text-center">Click "Scan Invitations" to check all invitations for inappropriate content. 点击"扫描邀请"检查所有邀请的不当内容。</p>

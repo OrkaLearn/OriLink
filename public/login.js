@@ -242,6 +242,42 @@ document.getElementById('refreshSignupCaptchaBtn').addEventListener('click', () 
 
 initCaptchas();
 
+let usernameCheckTimeout = null;
+const signupUsernameInput = document.getElementById('signupUsername');
+const usernameStatus = document.getElementById('usernameStatus');
+
+signupUsernameInput.addEventListener('input', () => {
+  clearTimeout(usernameCheckTimeout);
+  usernameStatus.classList.add('hidden');
+  usernameStatus.textContent = '';
+
+  const username = signupUsernameInput.value.trim();
+  if (username.length < 3) return;
+
+  usernameCheckTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/check-username?username=${encodeURIComponent(username)}`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+
+      usernameStatus.classList.remove('hidden');
+      if (data.available) {
+        usernameStatus.textContent = 'Username available 用户名可用';
+        usernameStatus.className = 'text-xs mt-1 text-green-400';
+      } else {
+        usernameStatus.textContent = data.error || 'Username not available 用户名不可用';
+        usernameStatus.className = 'text-xs mt-1 text-red-400';
+      }
+    } catch (err) {
+      usernameStatus.classList.remove('hidden');
+      usernameStatus.textContent = 'Check failed 检查失败';
+      usernameStatus.className = 'text-xs mt-1 text-red-400';
+    }
+  }, 500);
+});
+
 // ============================================================
 // Admin Panel
 // ============================================================
@@ -712,6 +748,48 @@ async function scanInvitations() {
   }
 }
 
+async function loadReportedInvitations() {
+  const results = document.getElementById('reportedList');
+  const container = document.getElementById('reportedResults');
+
+  container.classList.remove('hidden');
+  results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">Loading... 加载中...</p>';
+
+  try {
+    const reported = await adminApi('/reported');
+
+    if (reported.length === 0) {
+      results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No reported invitations 暂无被举报邀请</p>';
+      return;
+    }
+
+    let html = '';
+    reported.forEach(inv => {
+      const titleCheck = highlightProfanity(inv.title);
+      const descCheck = highlightProfanity(inv.description);
+
+      html += `
+        <div class="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/30 text-yellow-300">⚠️ ${inv.report_count} report${inv.report_count > 1 ? 's' : ''} 举报</span>
+          </div>
+          <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
+          <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+          <button class="warn-delete-btn mt-2 w-full py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
+            Warn & Delete 警告并删除
+          </button>
+        </div>
+      `;
+    });
+
+    results.innerHTML = html;
+    bindWarnDeleteButtons();
+  } catch (err) {
+    results.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${err.message}</p>`;
+  }
+}
+
 document.getElementById('adminProfanityCheckBtn').addEventListener('click', () => {
   document.getElementById('profanityPanel').classList.remove('hidden');
 });
@@ -725,6 +803,8 @@ document.getElementById('profanityBackdrop').addEventListener('click', () => {
 });
 
 document.getElementById('scanInvitationsBtn').addEventListener('click', scanInvitations);
+
+document.getElementById('loadReportedBtn').addEventListener('click', loadReportedInvitations);
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {

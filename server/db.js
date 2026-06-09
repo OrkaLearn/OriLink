@@ -118,6 +118,18 @@ async function initDatabase() {
     )
   `);
 
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS reported_invitations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      invitation_id INT NOT NULL,
+      reporter_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (invitation_id) REFERENCES invitations(id) ON DELETE CASCADE,
+      FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE KEY unique_report (invitation_id, reporter_id)
+    )
+  `);
+
   console.log('Database, users table, and invitations table ready (with new columns)');
   await connection.end();
 }

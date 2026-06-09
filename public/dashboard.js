@@ -10,6 +10,10 @@ const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 300;
 const DESCRIPTION_TRUNCATE_LENGTH = 50;
 
+let invitationsSort = 'event';
+let myInvitationsSort = 'event';
+let joinedInvitationsSort = 'event';
+
 const typeColors = {
   'play/sports': 'bg-emerald-500/80',
   'teammate finding': 'bg-blue-500/80',
@@ -68,7 +72,7 @@ function countWords(text) {
   return chineseChars + englishWords;
 }
 
-function createInvitationCard(invitation, isOwn = false, showChat = false) {
+function createInvitationCard(invitation, isOwn = false, showChat = false, showReport = false) {
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
   
@@ -106,9 +110,10 @@ function createInvitationCard(invitation, isOwn = false, showChat = false) {
   } else {
     const joinedCount = (invitation.joined_count || 0) + 1;
     const isFull = joinedCount >= invitation.max_participants;
+    const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
     actionButtons = isFull
-      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/50 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>`
-      : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>`;
+      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/50 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
+      : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
   }
 
   return `
@@ -170,21 +175,52 @@ function getCurrentUser() {
 
 function renderInvitationsPage() {
   const container = document.getElementById('page-description');
-  container.innerHTML = '<div class="flex justify-center py-4"><p class="text-white/60 text-sm">Loading invitations... 加载邀请中...</p></div>';
+  container.innerHTML = `
+    <div class="flex justify-between items-center mb-3">
+      <p class="text-white/60 text-sm">Loading invitations... 加载邀请中...</p>
+      <div class="flex items-center gap-2">
+        <span class="text-white/60 text-xs">Sort by 排序:</span>
+        <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+          <option value="event" class="bg-gray-800">Event time 活动时间</option>
+          <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  loadInvitationsList();
+
+  document.getElementById('invSortSelect').addEventListener('change', () => {
+    invitationsSort = document.getElementById('invSortSelect').value;
+    loadInvitationsList();
+  });
+}
+
+function loadInvitationsList() {
+  const container = document.getElementById('page-description');
+  const sortHtml = container.querySelector('#invSortSelect')?.parentElement?.outerHTML || '';
 
   Promise.all([
-    fetch('/api/invitations', { headers: getAuthHeader() }).then(res => res.json()),
+    fetch(`/api/invitations?sort=${invitationsSort}`, { headers: getAuthHeader() }).then(res => res.json()),
     getCurrentUser()
   ])
     .then(([invitations, user]) => {
+      let html = sortHtml;
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">No invitations yet. Be the first to post one! 暂无邀请。来做第一个发布邀请的人吧！</p>';
-        return;
+        html += '<p class="text-white text-sm text-center py-4">No invitations yet. Be the first to post one! 暂无邀请。来做第一个发布邀请的人吧！</p>';
+      } else {
+        html += invitations.map(inv => {
+          const isOwn = inv.username === user.username;
+          return createInvitationCard(inv, isOwn, false, !isOwn);
+        }).join('');
       }
-      container.innerHTML = invitations.map(inv => {
-        const isOwn = inv.username === user.username;
-        return createInvitationCard(inv, isOwn);
-      }).join('');
+      container.innerHTML = html;
+
+      document.getElementById('invSortSelect').value = invitationsSort;
+      document.getElementById('invSortSelect').addEventListener('change', () => {
+        invitationsSort = document.getElementById('invSortSelect').value;
+        loadInvitationsList();
+      });
       
       document.querySelectorAll('.join-btn').forEach(btn => {
         btn.addEventListener('click', handleJoin);
@@ -192,6 +228,10 @@ function renderInvitationsPage() {
       
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => handleDelete(e, 'invitations'));
+      });
+      
+      document.querySelectorAll('.report-btn').forEach(btn => {
+        btn.addEventListener('click', handleReport);
       });
       
       document.querySelectorAll('.expand-desc').forEach(el => {
@@ -224,7 +264,7 @@ function handleDelete(e, pageContext) {
       if (pageContext === 'joined') {
         loadMyInvitations();
       } else if (pageContext === 'invitations') {
-        renderInvitationsPage();
+        loadInvitationsList();
       } else {
         renderInvitationsPage();
         loadMyInvitations();
@@ -232,6 +272,37 @@ function handleDelete(e, pageContext) {
     })
     .catch(err => {
       btn.textContent = '删除 Delete';
+      btn.disabled = false;
+    });
+}
+
+function handleReport(e) {
+  const btn = e.target;
+  const invitationId = btn.dataset.id;
+  if (!confirm('Report this invitation for review? 举报此邀请以供审核？')) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Reporting... 举报中...';
+
+  fetch(`/api/invitations/${invitationId}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+        btn.disabled = false;
+        btn.textContent = 'Report 举报';
+      } else {
+        alert('Reported successfully 举报成功');
+        btn.textContent = 'Reported 已举报';
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    })
+    .catch(err => {
+      btn.textContent = 'Report 举报';
       btn.disabled = false;
     });
 }
@@ -467,11 +538,29 @@ function renderJoinedPage() {
       </form>
     </div>
     <div id="myInvitations">
-      <p class="text-white text-xs mb-2">My Invitations 我的邀请</p>
+      <div class="flex justify-between items-center mb-2">
+        <p class="text-white text-xs">My Invitations 我的邀请</p>
+        <div class="flex items-center gap-2">
+          <span class="text-white/60 text-xs">Sort by 排序:</span>
+          <select id="myInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+            <option value="event" class="bg-gray-800">Event time 活动时间</option>
+            <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+          </select>
+        </div>
+      </div>
       <div id="myInvitationsList"></div>
     </div>
     <div id="joinedInvitations" class="mt-6">
-      <p class="text-white text-xs mb-2">Joined Invitations 已参与的邀请</p>
+      <div class="flex justify-between items-center mb-2">
+        <p class="text-white text-xs">Joined Invitations 已参与的邀请</p>
+        <div class="flex items-center gap-2">
+          <span class="text-white/60 text-xs">Sort by 排序:</span>
+          <select id="joinedInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+            <option value="event" class="bg-gray-800">Event time 活动时间</option>
+            <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+          </select>
+        </div>
+      </div>
       <div id="joinedInvitationsList"></div>
     </div>
   `;
@@ -479,6 +568,11 @@ function renderJoinedPage() {
   document.getElementById('showPostForm').addEventListener('click', async () => {
     document.getElementById('postForm').classList.remove('hidden');
     document.getElementById('showPostForm').classList.add('hidden');
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const minDatetime = now.toISOString().slice(0, 16);
+    document.getElementById('invEventStart').setAttribute('min', minDatetime);
+    document.getElementById('invEventEnd').setAttribute('min', minDatetime);
   });
 
   document.getElementById('closePostForm').addEventListener('click', () => {
@@ -495,20 +589,32 @@ function renderJoinedPage() {
   });
 
   document.getElementById('invitationForm').addEventListener('submit', handlePostInvitation);
+
+  document.getElementById('myInvSortSelect').addEventListener('change', () => {
+    myInvitationsSort = document.getElementById('myInvSortSelect').value;
+    loadMyInvitations();
+  });
+
+  document.getElementById('joinedInvSortSelect').addEventListener('change', () => {
+    joinedInvitationsSort = document.getElementById('joinedInvSortSelect').value;
+    loadJoinedInvitations();
+  });
+
   loadMyInvitations();
   loadJoinedInvitations();
 }
 
 function loadMyInvitations() {
-  fetch('/api/my-invitations', { headers: getAuthHeader() })
+  fetch(`/api/my-invitations?sort=${myInvitationsSort}`, { headers: getAuthHeader() })
     .then(res => res.json())
     .then(invitations => {
       const container = document.getElementById('myInvitationsList');
+      if (!container) return;
       if (invitations.length === 0) {
         container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true)).join('');
+      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true, false)).join('');
       
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => handleDelete(e, 'joined'));
@@ -526,12 +632,15 @@ function loadMyInvitations() {
       });
     })
     .catch(err => {
-      document.getElementById('myInvitationsList').innerHTML = '<p class="text-red-400 text-sm">Error loading my invitations 加载我的邀请出错</p>';
+      const container = document.getElementById('myInvitationsList');
+      if (container) {
+        container.innerHTML = '<p class="text-red-400 text-sm">Error loading my invitations 加载我的邀请出错</p>';
+      }
     });
 }
 
 function loadJoinedInvitations() {
-  fetch('/api/invitations/joined', { headers: getAuthHeader() })
+  fetch(`/api/invitations/joined?sort=${joinedInvitationsSort}`, { headers: getAuthHeader() })
     .then(res => res.json())
     .then(invitations => {
       const container = document.getElementById('joinedInvitationsList');
@@ -540,7 +649,7 @@ function loadJoinedInvitations() {
         container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t joined any invitations yet. 你还没有参与任何邀请。</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true)).join('');
+      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true, false)).join('');
       
       document.querySelectorAll('.chat-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openChatModal(e));
@@ -593,8 +702,20 @@ function handlePostInvitation(e) {
     return;
   }
 
+  if (startDate <= new Date()) {
+    messageEl.textContent = 'Event start time must be in the future 活动开始时间必须在当前时间之后';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
   if (endDate <= startDate) {
     messageEl.textContent = 'Event end time must be after start time 活动结束时间必须在开始时间之后';
+    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    return;
+  }
+
+  if (endDate - startDate > 24 * 60 * 60 * 1000) {
+    messageEl.textContent = 'Event duration cannot exceed 24 hours 活动时长不能超过24小时';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
   }
