@@ -319,34 +319,80 @@ function handleDelete(e, pageContext) {
     });
 }
 
+let currentReportBtn = null;
+
 function handleReport(e) {
   const btn = e.target;
-  const invitationId = btn.dataset.id;
-  if (!confirm('Report this invitation for review? 举报此邀请以供审核？')) return;
+  currentReportBtn = btn;
+  const modal = document.getElementById('reportModal');
+  const reasonEl = document.getElementById('reportReason');
+  const countEl = document.getElementById('reportReasonCount');
+  const errorEl = document.getElementById('reportError');
 
-  btn.disabled = true;
-  btn.textContent = 'Reporting... 举报中...';
+  reasonEl.value = '';
+  countEl.textContent = '0';
+  errorEl.classList.add('hidden');
+  modal.classList.remove('hidden');
+  reasonEl.focus();
+}
+
+function closeReportModal() {
+  document.getElementById('reportModal').classList.add('hidden');
+  currentReportBtn = null;
+}
+
+function submitReport() {
+  const btn = currentReportBtn;
+  if (!btn) return;
+
+  const reason = document.getElementById('reportReason').value.trim();
+  const errorEl = document.getElementById('reportError');
+  const confirmBtn = document.getElementById('reportConfirmBtn');
+
+  if (!reason) {
+    errorEl.textContent = 'Please provide a reason 请提供举报原因';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  if (reason.length > 500) {
+    errorEl.textContent = 'Reason must be under 500 characters 原因不能超过500个字符';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  errorEl.classList.add('hidden');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Submitting... 提交中...';
+
+  const invitationId = btn.dataset.id;
 
   fetch(`/api/invitations/${invitationId}/report`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify({ reason })
   })
     .then(res => res.json())
     .then(data => {
       if (data.error) {
-        alert(data.error);
-        btn.disabled = false;
-        btn.textContent = 'Report 举报';
-      } else {
-        alert('Reported successfully 举报成功');
-        btn.textContent = 'Reported 已举报';
-        btn.disabled = true;
-        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        errorEl.textContent = data.error;
+        errorEl.classList.remove('hidden');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Report 确认举报';
+        return;
       }
+      closeReportModal();
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm Report 确认举报';
+      btn.textContent = 'Reported 已举报';
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
     })
     .catch(err => {
-      btn.textContent = 'Report 举报';
-      btn.disabled = false;
+      errorEl.textContent = 'Report failed 举报失败';
+      errorEl.classList.remove('hidden');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm Report 确认举报';
     });
 }
 
@@ -1084,6 +1130,22 @@ renderInvitationsPage();
 
 document.getElementById('closeModal').addEventListener('click', hideInviteModal);
 document.getElementById('modalBackdrop').addEventListener('click', hideInviteModal);
+
+document.getElementById('reportModalBackdrop').addEventListener('click', closeReportModal);
+document.getElementById('reportCancelBtn').addEventListener('click', closeReportModal);
+document.getElementById('reportConfirmBtn').addEventListener('click', submitReport);
+document.getElementById('reportReason').addEventListener('input', function() {
+  document.getElementById('reportReasonCount').textContent = this.value.length;
+});
+document.getElementById('reportReason').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    submitReport();
+  }
+  if (e.key === 'Escape') {
+    closeReportModal();
+  }
+});
 
 document.getElementById('closeChatModal').addEventListener('click', closeChatModal);
 document.getElementById('chatModalBackdrop').addEventListener('click', closeChatModal);

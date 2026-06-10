@@ -123,12 +123,20 @@ async function initDatabase() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       invitation_id INT NOT NULL,
       reporter_id INT NOT NULL,
+      reason TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (invitation_id) REFERENCES invitations(id) ON DELETE CASCADE,
       FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
       UNIQUE KEY unique_report (invitation_id, reporter_id)
     )
   `);
+
+  const [repCols] = await connection.query('DESCRIBE reported_invitations');
+  const repColNames = repCols.map(c => c.Field);
+
+  if (!repColNames.includes('reason')) {
+    await connection.query('ALTER TABLE reported_invitations ADD COLUMN reason TEXT NOT NULL DEFAULT ""');
+  }
 
   console.log('Database, users table, and invitations table ready (with new columns)');
   await connection.end();

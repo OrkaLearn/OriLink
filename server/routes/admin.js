@@ -225,7 +225,8 @@ router.get('/reported', authenticateAdmin, async (req, res) => {
       `SELECT i.id, i.title, i.description, i.type, i.max_participants,
               i.event_start, i.event_end, i.created_at, i.user_id,
               u.username,
-              COUNT(r.id) as report_count
+              COUNT(r.id) as report_count,
+              GROUP_CONCAT(r.reason SEPARATOR ' ||| ') as reasons
        FROM reported_invitations r
        JOIN invitations i ON r.invitation_id = i.id
        JOIN users u ON i.user_id = u.id
@@ -235,6 +236,26 @@ router.get('/reported', authenticateAdmin, async (req, res) => {
     res.json(reported);
   } catch (error) {
     console.error('Get reported invitations error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/reports/:invitationId', authenticateAdmin, async (req, res) => {
+  try {
+    const { invitationId } = req.params;
+
+    const [result] = await pool.query(
+      'DELETE FROM reported_invitations WHERE invitation_id = ?',
+      [invitationId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    res.json({ message: 'Report ignored and cleared successfully 已忽略并清除举报' });
+  } catch (error) {
+    console.error('Ignore report error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -671,6 +671,32 @@ function bindWarnDeleteButtons() {
   });
 }
 
+function bindIgnoreButtons() {
+  document.querySelectorAll('.ignore-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const invitationId = btn.dataset.invitationId;
+      if (!confirm('Ignore and clear all reports for this invitation? 忽略并清除此邀请的所有举报？')) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Ignoring... 忽略中...';
+
+      try {
+        await adminApi(`/reports/${invitationId}`, { method: 'DELETE' });
+        const card = btn.closest('[data-invitation-id]');
+        if (card) card.remove();
+        const results = document.getElementById('reportedList');
+        if (results.children.length === 0) {
+          results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No reported invitations 暂无被举报邀请</p>';
+        }
+      } catch (err) {
+        alert('Failed: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Ignore 忽略';
+      }
+    });
+  });
+}
+
 async function scanInvitations() {
   const results = document.getElementById('profanityResults');
   const summary = document.getElementById('profanitySummary');
@@ -761,24 +787,37 @@ async function loadReportedInvitations() {
     reported.forEach(inv => {
       const titleCheck = highlightProfanity(inv.title);
       const descCheck = highlightProfanity(inv.description);
+      const reasons = inv.reasons ? inv.reasons.split(' ||| ').map(r => escapeHtml(r.trim())).filter(Boolean) : [];
 
       html += `
-        <div class="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+        <div class="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30" data-invitation-id="${inv.id}">
           <div class="flex items-center justify-between mb-2">
             <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
             <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/30 text-yellow-300">⚠️ ${inv.report_count} report${inv.report_count > 1 ? 's' : ''} 举报</span>
           </div>
           <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
           <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
-          <button class="warn-delete-btn mt-2 w-full py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
-            Warn & Delete 警告并删除
-          </button>
+          ${reasons.length > 0 ? `
+            <div class="mt-2 mb-2">
+              <p class="text-white/60 text-xs mb-1">Report reasons 举报原因:</p>
+              ${reasons.map(r => `<p class="text-yellow-300/80 text-xs ml-2">• ${r}</p>`).join('')}
+            </div>
+          ` : ''}
+          <div class="flex gap-2 mt-2">
+            <button class="warn-delete-btn flex-1 py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
+              Warn & Delete 警告并删除
+            </button>
+            <button class="ignore-btn flex-1 py-1.5 rounded-lg bg-gray-500/30 hover:bg-gray-500/50 text-white text-xs font-medium transition-all" data-invitation-id="${inv.id}">
+              Ignore 忽略
+            </button>
+          </div>
         </div>
       `;
     });
 
     results.innerHTML = html;
     bindWarnDeleteButtons();
+    bindIgnoreButtons();
   } catch (err) {
     results.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${err.message}</p>`;
   }

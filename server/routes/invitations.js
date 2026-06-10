@@ -254,6 +254,21 @@ router.post('/invitations/:id/report', async (req, res) => {
     }
 
     const invitationId = req.params.id;
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Report reason is required 举报时必须提供原因' });
+    }
+
+    const sanitizedReason = xss(reason.trim(), {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    });
+
+    if (!sanitizedReason || sanitizedReason.length > 500) {
+      return res.status(400).json({ error: 'Report reason must be between 1 and 500 characters 举报原因必须在1到500个字符之间' });
+    }
 
     const [rows] = await pool.query(
       'SELECT id, user_id FROM invitations WHERE id = ?',
@@ -270,8 +285,8 @@ router.post('/invitations/:id/report', async (req, res) => {
 
     try {
       await pool.query(
-        'INSERT INTO reported_invitations (invitation_id, reporter_id) VALUES (?, ?)',
-        [invitationId, currentUserId]
+        'INSERT INTO reported_invitations (invitation_id, reporter_id, reason) VALUES (?, ?, ?)',
+        [invitationId, currentUserId, sanitizedReason]
       );
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') {
