@@ -41,9 +41,14 @@ Agents must prioritize security and stability in all operations.
 
 ### Build
 ```bash
-# Build the entire project (backend and frontend)
+# Build CSS (Tailwind CLI) - runs automatically before start/dev
+npm run build:css
+
+# Build the entire project (CSS only, frontend is static)
 npm run build
 ```
+
+**Note:** The CSS build runs automatically via `prestart` and `predev` hooks. The Tailwind CDN has been replaced with a compiled `style.css` generated from `public/src/input.css`.
 
 ### Lint & Format
 ```bash
@@ -152,10 +157,13 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ```bash
 cd /home/kevin/projects/orilink/server
+npm run build:css  # Build CSS before starting (auto-runs with npm start)
 node index.js
 # or with nodemon for development
 npx nodemon index.js
 ```
+
+**Note:** When deploying, always run `npm run build:css` in the `server/` directory before starting the server to ensure the compiled CSS is up to date. The `prestart` hook handles this automatically when using `npm start`.
 
 ### Verify
 

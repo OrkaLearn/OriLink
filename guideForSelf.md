@@ -6,19 +6,39 @@ Quick commands to run the OriLink backend server.
 
 ## 1. Local Development
 
-Start the server from the `server/` directory:
+### Build CSS (required before first run)
+
+The project uses **Tailwind CSS CLI** (not CDN). CSS must be compiled before the server can serve styled pages:
 
 ```bash
 cd /home/kevin/projects/orilink/server
+npm run build:css
+```
+
+This compiles Tailwind utilities + custom styles from `public/src/input.css` into `public/style.css`.
+
+### Start the server
+
+**Option A: Using npm (auto-builds CSS)**
+```bash
+cd /home/kevin/projects/orilink/server
+npm start
+```
+
+**Option B: Using nodemon for auto-restart (auto-builds CSS)**
+```bash
+cd /home/kevin/projects/orilink/server
+npm run dev
+```
+
+**Option C: Direct node (manual CSS build required)**
+```bash
+cd /home/kevin/projects/orilink/server
+npm run build:css  # Must run this first
 node index.js
 ```
 
-For auto-restart on file changes:
-
-```bash
-cd /home/kevin/projects/orilink/server
-npx nodemon index.js
-```
+> **Note:** `npm start` and `npm run dev` automatically run `npm run build:css` via `prestart`/`predev` hooks. Direct `node index.js` does NOT auto-build CSS.
 
 Stop the server (port 3210):
 
@@ -33,6 +53,18 @@ Or press `Ctrl + C` in the terminal where it's running.
 ## 2. Production Server (esshasrv003)
 
 OriLink runs as a systemd service named **`kevin-orilink.service`** (user `kevin`, port 3210).
+
+### Deploy Changes
+
+Compiled CSS (`public/style.css`) is committed to the repository. **No build step is needed on the server.**
+
+```bash
+cd /home/kevin/projects/orilink
+git pull
+sudo systemctl restart kevin-orilink
+```
+
+> **Important:** Always build and commit `public/style.css` locally before deploying. See Section 6 for the local build process.
 
 ### Manage Service
 
@@ -139,3 +171,89 @@ mysql -u root -p orilink < orilink_backup.sql
 ```
 
 > **Note:** After transferring, make sure the MySQL password in `server/db.js` matches the password on the new computer. If it's different, update the `password` field in `db.js` to the new one.
+
+---
+
+## 6. Frontend Build (Tailwind CSS)
+
+The frontend uses **Tailwind CSS v3** compiled via CLI (no CDN).
+
+### Build Flow: Local Build → Commit → Deploy
+
+**Tailwind is only installed on your development machine.** The production server does NOT need Tailwind installed.
+
+```
+Local Machine                    Git Repository              Production Server
+┌─────────────────────┐         ┌──────────────────┐        ┌──────────────────┐
+│ Edit .html/.js/.css │ ──────> │ Commit style.css │ ─────> │ git pull         │
+│ npm run build:css   │         │ (compiled CSS)   │        │ restart service  │
+└─────────────────────┘         └──────────────────┘        └──────────────────┘
+```
+
+### Local Build Steps
+
+```bash
+# 1. Make changes to HTML, JS, or public/src/input.css
+# 2. Build CSS
+cd server
+npm run build:css
+
+# 3. Commit the compiled CSS (and your source changes)
+git add ../public/style.css
+git add <your other changed files>
+git commit -m "your message"
+git push
+
+# 4. On production server, just pull and restart
+cd /home/kevin/projects/orilink
+git pull
+sudo systemctl restart kevin-orilink
+```
+
+### Project Structure
+
+```
+server/
+  tailwind.config.js    # Tailwind configuration (dev only)
+  package.json          # Contains build scripts (tailwindcss is devDependency)
+public/
+  src/
+    input.css           # Tailwind directives + custom styles (EDIT THIS)
+  style.css             # Compiled output (COMMIT THIS, DO NOT EDIT)
+  login.html            # Homepage/login (no CDN)
+  dashboard.html        # Dashboard (no CDN)
+```
+
+### Build Commands (run locally only)
+
+```bash
+# Build CSS only
+cd server
+npm run build:css
+
+# Build entire project (CSS only, frontend is static)
+npm run build
+```
+
+### When to Rebuild CSS
+
+Rebuild CSS locally whenever you:
+- Add/remove Tailwind utility classes in HTML or JS files
+- Modify custom styles in `public/src/input.css`
+
+Then commit the updated `public/style.css` before deploying.
+
+### Git Configuration
+
+Ensure `public/style.css` is tracked by git (not ignored):
+
+```bash
+# Verify style.css is tracked
+git ls-files public/style.css
+
+# If it's not tracked, add it
+git add public/style.css
+git commit -m "chore: add compiled tailwind css"
+```
+
+> **Important:** Never edit `public/style.css` directly. It is overwritten by the build process. Edit `public/src/input.css` instead.

@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'InstrumentSans', 'Noto Sans SC', sans-serif;
+}
+
+html, body {
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.bg-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.bg-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.nav-item {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.input-field {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(0, 180, 160, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 180, 160, 0.15);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.login-btn {
+  background: #40a9b8;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  background: #338793;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(64, 169, 184, 0.35);
+}
+
+.login-btn:active {
+  background: #2d7684;
+  transform: translateY(0);
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0.95) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-white\/80 {
+  color: #ffffff !important;
+}
+
+.text-white {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.link-text {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: color 0.2s ease;
+}
+
+.link-text:hover {
+  color: #ffffff;
+}
+
+.captcha-box {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.refresh-btn {
+  background: #40a9b8;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background: #338793;
+}
+
+.hidden {
+  display: none;
+}
+
+.captcha-container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.captcha-container svg text {
+  fill: #ffffff !important;
+  opacity: 0.9;
+}
+
+.captcha-container svg rect {
+  fill: rgba(255, 255, 255, 0.05) !important;
+}
+
+#loginCaptchaSvg svg,
+#signupCaptchaSvg svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.invitation-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.invitation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.expand-desc:hover span {
+  text-decoration: underline;
+}
