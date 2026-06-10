@@ -139,6 +139,31 @@ let currentUserId = null;
 let currentUsername = null;
 let socket = null;
 let currentChatInvitationId = null;
+let accountOriginalValues = null;
+
+function checkForChanges() {
+  const usernameEl = document.getElementById('username');
+  const passwordEl = document.getElementById('password');
+  const personalityEl = document.getElementById('personalityType');
+  const saveBtn = document.getElementById('saveBtn');
+  if (!usernameEl || !passwordEl || !personalityEl || !saveBtn) return;
+
+  const currentUsername = usernameEl.value.trim();
+  const currentPassword = passwordEl.value;
+  const currentPersonality = personalityEl.value;
+
+  const hasChanges = currentUsername !== accountOriginalValues.username ||
+                     currentPassword !== accountOriginalValues.password ||
+                     currentPersonality !== accountOriginalValues.personalityType;
+
+  if (hasChanges) {
+    saveBtn.className = 'w-full py-2 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-sm font-medium transition-all';
+    saveBtn.textContent = '保存更改* Save Changes*';
+  } else {
+    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
+    saveBtn.textContent = '保存更改 Save Changes';
+  }
+}
 
 function initSocket() {
   socket = io();
@@ -890,6 +915,16 @@ function renderAccountPage() {
     `;
 
       document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
+
+      accountOriginalValues = {
+        username: user.username,
+        password: '',
+        personalityType: user.personality_type || ''
+      };
+
+      document.getElementById('username').addEventListener('input', checkForChanges);
+      document.getElementById('password').addEventListener('input', checkForChanges);
+      document.getElementById('personalityType').addEventListener('change', checkForChanges);
     })
     .catch(err => {
       document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
@@ -946,12 +981,19 @@ async function handleAccountSubmit(e) {
     messageEl.className = 'text-center text-xs mt-2 text-green-400';
     document.getElementById('password').value = '';
     document.getElementById('currentPassword').value = '';
+    accountOriginalValues.username = username;
+    accountOriginalValues.password = '';
+    accountOriginalValues.personalityType = personality_type;
+    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
+    saveBtn.textContent = '保存更改 Save Changes';
   } catch (err) {
     messageEl.textContent = err.message;
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
   } finally {
     saveBtn.disabled = false;
+    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
     saveBtn.textContent = '保存更改 Save Changes';
+    checkForChanges();
   }
 }
 
