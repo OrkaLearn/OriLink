@@ -18,15 +18,24 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://ori.nekko.cn',
+    origin: 'http://ori.nekko.cn',
     methods: ['GET', 'POST']
   }
 });
 
 const PORT = 3210;
 
-app.use(helmet());
-app.use(cors({ origin: 'https://ori.nekko.cn' }));
+app.use(helmet({
+  crossOriginOpenerPolicy: false,
+  originAgentCluster: false,
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "upgrade-insecure-requests": null,
+    }
+  }
+}));
+app.use(cors({ origin: 'http://ori.nekko.cn' }));
 app.use(express.json());
 
 const authLimiter = rateLimit({
