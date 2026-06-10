@@ -1042,6 +1042,35 @@ document.getElementById('chatInput').addEventListener('input', function() {
   this.style.height = this.scrollHeight + 'px';
 });
 
+function insertEmojiAtCursor(emoji) {
+  const input = document.getElementById('chatInput');
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const text = input.value;
+  input.value = text.substring(0, start) + emoji + text.substring(end);
+  input.selectionStart = input.selectionEnd = start + emoji.length;
+  input.focus();
+  input.dispatchEvent(new Event('input'));
+}
+
+document.getElementById('emojiToggleBtn').addEventListener('click', () => {
+  document.getElementById('emojiPicker').classList.toggle('hidden');
+});
+
+document.querySelectorAll('.emoji-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    insertEmojiAtCursor(btn.dataset.emoji);
+  });
+});
+
+document.addEventListener('click', (e) => {
+  const picker = document.getElementById('emojiPicker');
+  const toggle = document.getElementById('emojiToggleBtn');
+  if (!picker.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
+    picker.classList.add('hidden');
+  }
+});
+
 getCurrentUser().then(user => {
   initSocket();
 });

@@ -104,10 +104,27 @@
       <div id="chatMessages" class="flex-1 overflow-y-auto mb-3 p-2 bg-white/5 rounded-lg">
         <p class="text-white/60 text-sm text-center py-4">Loading messages... 加载消息中...</p>
       </div>
+      <div id="emojiPicker" class="hidden absolute bottom-20 left-4 right-4 glass-panel rounded-xl p-3 z-10">
+        <div class="grid grid-cols-5 gap-2">
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="👌">👌</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="😇">😇</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="🙏">🙏</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="👍">👍</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="🎉">🎉</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="😁">😁</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="✊">✊</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="🤝">🤝</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="🌹">🌹</button>
+          <button class="emoji-btn text-2xl hover:bg-white/20 rounded-lg p-1 transition-colors" data-emoji="❤️">❤️</button>
+        </div>
+      </div>
       <div class="flex gap-2">
         <textarea id="chatInput" rows="1"
           class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
           placeholder="Enter message... 输入消息..."></textarea>
+        <button id="emojiToggleBtn"
+          class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-lg transition-all"
+          title="Emoji 表情">😀</button>
         <button id="sendChatBtn"
           class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
           Send 发送
