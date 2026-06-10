@@ -108,7 +108,6 @@ loginForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('loginPassword').value;
   
   const captcha = getCaptchaValue('login');
-  console.log('Login - CAPTCHA token:', !!captcha.captchaToken);
 
   loginBtn.disabled = true;
   loginBtn.textContent = 'Logging in... 登录中...';
@@ -120,8 +119,6 @@ loginForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password, ...captcha })
     });
     const data = await res.json();
-    
-    console.log('Login - Response:', res.status, data);
 
     if (!res.ok) {
       throw new Error(data.error || 'Login failed 登录失败');
@@ -153,7 +150,6 @@ signupForm.addEventListener('submit', async (e) => {
   const classNum = document.getElementById('classNum').value;
   
   const captcha = getCaptchaValue('signup');
-  console.log('Signup - CAPTCHA token:', !!captcha.captchaToken);
 
   signupBtn.disabled = true;
   signupBtn.textContent = 'Creating account... 创建账号中...';
@@ -165,8 +161,6 @@ signupForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, ...captcha })
     });
     const data = await res.json();
-    
-    console.log('Signup - Response:', res.status, data);
 
     if (!res.ok) {
       throw new Error(data.error || 'Registration failed 注册失败');

@@ -4,7 +4,7 @@ const pool = mysql.createPool({
   host: 'localhost',
   port: 3306,
   user: 'kevin',
-  password: '0IsIs//',
+  password: process.env.DB_PASSWORD,
   database: 'orilink',
   waitForConnections: true,
   connectionLimit: 10,
@@ -16,7 +16,7 @@ async function initDatabase() {
     host: 'localhost',
     port: 3306,
     user: 'kevin',
-    password: '0IsIs//',
+    password: process.env.DB_PASSWORD,
   });
 
   await connection.query('CREATE DATABASE IF NOT EXISTS orilink');

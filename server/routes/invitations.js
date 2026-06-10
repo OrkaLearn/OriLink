@@ -2,11 +2,22 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const jwt = require('jsonwebtoken');
+const xss = require('xss');
 
 const INVITATION_TYPES = ['play/sports', 'teammate finding', 'tutoring', 'other'];
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 300;
 const MAX_ACTIVE_INVITATIONS = 4;
+
+const SORT_OPTIONS = {
+  newest: 'i.created_at DESC',
+  event: 'i.event_start IS NULL, i.event_start ASC'
+};
+
+const MY_SORT_OPTIONS = {
+  newest: 'created_at DESC',
+  event: 'event_start IS NULL, event_start ASC'
+};
 
 let io;
 
@@ -23,7 +34,7 @@ function getUserIdFromToken(authHeader) {
     const token = authHeader.substring(7);
     try {
       const jwt = require('jsonwebtoken');
-      const decoded = jwt.verify(token, 'orilink-secret-key-change-in-production');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       resolve(decoded.id);
     } catch (err) {
       resolve(null);
@@ -35,7 +46,7 @@ router.get('/invitations', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
-    const sort = req.query.sort === 'newest' ? 'i.created_at DESC' : 'i.event_start IS NULL, i.event_start ASC';
+    const sort = SORT_OPTIONS[req.query.sort] || SORT_OPTIONS.event;
 
     let query = `
       SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type,
@@ -66,7 +77,7 @@ router.get('/my-invitations', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
-    const sort = req.query.sort === 'newest' ? 'created_at DESC' : 'event_start IS NULL, event_start ASC';
+    const sort = MY_SORT_OPTIONS[req.query.sort] || MY_SORT_OPTIONS.event;
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -313,7 +324,7 @@ router.get('/invitations/joined', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const currentUserId = await getUserIdFromToken(authHeader);
-    const sort = req.query.sort === 'newest' ? 'i.created_at DESC' : 'i.event_start IS NULL, i.event_start ASC';
+    const sort = SORT_OPTIONS[req.query.sort] || SORT_OPTIONS.event;
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -352,6 +363,16 @@ router.post('/messages/:invitationId', async (req, res) => {
       return res.status(400).json({ error: 'Message content is required' });
     }
 
+    const sanitizedContent = xss(content.trim(), {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    });
+
+    if (!sanitizedContent) {
+      return res.status(400).json({ error: 'Message content cannot be empty after sanitization' });
+    }
+
     const [invCheck] = await pool.query(
       `SELECT i.id FROM invitations i
        LEFT JOIN joined_invitations ji ON i.id = ji.invitation_id
@@ -368,7 +389,7 @@ router.post('/messages/:invitationId', async (req, res) => {
 
     await pool.query(
       'INSERT INTO messages (invitation_id, user_id, content) VALUES (?, ?, ?)',
-      [invitationId, currentUserId, content]
+      [invitationId, currentUserId, sanitizedContent]
     );
 
     if (io) {
@@ -376,7 +397,7 @@ router.post('/messages/:invitationId', async (req, res) => {
         invitationId: parseInt(invitationId),
         userId: currentUserId,
         username: username,
-        content: content,
+        content: sanitizedContent,
         created_at: new Date().toISOString()
       });
     }

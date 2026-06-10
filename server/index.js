@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const http = require('http');
 const os = require('os');
@@ -16,15 +18,37 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://ori.nekko.cn',
     methods: ['GET', 'POST']
   }
 });
 
 const PORT = 3210;
 
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: 'https://ori.nekko.cn' }));
 app.use(express.json());
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests, please try again later 请求次数过多，请稍后再试',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/login', authLimiter);
+app.use('/api/register', authLimiter);
+app.use('/api/admin/login', authLimiter);
+app.use('/api', generalLimiter);
 
 app.use('/api', authRoutes);
 app.use('/api', accountRoutes);
@@ -80,7 +104,7 @@ function extractUserIdFromToken(authHeader) {
     const token = authHeader.substring(7);
     try {
       const jwt = require('jsonwebtoken');
-      const decoded = jwt.verify(token, 'orilink-secret-key-change-in-production');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       resolve(decoded.id);
     } catch (err) {
       resolve(null);

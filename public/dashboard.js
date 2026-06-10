@@ -14,6 +14,13 @@ let invitationsSort = 'event';
 let myInvitationsSort = 'event';
 let joinedInvitationsSort = 'event';
 
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 const typeColors = {
   'play/sports': 'bg-emerald-500/80',
   'teammate finding': 'bg-blue-500/80',
@@ -76,8 +83,16 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
   
+  const safeInvitation = {
+    ...invitation,
+    title: escapeHtml(invitation.title),
+    description: escapeHtml(invitation.description),
+    username: escapeHtml(invitation.username || 'Unknown 未知'),
+    personality_type: escapeHtml(invitation.personality_type || 'N/A')
+  };
+  
   const descriptionHtml = truncated 
-    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
+    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
     : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
   
   let metaInfo = '';
@@ -102,11 +117,11 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   if (isOwn) {
     actionButtons = `
       <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">Chat 聊天</button>
+        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>
         <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete 删除</button>
       </div>`;
   } else if (showChat) {
-    actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${invitation.title}">Chat 聊天</button>`;
+    actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>`;
   } else {
     const joinedCount = (invitation.joined_count || 0) + 1;
     const isFull = joinedCount >= invitation.max_participants;
@@ -120,14 +135,14 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     <div class="invitation-card glass-panel rounded-xl p-4 mb-3">
       <div class="flex items-start justify-between gap-2">
         <div class="flex-1 min-w-0">
-          <h3 class="text-white font-semibold text-sm truncate">${invitation.title}</h3>
+          <h3 class="text-white font-semibold text-sm truncate">${safeInvitation.title}</h3>
           ${descriptionHtml}
           <div class="mt-2">${typeBadge}</div>
           ${metaInfo}
         </div>
         <div class="text-right">
-          <p class="text-white text-xs whitespace-nowrap">@${invitation.username || 'Unknown 未知'}</p>
-          <p class="text-white/80 text-xs whitespace-nowrap">${invitation.personality_type || 'N/A'}</p>
+          <p class="text-white text-xs whitespace-nowrap">@${safeInvitation.username}</p>
+          <p class="text-white/80 text-xs whitespace-nowrap">${safeInvitation.personality_type}</p>
         </div>
       </div>
       ${actionButtons}
@@ -426,8 +441,8 @@ function loadChatMessages(invitationId) {
         return `
           <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
             <div class="inline-block max-w-[80%]">
-              <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + msg.username} · ${time}</p>
-              <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${msg.content}</p>
+              <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(msg.username)} · ${time}</p>
+              <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(msg.content)}</p>
             </div>
           </div>
         `;
@@ -452,8 +467,8 @@ function appendMessageToChat(data) {
   const html = `
     <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
       <div class="inline-block max-w-[80%]">
-        <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + data.username} · ${time}</p>
-        <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${data.content}</p>
+        <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
+        <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(data.content)}</p>
       </div>
     </div>
   `;
@@ -948,7 +963,7 @@ async function handleAccountSubmit(e) {
   }
 
   const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
-  const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
+  const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{8,}$/;
 
   if (username && !usernameRegex.test(username)) {
     messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores or dots (max 20 chars) 用户名必须以字母开头，只能包含字母、数字、下划线或点（最多 20 个字符）';
@@ -957,7 +972,7 @@ async function handleAccountSubmit(e) {
   }
 
   if (password && !passwordRegex.test(password)) {
-    messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 密码至少 5 个字符，只能包含字母、数字和常用符号';
+    messageEl.textContent = 'Password must be at least 8 characters, containing only letters, numbers, and common symbols 密码至少 8 个字符，只能包含字母、数字和常用符号';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
   }

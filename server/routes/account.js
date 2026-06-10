@@ -5,10 +5,10 @@ const { pool } = require('../db');
 
 const router = express.Router();
 
-const JWT_SECRET = 'orilink-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const USERNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
-const PASSWORD_REGEX = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
+const PASSWORD_REGEX = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{8,}$/;
 
 const MBTI_TYPES = [
   'INFJ', 'INFP', 'INTJ', 'INTP', 
@@ -90,10 +90,10 @@ router.put('/account', authenticateToken, async (req, res) => {
     
     if (password) {
       if (!PASSWORD_REGEX.test(password)) {
-        return res.status(400).json({ error: 'Password must be at least 5 characters and contain only letters, numbers, and common symbols' });
+        return res.status(400).json({ error: 'Password must be at least 8 characters and contain only letters, numbers, and common symbols' });
       }
       
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       updates.push('password = ?');
       params.push(hashedPassword);
     }
