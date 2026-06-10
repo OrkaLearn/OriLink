@@ -362,6 +362,66 @@ router.get('/invitations/joined', async (req, res) => {
   }
 });
 
+router.get('/invitations/:id/members', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const currentUserId = await getUserIdFromToken(authHeader);
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const invitationId = req.params.id;
+
+    const [invRows] = await pool.query(
+      'SELECT id, user_id FROM invitations WHERE id = ?',
+      [invitationId]
+    );
+
+    if (invRows.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    const isCreator = invRows[0].user_id === currentUserId;
+
+    if (!isCreator) {
+      const [joinCheck] = await pool.query(
+        'SELECT id FROM joined_invitations WHERE user_id = ? AND invitation_id = ?',
+        [currentUserId, invitationId]
+      );
+
+      if (joinCheck.length === 0) {
+        return res.status(403).json({ error: 'Only the invitation creator or joined members can view members 只有邀请创建者或已加入的成员可以查看成员' });
+      }
+    }
+
+    const [members] = await pool.query(
+      `SELECT u.id, u.username, u.full_name, u.personality_type, ji.joined_at
+       FROM joined_invitations ji
+       JOIN users u ON ji.user_id = u.id
+       WHERE ji.invitation_id = ?
+       ORDER BY ji.joined_at ASC`,
+      [invitationId]
+    );
+
+    const [creatorRows] = await pool.query(
+      `SELECT u.id, u.username, u.full_name, u.personality_type
+       FROM invitations i
+       JOIN users u ON i.user_id = u.id
+       WHERE i.id = ?`,
+      [invitationId]
+    );
+
+    res.json({
+      creator: creatorRows[0],
+      members
+    });
+  } catch (err) {
+    console.error('Error fetching members:', err);
+    res.status(500).json({ error: 'Failed to fetch members' });
+  }
+});
+
 router.post('/messages/:invitationId', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;

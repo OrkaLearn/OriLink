@@ -118,10 +118,15 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     actionButtons = `
       <div class="flex gap-2 mt-3">
         <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>
+        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
         <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete 删除</button>
       </div>`;
   } else if (showChat) {
-    actionButtons = `<button class="chat-btn mt-3 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all w-full" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>`;
+    actionButtons = `
+      <div class="flex gap-2 mt-3">
+        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>
+        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+      </div>`;
   } else {
     const joinedCount = (invitation.joined_count || 0) + 1;
     const isFull = joinedCount >= invitation.max_participants;
@@ -551,6 +556,14 @@ function sendChatMessage() {
       }
       return res.json();
     })
+    .then(() => {
+      appendMessageToChat({
+        userId: currentUserId,
+        username: currentUsername,
+        content: content,
+        created_at: new Date().toISOString()
+      });
+    })
     .catch(err => {
       console.error('Error sending message:', err || '发送消息出错');
       input.value = originalValue;
@@ -731,6 +744,12 @@ function loadMyInvitations() {
       document.querySelectorAll('.chat-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openChatModal(e));
       });
+
+      document.querySelectorAll('.members-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          showMembersModal(btn.dataset.id, btn.dataset.title);
+        });
+      });
       
       document.querySelectorAll('.expand-desc').forEach(el => {
         el.addEventListener('click', function() {
@@ -761,6 +780,12 @@ function loadJoinedInvitations() {
       
       document.querySelectorAll('.chat-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openChatModal(e));
+      });
+      
+      document.querySelectorAll('.members-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          showMembersModal(btn.dataset.id, btn.dataset.title);
+        });
       });
       
       document.querySelectorAll('.expand-desc').forEach(el => {
@@ -903,6 +928,61 @@ function showInviteModal(inv) {
 
 function hideInviteModal() {
   document.getElementById('inviteModal').classList.add('hidden');
+}
+
+function showMembersModal(invitationId, title) {
+  const modal = document.getElementById('inviteModal');
+  const modalBody = document.getElementById('modalBody');
+
+  modalBody.innerHTML = `
+    <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
+    <p class="text-white/60 text-xs mt-1 mb-3">Loading members... 加载成员中...</p>
+  `;
+  modal.classList.remove('hidden');
+  document.getElementById('closeModal').onclick = hideInviteModal;
+
+  fetch(`/api/invitations/${invitationId}/members`, { headers: getAuthHeader() })
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(err => { throw new Error(err.error || 'Failed to load members 加载成员失败'); });
+      }
+      return res.json();
+    })
+    .then(data => {
+      let html = `<h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>`;
+      html += `<p class="text-white/60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${escapeHtml(data.creator.personality_type || 'N/A')}</p>`;
+
+      if (data.members.length === 0) {
+        html += '<p class="text-white/60 text-sm">No members have joined yet 暂无成员加入</p>';
+      } else {
+        html += '<div class="space-y-2">';
+        data.members.forEach(m => {
+          const joinedTime = new Date(m.joined_at).toLocaleString();
+          html += `
+            <div class="flex items-center justify-between p-2 rounded-lg bg-white/10">
+              <div>
+                <p class="text-white text-sm font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
+                <p class="text-white/60 text-xs">${escapeHtml(m.personality_type || 'N/A')}</p>
+              </div>
+              <p class="text-white/40 text-xs">${joinedTime}</p>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      html += `<button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>`;
+      modalBody.innerHTML = html;
+      modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
+    })
+    .catch(err => {
+      modalBody.innerHTML = `
+        <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
+        <p class="text-red-400 text-sm mt-2">${escapeHtml(err.message)}</p>
+        <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>
+      `;
+      modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
+    });
 }
 
 function renderAccountPage() {
