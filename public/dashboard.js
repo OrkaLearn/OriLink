@@ -554,7 +554,7 @@ function renderJoinedPage() {
       </div>
       <div id="myInvitationsList"></div>
     </div>
-    <div id="joinedInvitations" class="mt-6">
+    <div id="joinedInvitations" class="mt-6 pt-6 border-t border-white/10">
       <div class="flex justify-between items-center mb-2">
         <p class="text-white text-xs">Joined Invitations 已参与的邀请</p>
         <div class="flex items-center gap-2">
