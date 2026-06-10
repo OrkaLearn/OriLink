@@ -4,7 +4,6 @@ const { pool } = require('../db');
 
 const router = express.Router();
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 const USERNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
@@ -33,7 +32,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Password required' });
     }
 
-    if (password !== ADMIN_PASSWORD) {
+    const isValid = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+    if (!isValid) {
       return res.status(401).json({ error: 'Invalid admin password' });
     }
 
