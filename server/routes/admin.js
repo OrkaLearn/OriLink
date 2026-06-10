@@ -74,11 +74,11 @@ router.post('/users', authenticateAdmin, async (req, res) => {
 
     const gradeNum = parseInt(grade, 10);
     const classNumInt = parseInt(classNum, 10);
-    if (isNaN(gradeNum) || gradeNum < 9 || gradeNum > 12) {
-      return res.status(400).json({ error: 'Grade must be between 9 and 12' });
+    if (isNaN(gradeNum)) {
+      return res.status(400).json({ error: 'Grade must be a valid number 年级必须是有效数字' });
     }
-    if (isNaN(classNumInt) || classNumInt < 1 || classNumInt > 10) {
-      return res.status(400).json({ error: 'Class must be between 1 and 10' });
+    if (isNaN(classNumInt)) {
+      return res.status(400).json({ error: 'Class must be a valid number 班级必须是有效数字' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -124,8 +124,8 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     if (grade !== undefined) {
       const gradeNum = parseInt(grade, 10);
-      if (isNaN(gradeNum) || gradeNum < 9 || gradeNum > 12) {
-        return res.status(400).json({ error: 'Grade must be between 9 and 12' });
+      if (isNaN(gradeNum)) {
+        return res.status(400).json({ error: 'Grade must be a valid number 年级必须是有效数字' });
       }
       updates.push('grade = ?');
       params.push(gradeNum);
@@ -133,8 +133,8 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     if (classNum !== undefined) {
       const classNumInt = parseInt(classNum, 10);
-      if (isNaN(classNumInt) || classNumInt < 1 || classNumInt > 10) {
-        return res.status(400).json({ error: 'Class must be between 1 and 10' });
+      if (isNaN(classNumInt)) {
+        return res.status(400).json({ error: 'Class must be a valid number 班级必须是有效数字' });
       }
       updates.push('class = ?');
       params.push(classNumInt);

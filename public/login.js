@@ -489,11 +489,11 @@ function openEditModal(userId, currentGrade, currentClass) {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-white/70 text-xs mb-1">Grade 年级</label>
-            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" class="input-field w-full px-3 py-2 rounded-lg text-sm">
           </div>
           <div>
             <label class="block text-white/70 text-xs mb-1">Class 班级</label>
-            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" maxlength="2" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="input-field w-full px-3 py-2 rounded-lg text-sm">
           </div>
         </div>
       </div>
