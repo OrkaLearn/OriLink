@@ -816,3 +816,17 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+async function loadUserCount() {
+  const el = document.getElementById('userCount');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/stats/users');
+    const data = await res.json();
+    el.textContent = `${data.count} Registered Users 注册用户`;
+  } catch (err) {
+    el.textContent = 'Error 错误';
+  }
+}
+
+loadUserCount();

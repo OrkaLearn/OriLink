@@ -77,7 +77,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
   
   const descriptionHtml = truncated 
-    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/50 hover:text-white">View More 查看更多</span></p>`
+    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(invitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
     : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
   
   let metaInfo = '';
@@ -112,7 +112,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     const isFull = joinedCount >= invitation.max_participants;
     const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
     actionButtons = isFull
-      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/50 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
+      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/70 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
       : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
   }
 
@@ -125,7 +125,10 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
           <div class="mt-2">${typeBadge}</div>
           ${metaInfo}
         </div>
-        <p class="text-white text-xs whitespace-nowrap">@${invitation.username || 'Unknown 未知'}</p>
+        <div class="text-right">
+          <p class="text-white text-xs whitespace-nowrap">@${invitation.username || 'Unknown 未知'}</p>
+          <p class="text-white/80 text-xs whitespace-nowrap">${invitation.personality_type || 'N/A'}</p>
+        </div>
       </div>
       ${actionButtons}
     </div>
@@ -181,8 +184,8 @@ function renderInvitationsPage() {
       <div class="flex items-center gap-2">
         <span class="text-white/60 text-xs">Sort by 排序:</span>
         <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-          <option value="event" class="bg-gray-800">Event time 活动时间</option>
-          <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+          <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
+          <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
         </select>
       </div>
     </div>
@@ -398,7 +401,7 @@ function loadChatMessages(invitationId) {
         return `
           <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
             <div class="inline-block max-w-[80%]">
-              <p class="text-white/50 text-xs">${isOwn ? 'You 你' : '@' + msg.username} · ${time}</p>
+              <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + msg.username} · ${time}</p>
               <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${msg.content}</p>
             </div>
           </div>
@@ -424,7 +427,7 @@ function appendMessageToChat(data) {
   const html = `
     <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
       <div class="inline-block max-w-[80%]">
-        <p class="text-white/50 text-xs">${isOwn ? 'You 你' : '@' + data.username} · ${time}</p>
+        <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + data.username} · ${time}</p>
         <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${data.content}</p>
       </div>
     </div>
@@ -484,6 +487,7 @@ function renderJoinedPage() {
     <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
       Post Invitation 发布邀请
     </button>
+    <p id="invitationCount" class="text-white/60 text-xs text-center mb-2"></p>
     <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20 relative">
       <button id="closePostForm" class="absolute top-3 right-3 text-white/60 hover:text-white">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -494,14 +498,14 @@ function renderJoinedPage() {
           <input type="text" id="invTitle" required
             class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
             placeholder="e.g., Need tennis partner 例如：需要网球搭档">
-          <p class="text-white/40 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words 字</p>
+          <p class="text-white/60 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words 字</p>
         </div>
         <div>
           <label class="block text-white/80 text-xs mb-1">Description (max ${MAX_DESCRIPTION_LENGTH} chars) 描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
           <textarea id="invDescription" required maxlength="${MAX_DESCRIPTION_LENGTH}" rows="3"
             class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
             placeholder="Describe your invitation... 描述你的邀请..."></textarea>
-          <p class="text-white/40 text-xs text-right mt-1"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
+          <p class="text-white/60 text-xs text-right mt-1"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
         </div>
         <div>
           <label class="block text-white/80 text-xs mb-1">Type 类型</label>
@@ -543,8 +547,8 @@ function renderJoinedPage() {
         <div class="flex items-center gap-2">
           <span class="text-white/60 text-xs">Sort by 排序:</span>
           <select id="myInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-            <option value="event" class="bg-gray-800">Event time 活动时间</option>
-            <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
+            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
           </select>
         </div>
       </div>
@@ -556,8 +560,8 @@ function renderJoinedPage() {
         <div class="flex items-center gap-2">
           <span class="text-white/60 text-xs">Sort by 排序:</span>
           <select id="joinedInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-            <option value="event" class="bg-gray-800">Event time 活动时间</option>
-            <option value="newest" class="bg-gray-800">Post time 发布时间</option>
+            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
+            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
           </select>
         </div>
       </div>
@@ -566,6 +570,20 @@ function renderJoinedPage() {
   `;
 
   document.getElementById('showPostForm').addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/my-invitations?sort=event', { headers: getAuthHeader() });
+      const invitations = await res.json();
+      if (invitations.length >= 4) {
+        messageEl = document.getElementById('postMessage');
+        if (messageEl) {
+          messageEl.textContent = 'You have reached the maximum of 4 active invitations 您已达到4个活跃邀请的上限';
+          messageEl.className = 'text-center text-xs mt-2 text-red-400';
+        }
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to check invitation count:', err);
+    }
     document.getElementById('postForm').classList.remove('hidden');
     document.getElementById('showPostForm').classList.add('hidden');
     const now = new Date();
@@ -610,6 +628,10 @@ function loadMyInvitations() {
     .then(invitations => {
       const container = document.getElementById('myInvitationsList');
       if (!container) return;
+      const countEl = document.getElementById('invitationCount');
+      if (countEl) {
+        countEl.textContent = `${invitations.length}/4 active invitations 活跃邀请`;
+      }
       if (invitations.length === 0) {
         container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
         return;
@@ -740,10 +762,16 @@ function handlePostInvitation(e) {
     })
     .then(res => {
       if (!res) return;
-      return res.json();
+      return res.json().then(data => ({ ok: res.ok, data }));
     })
-    .then(data => {
-      if (!data) return;
+    .then(result => {
+      if (!result) return;
+      if (!result.ok) {
+        messageEl.textContent = result.data.error || 'Failed to post invitation 发布邀请失败';
+        messageEl.className = 'text-center text-xs mt-2 text-red-400';
+        return;
+      }
+      const data = result.data;
       messageEl.textContent = 'Invitation posted successfully! 邀请发布成功！';
       messageEl.className = 'text-center text-xs mt-2 text-green-400';
       document.getElementById('invitationForm').reset();
@@ -774,7 +802,7 @@ function showInviteModal(inv) {
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
   
   modalBody.innerHTML = `
-    <p class="text-white/50 text-xs">@${inv.username || 'Unknown 未知'}</p>
+    <p class="text-white/80 text-xs">@${inv.username || 'Unknown 未知'} · ${inv.personality_type || 'N/A'}</p>
     <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
     <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
@@ -807,28 +835,28 @@ function renderAccountPage() {
           <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
             <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
             <div>
-              <label class="block text-white/30 text-xs mb-1">Full Name 姓名</label>
+              <label class="block text-white/50 text-xs mb-1">Full Name 姓名</label>
               <input type="text" value="${user.full_name || 'N/A 无'}" disabled
-                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-white/30 text-xs mb-1">Grade 年级</label>
+                <label class="block text-white/50 text-xs mb-1">Grade 年级</label>
                 <input type="text" value="${user.grade || 'N/A 无'}" disabled
-                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
               </div>
               <div>
-                <label class="block text-white/30 text-xs mb-1">Class 班级</label>
+                <label class="block text-white/50 text-xs mb-1">Class 班级</label>
                 <input type="text" value="${user.class || 'N/A 无'}" disabled
-                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/30 text-sm cursor-not-allowed">
+                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
               </div>
             </div>
             <div>
-              <label class="block text-white/30 text-xs mb-1">Warning Count 警告次数</label>
+              <label class="block text-white/50 text-xs mb-1">Warning Count 警告次数</label>
               <input type="text" value="${user.warning_count || 0}" disabled
                 class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
             </div>
-            <p class="text-white/40 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
+            <p class="text-white/60 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
           </div>
           <div>
             <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>

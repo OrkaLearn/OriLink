@@ -147,4 +147,14 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.get('/stats/users', async (req, res) => {
+  try {
+    const [result] = await pool.query('SELECT COUNT(*) as count FROM users');
+    res.json({ count: result[0].count });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

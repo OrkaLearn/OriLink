@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const INVITATION_TYPES = ['play/sports', 'teammate finding', 'tutoring', 'other'];
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 300;
+const MAX_ACTIVE_INVITATIONS = 4;
 
 let io;
 
@@ -37,7 +38,7 @@ router.get('/invitations', async (req, res) => {
     const sort = req.query.sort === 'newest' ? 'i.created_at DESC' : 'i.event_start IS NULL, i.event_start ASC';
 
     let query = `
-      SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username,
+      SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = i.id) as joined_count
       FROM invitations i
       JOIN users u ON i.user_id = u.id
@@ -72,9 +73,11 @@ router.get('/my-invitations', async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT id, title, description, type, max_participants, event_start, event_end, created_at,
+      `SELECT invitations.id, invitations.title, invitations.description, invitations.type, invitations.max_participants, invitations.event_start, invitations.event_end, invitations.created_at, u.personality_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = invitations.id) as joined_count
-      FROM invitations WHERE user_id = ? AND (event_end IS NULL OR event_end >= NOW()) ORDER BY ${sort}`,
+      FROM invitations
+      JOIN users u ON invitations.user_id = u.id
+      WHERE user_id = ? AND (event_end IS NULL OR event_end >= NOW()) ORDER BY ${sort}`,
       [currentUserId]
     );
     res.json(rows);
@@ -91,6 +94,14 @@ router.post('/invitations', async (req, res) => {
 
     if (!currentUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const [countResult] = await pool.query(
+      'SELECT COUNT(*) as count FROM invitations WHERE user_id = ? AND (event_end IS NULL OR event_end >= NOW())',
+      [currentUserId]
+    );
+    if (countResult[0].count >= MAX_ACTIVE_INVITATIONS) {
+      return res.status(400).json({ error: `You can only have ${MAX_ACTIVE_INVITATIONS} active invitations at a time 您最多只能同时发布${MAX_ACTIVE_INVITATIONS}个邀请` });
     }
 
     const { title, description, type, max_participants, event_start, event_end } = req.body;
@@ -309,7 +320,7 @@ router.get('/invitations/joined', async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username,
+      `SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = i.id) as joined_count
       FROM invitations i
       JOIN joined_invitations ji ON i.id = ji.invitation_id
