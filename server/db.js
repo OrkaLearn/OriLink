@@ -54,6 +54,10 @@ async function initDatabase() {
     await connection.query('ALTER TABLE users ADD COLUMN warning_count INT NOT NULL DEFAULT 0');
   }
 
+  if (!colNames.includes('user_type')) {
+    await connection.query("ALTER TABLE users ADD COLUMN user_type ENUM('normal', 'verified', 'organization') NOT NULL DEFAULT 'normal'");
+  }
+
   await connection.query(`
     CREATE TABLE IF NOT EXISTS warnings (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,6 +90,11 @@ async function initDatabase() {
 
   if (!invColNames.includes('max_participants')) {
     await connection.query('ALTER TABLE invitations ADD COLUMN max_participants INT NOT NULL DEFAULT 1');
+  } else {
+    const maxParticipantsCol = invCols.find(c => c.Field === 'max_participants');
+    if (maxParticipantsCol.Null === 'NO') {
+      await connection.query('ALTER TABLE invitations MODIFY COLUMN max_participants INT DEFAULT NULL');
+    }
   }
   if (!invColNames.includes('event_start')) {
     await connection.query('ALTER TABLE invitations ADD COLUMN event_start DATETIME');

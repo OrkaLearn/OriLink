@@ -49,7 +49,7 @@ router.get('/invitations', async (req, res) => {
     const sort = SORT_OPTIONS[req.query.sort] || SORT_OPTIONS.event;
 
     let query = `
-      SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type,
+      SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type, u.user_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = i.id) as joined_count
       FROM invitations i
       JOIN users u ON i.user_id = u.id
@@ -84,7 +84,7 @@ router.get('/my-invitations', async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT invitations.id, invitations.title, invitations.description, invitations.type, invitations.max_participants, invitations.event_start, invitations.event_end, invitations.created_at, u.personality_type,
+      `SELECT invitations.id, invitations.title, invitations.description, invitations.type, invitations.max_participants, invitations.event_start, invitations.event_end, invitations.created_at, u.personality_type, u.user_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = invitations.id) as joined_count
       FROM invitations
       JOIN users u ON invitations.user_id = u.id
@@ -115,6 +115,10 @@ router.post('/invitations', async (req, res) => {
       return res.status(400).json({ error: `You can only have ${MAX_ACTIVE_INVITATIONS} active invitations at a time 您最多只能同时发布${MAX_ACTIVE_INVITATIONS}个邀请` });
     }
 
+    const [userRows] = await pool.query('SELECT user_type FROM users WHERE id = ?', [currentUserId]);
+    const userType = userRows.length > 0 ? userRows[0].user_type : 'normal';
+    const isPrivileged = userType === 'verified' || userType === 'organization';
+
     const { title, description, type, max_participants, event_start, event_end } = req.body;
 
     if (!title || !description || !type) {
@@ -133,9 +137,20 @@ router.post('/invitations', async (req, res) => {
       return res.status(400).json({ error: 'Invalid invitation type' });
     }
 
-    const participants = parseInt(max_participants) || 1;
-    if (participants < 1 || participants > 10) {
-      return res.status(400).json({ error: 'max_participants must be between 1 and 10' });
+    let participants;
+    if (max_participants === null || max_participants === undefined || max_participants === '' || max_participants === 0) {
+      if (!isPrivileged) {
+        return res.status(400).json({ error: 'Only verified and organization users can post unlimited invitations 仅已验证和组织用户可以发布无限人数的邀请' });
+      }
+      participants = null;
+    } else {
+      participants = parseInt(max_participants, 10);
+      if (isNaN(participants) || participants < 1) {
+        return res.status(400).json({ error: 'max_participants must be at least 1 (or 0/unset for unlimited for verified/organization accounts) 人数至少为1（已验证/组织账户可为0或留空表示不限）' });
+      }
+      if (!isPrivileged && participants > 10) {
+        return res.status(400).json({ error: 'max_participants must be between 1 and 10 (verified/organization users have no limit) 人数必须在1到10之间（已验证/组织账户无限制）' });
+      }
     }
 
     let startTime = null;
@@ -163,8 +178,13 @@ router.post('/invitations', async (req, res) => {
       return res.status(400).json({ error: 'event_end must be after event_start' });
     }
 
-    if (startTime && endTime && (endTime - startTime) > 24 * 60 * 60 * 1000) {
-      return res.status(400).json({ error: 'Event duration cannot exceed 24 hours 活动时长不能超过24小时' });
+    const maxDuration = isPrivileged ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    if (startTime && endTime && (endTime - startTime) > maxDuration) {
+      return res.status(400).json({ 
+        error: isPrivileged 
+          ? 'Event duration cannot exceed 7 days 活动时长不能超过7天' 
+          : 'Event duration cannot exceed 24 hours 活动时长不能超过24小时' 
+      });
     }
 
     const [result] = await pool.query(
@@ -346,7 +366,7 @@ router.get('/invitations/joined', async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type,
+      `SELECT i.id, i.title, i.description, i.type, i.max_participants, i.event_start, i.event_end, i.created_at, u.username, u.personality_type, u.user_type,
         (SELECT COUNT(*) FROM joined_invitations ji WHERE ji.invitation_id = i.id) as joined_count
       FROM invitations i
       JOIN joined_invitations ji ON i.id = ji.invitation_id
@@ -396,7 +416,7 @@ router.get('/invitations/:id/members', async (req, res) => {
     }
 
     const [members] = await pool.query(
-      `SELECT u.id, u.username, u.full_name, u.personality_type, ji.joined_at
+      `SELECT u.id, u.username, u.full_name, u.personality_type, u.user_type, ji.joined_at
        FROM joined_invitations ji
        JOIN users u ON ji.user_id = u.id
        WHERE ji.invitation_id = ?
@@ -405,7 +425,7 @@ router.get('/invitations/:id/members', async (req, res) => {
     );
 
     const [creatorRows] = await pool.query(
-      `SELECT u.id, u.username, u.full_name, u.personality_type
+      `SELECT u.id, u.username, u.full_name, u.personality_type, u.user_type
        FROM invitations i
        JOIN users u ON i.user_id = u.id
        WHERE i.id = ?`,

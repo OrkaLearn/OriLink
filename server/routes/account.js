@@ -37,7 +37,7 @@ function authenticateToken(req, res, next) {
 router.get('/account', authenticateToken, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, grade, class, personality_type, email, warning_count, created_at FROM users WHERE id = ?',
+      'SELECT id, username, full_name, grade, class, personality_type, user_type, email, warning_count, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     
@@ -99,6 +99,10 @@ router.put('/account', authenticateToken, async (req, res) => {
     }
     
     if (personality_type) {
+      const [userCheck] = await pool.query('SELECT user_type FROM users WHERE id = ?', [req.user.id]);
+      if (userCheck.length > 0 && userCheck[0].user_type !== 'normal') {
+        return res.status(403).json({ error: 'Verified and organization accounts cannot change their personality type 已验证和组织账户不能更改其性格类型' });
+      }
       if (!MBTI_TYPES.includes(personality_type)) {
         return res.status(400).json({ error: 'Invalid personality type' });
       }

@@ -79,6 +79,19 @@ function countWords(text) {
   return chineseChars + englishWords;
 }
 
+function renderUserTypeBadge(userType, personalityType) {
+  const safeType = escapeHtml(userType || 'normal');
+  const safeMbti = escapeHtml(personalityType || 'N/A');
+  
+  if (safeType === 'verified') {
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-500/80 text-white whitespace-nowrap">Verified 已验证</span>';
+  }
+  if (safeType === 'organization') {
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/80 text-white whitespace-nowrap">Organization 组织</span>';
+  }
+  return `<span class="text-white/80 text-xs whitespace-nowrap">${safeMbti}</span>`;
+}
+
 function createInvitationCard(invitation, isOwn = false, showChat = false, showReport = false) {
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
@@ -88,7 +101,8 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     title: escapeHtml(invitation.title),
     description: escapeHtml(invitation.description),
     username: escapeHtml(invitation.username || 'Unknown 未知'),
-    personality_type: escapeHtml(invitation.personality_type || 'N/A')
+    personality_type: escapeHtml(invitation.personality_type || 'N/A'),
+    user_type: escapeHtml(invitation.user_type || 'normal')
   };
   
   const descriptionHtml = truncated 
@@ -96,12 +110,15 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
   
   let metaInfo = '';
-  if (invitation.max_participants || invitation.event_start || invitation.event_end) {
+  if (invitation.max_participants !== undefined || invitation.event_start || invitation.event_end) {
     metaInfo += '<div class="mt-2 flex flex-wrap gap-2">';
-    if (invitation.max_participants) {
+    if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
       const joinedCount = (invitation.joined_count || 0) + 1;
       const isFull = joinedCount >= invitation.max_participants;
       metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</span>`;
+    } else if (invitation.max_participants === null) {
+      const joinedCount = (invitation.joined_count || 0) + 1;
+      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/∞</span>`;
     }
     if (invitation.event_start && invitation.event_end) {
       const startDate = new Date(invitation.event_start);
@@ -117,19 +134,19 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   if (isOwn) {
     actionButtons = `
       <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>
+        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
         <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
         <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete 删除</button>
       </div>`;
   } else if (showChat) {
     actionButtons = `
       <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Chat 聊天</button>
+        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
         <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
       </div>`;
   } else {
     const joinedCount = (invitation.joined_count || 0) + 1;
-    const isFull = joinedCount >= invitation.max_participants;
+    const isFull = invitation.max_participants !== null && invitation.max_participants !== undefined && joinedCount >= invitation.max_participants;
     const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
     actionButtons = isFull
       ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/70 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
@@ -147,7 +164,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
         </div>
         <div class="text-right">
           <p class="text-white text-xs whitespace-nowrap">@${safeInvitation.username}</p>
-          <p class="text-white/80 text-xs whitespace-nowrap">${safeInvitation.personality_type}</p>
+          ${renderUserTypeBadge(safeInvitation.user_type, safeInvitation.personality_type)}
         </div>
       </div>
       ${actionButtons}
@@ -157,6 +174,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
 
 let currentUserId = null;
 let currentUsername = null;
+let currentUserType = null;
 let socket = null;
 let currentChatInvitationId = null;
 let accountOriginalValues = null;
@@ -166,11 +184,11 @@ function checkForChanges() {
   const passwordEl = document.getElementById('password');
   const personalityEl = document.getElementById('personalityType');
   const saveBtn = document.getElementById('saveBtn');
-  if (!usernameEl || !passwordEl || !personalityEl || !saveBtn) return;
+  if (!usernameEl || !passwordEl || !saveBtn) return;
 
   const currentUsername = usernameEl.value.trim();
   const currentPassword = passwordEl.value;
-  const currentPersonality = personalityEl.value;
+  const currentPersonality = personalityEl ? personalityEl.value : '';
 
   const hasChanges = currentUsername !== accountOriginalValues.username ||
                      currentPassword !== accountOriginalValues.password ||
@@ -211,12 +229,13 @@ function initSocket() {
 }
 
 function getCurrentUser() {
-  if (currentUserId) return Promise.resolve({ id: currentUserId, username: currentUsername });
+  if (currentUserId) return Promise.resolve({ id: currentUserId, username: currentUsername, user_type: currentUserType });
   return fetch('/api/account', { headers: getAuthHeader() })
     .then(res => res.json())
     .then(user => {
       currentUserId = user.id;
       currentUsername = user.username;
+      currentUserType = user.user_type || 'normal';
       return user;
     });
 }
@@ -224,8 +243,7 @@ function getCurrentUser() {
 function renderInvitationsPage() {
   const container = document.getElementById('page-description');
   container.innerHTML = `
-    <div class="flex justify-between items-center mb-3">
-      <p class="text-white/60 text-sm">Loading invitations... 加载邀请中...</p>
+    <div class="flex justify-end items-center mb-5">
       <div class="flex items-center gap-2">
         <span class="text-white/60 text-xs">Sort by 排序:</span>
         <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
@@ -246,7 +264,7 @@ function renderInvitationsPage() {
 
 function loadInvitationsList() {
   const container = document.getElementById('page-description');
-  const sortHtml = container.querySelector('#invSortSelect')?.parentElement?.outerHTML || '';
+  const sortHtml = container.querySelector('#invSortSelect')?.parentElement?.parentElement?.outerHTML || '';
 
   Promise.all([
     fetch(`/api/invitations?sort=${invitationsSort}`, { headers: getAuthHeader() }).then(res => res.json()),
@@ -451,7 +469,7 @@ function handleJoin(e) {
 function openChatModal(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
-  const title = btn.dataset.title || 'Chat 聊天';
+  const title = btn.dataset.title || 'Temp Chat 临时聊天';
   currentChatInvitationId = invitationId;
   
   const modal = document.getElementById('chatModal');
@@ -582,7 +600,12 @@ function closeChatModal() {
 
 function renderJoinedPage() {
   const container = document.getElementById('page-description');
-  container.innerHTML = `
+  getCurrentUser().then(() => {
+    const isPrivileged = currentUserType === 'verified' || currentUserType === 'organization';
+    const participantsLabel = isPrivileged
+      ? 'People needed (excl. yourself) 所需人数（不含自己）'
+      : 'Participants (incl. yourself) 所需人数（含自己）';
+    container.innerHTML = `
     <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
       Post Invitation 发布邀请
     </button>
@@ -615,11 +638,16 @@ function renderJoinedPage() {
           </select>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Participants (incl. yourself) 所需人数（含自己）</label>
-          <select id="invMaxParticipants"
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
-          </select>
+          <label class="block text-white/80 text-xs mb-1">${participantsLabel}</label>
+          ${isPrivileged
+            ? `<input type="number" id="invMaxParticipants" min="1"
+                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
+                 placeholder="Leave blank if unlimited 留空表示不限">`
+            : `<select id="invMaxParticipants"
+                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                 <option value="">Select... 选择...</option>
+                 ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
+               </select>`}
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -719,6 +747,7 @@ function renderJoinedPage() {
 
   loadMyInvitations();
   loadJoinedInvitations();
+  });
 }
 
 function loadMyInvitations() {
@@ -807,10 +836,12 @@ function handlePostInvitation(e) {
   e.preventDefault();
   const messageEl = document.getElementById('postMessage');
   const postBtn = document.getElementById('postBtn');
+  const isPrivileged = currentUserType === 'verified' || currentUserType === 'organization';
   const title = document.getElementById('invTitle').value.trim();
   const description = document.getElementById('invDescription').value.trim();
   const type = document.getElementById('invType').value;
-  const max_participants = parseInt(document.getElementById('invMaxParticipants').value);
+  const rawMaxParticipants = document.getElementById('invMaxParticipants').value;
+  const max_participants = parseInt(rawMaxParticipants, 10);
   const event_start = document.getElementById('invEventStart').value;
   const event_end = document.getElementById('invEventEnd').value;
 
@@ -847,10 +878,27 @@ function handlePostInvitation(e) {
     return;
   }
 
-  if (endDate - startDate > 24 * 60 * 60 * 1000) {
-    messageEl.textContent = 'Event duration cannot exceed 24 hours 活动时长不能超过24小时';
+  const maxDurationMs = isPrivileged ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+  if (endDate - startDate > maxDurationMs) {
+    messageEl.textContent = isPrivileged
+      ? 'Event duration cannot exceed 7 days 活动时长不能超过7天'
+      : 'Event duration cannot exceed 24 hours 活动时长不能超过24小时';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
+  }
+
+  if (isPrivileged) {
+    if (!isNaN(max_participants) && max_participants < 1) {
+      messageEl.textContent = 'Number of people must be at least 1 (leave blank for unlimited) 人数至少为1（留空表示不限）';
+      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      return;
+    }
+  } else {
+    if (isNaN(max_participants) || max_participants < 1 || max_participants > 10) {
+      messageEl.textContent = 'Number of people must be between 1 and 10 人数必须在1到10之间';
+      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      return;
+    }
   }
 
   if (countWords(title) > 15) {
@@ -865,10 +913,11 @@ function handlePostInvitation(e) {
       postBtn.disabled = true;
       postBtn.textContent = 'Posting... 发布中...';
 
+      const submittedMaxParticipants = (max_participants === 0 || isNaN(max_participants)) ? null : max_participants;
       return fetch('/api/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify({ title, description, type, max_participants, event_start, event_end })
+        body: JSON.stringify({ title, description, type, max_participants: submittedMaxParticipants, event_start, event_end })
       });
     })
     .then(res => {
@@ -913,7 +962,7 @@ function showInviteModal(inv) {
   const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
   
   modalBody.innerHTML = `
-    <p class="text-white/80 text-xs">@${inv.username || 'Unknown 未知'} · ${inv.personality_type || 'N/A'}</p>
+    <p class="text-white/80 text-xs">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
     <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
     <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
@@ -950,7 +999,7 @@ function showMembersModal(invitationId, title) {
     })
     .then(data => {
       let html = `<h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>`;
-      html += `<p class="text-white/60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${escapeHtml(data.creator.personality_type || 'N/A')}</p>`;
+      html += `<p class="text-white/60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
 
       if (data.members.length === 0) {
         html += '<p class="text-white/60 text-sm">No members have joined yet 暂无成员加入</p>';
@@ -962,7 +1011,7 @@ function showMembersModal(invitationId, title) {
             <div class="flex items-center justify-between p-2 rounded-lg bg-white/10">
               <div>
                 <p class="text-white text-sm font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
-                <p class="text-white/60 text-xs">${escapeHtml(m.personality_type || 'N/A')}</p>
+                <p class="text-white/60 text-xs">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
               </div>
               <p class="text-white/40 text-xs">${joinedTime}</p>
             </div>
@@ -1036,12 +1085,17 @@ function renderAccountPage() {
           </div>
           <div>
             <label class="block text-white/80 text-xs mb-1">Personality Type (MBTI) 性格类型（MBTI）</label>
+            ${user.user_type === 'normal' ? `
             <select id="personalityType" name="personalityType"
               class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
 <option value="">Select type... 选择类型...</option>
             ${mbtiOptions}
-          </select>
-        </div>
+          </select>` : `
+            <div class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+              ${renderUserTypeBadge(user.user_type, user.personality_type)}
+            </div>
+            <p class="text-white/60 text-xs italic mt-1">Verified and organization accounts cannot change their type. 已验证和组织账户不能更改其类型。</p>`}
+          </div>
         <div>
           <label class="block text-white/80 text-xs mb-1">Current password (required to save) 当前密码（保存时必填）</label>
           <input type="password" id="currentPassword" name="currentPassword" required
@@ -1065,7 +1119,10 @@ function renderAccountPage() {
 
       document.getElementById('username').addEventListener('input', checkForChanges);
       document.getElementById('password').addEventListener('input', checkForChanges);
-      document.getElementById('personalityType').addEventListener('change', checkForChanges);
+      const personalityTypeEl = document.getElementById('personalityType');
+      if (personalityTypeEl) {
+        personalityTypeEl.addEventListener('change', checkForChanges);
+      }
     })
     .catch(err => {
       document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
@@ -1079,7 +1136,8 @@ async function handleAccountSubmit(e) {
   
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-  const personality_type = document.getElementById('personalityType').value;
+  const personalityTypeEl = document.getElementById('personalityType');
+  const personality_type = personalityTypeEl ? personalityTypeEl.value : undefined;
   const currentPassword = document.getElementById('currentPassword').value;
 
   if (!currentPassword) {

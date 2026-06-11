@@ -387,10 +387,21 @@ adminPasswordInput.addEventListener('keydown', (e) => {
 
 document.getElementById('adminRefreshUsers').addEventListener('click', loadAdminUsers);
 
+function renderUserTypeBadge(userType) {
+  const safeType = escapeHtml(userType || 'normal');
+  if (safeType === 'verified') {
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-500/80 text-white whitespace-nowrap">Verified 已验证</span>';
+  }
+  if (safeType === 'organization') {
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/80 text-white whitespace-nowrap">Organization 组织</span>';
+  }
+  return '<span class="text-white/60 text-xs">Normal 普通</span>';
+}
+
 async function loadAdminUsers() {
   adminUserListError.classList.add('hidden');
   adminNoUsers.classList.add('hidden');
-  adminUserList.innerHTML = '<tr><td colspan="9" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
+  adminUserList.innerHTML = '<tr><td colspan="10" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
   try {
     const users = await adminApi('/users');
     adminUserList.innerHTML = '';
@@ -406,20 +417,21 @@ async function loadAdminUsers() {
       tr.innerHTML = `
         <td class="px-3 py-2 text-white/60">${user.id}</td>
         <td class="px-3 py-2">${escapeHtml(user.username)}</td>
-        <td class="px-3 py-2 hidden md:table-cell">${escapeHtml(fullName)}</td>
+        <td class="px-3 py-2 hidden md:table-cell"><span class="editable-fullname" data-id="${user.id}" data-value="${escapeHtml(fullName)}">${escapeHtml(fullName)}</span></td>
         <td class="px-3 py-2">
           <span class="editable-grade" data-id="${user.id}" data-value="${escapeHtml(user.grade)}">${escapeHtml(user.grade)}</span>
         </td>
         <td class="px-3 py-2">
           <span class="editable-class" data-id="${user.id}" data-value="${escapeHtml(user.class)}">${escapeHtml(user.class)}</span>
         </td>
+        <td class="px-3 py-2">${renderUserTypeBadge(user.user_type)}</td>
         <td class="px-3 py-2 text-white/50 text-xs hidden lg:table-cell">${created}</td>
         <td class="px-3 py-2">
           <span class="text-white/80">${user.warning_count || 0}</span>
           <button class="view-profile-btn ml-1 text-xs text-blue-400 hover:text-blue-300" data-id="${user.id}">Profile 资料</button>
         </td>
         <td class="px-3 py-2 text-right">
-          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-grade="${escapeHtml(user.grade)}" data-class="${escapeHtml(user.class)}">Edit 编辑</button>
+          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-grade="${escapeHtml(user.grade)}" data-class="${escapeHtml(user.class)}" data-user-type="${escapeHtml(user.user_type || 'normal')}">Edit 编辑</button>
           <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete 删除</button>
         </td>
       `;
@@ -463,7 +475,10 @@ function bindUserRowActions() {
       const tr = btn.closest('tr');
       const grade = tr.querySelector('.editable-grade').textContent.trim();
       const cls = tr.querySelector('.editable-class').textContent.trim();
-      openEditModal(id, grade, cls);
+      const userType = btn.dataset.userType || 'normal';
+      const fullNameEl = tr.querySelector('.editable-fullname');
+      const fullName = fullNameEl ? fullNameEl.textContent.trim() : '';
+      openEditModal(id, grade, cls, userType, fullName);
     });
   });
 
@@ -474,7 +489,7 @@ function bindUserRowActions() {
   });
 }
 
-function openEditModal(userId, currentGrade, currentClass) {
+function openEditModal(userId, currentGrade, currentClass, currentUserType, currentFullName) {
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4';
   modal.innerHTML = `
@@ -482,6 +497,10 @@ function openEditModal(userId, currentGrade, currentClass) {
     <div class="glass-panel rounded-2xl p-6 w-full max-w-sm relative z-10">
       <h3 class="text-white font-bold text-lg mb-4">Edit User #${userId} 编辑用户</h3>
       <div class="space-y-3">
+        <div>
+          <label class="block text-white/70 text-xs mb-1">Full Name 姓名</label>
+          <input type="text" id="editFullName" value="${escapeHtml(currentFullName)}" maxlength="100" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+        </div>
         <div>
           <label class="block text-white/70 text-xs mb-1">New password (leave empty to keep current) 新密码（留空保持当前密码）</label>
           <input type="password" id="editPassword" placeholder="New password 新密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm">
@@ -495,6 +514,14 @@ function openEditModal(userId, currentGrade, currentClass) {
             <label class="block text-white/70 text-xs mb-1">Class 班级</label>
             <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="input-field w-full px-3 py-2 rounded-lg text-sm">
           </div>
+        </div>
+        <div>
+          <label class="block text-white/70 text-xs mb-1">User Type 用户类型</label>
+          <select id="editUserType" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <option value="normal" ${currentUserType === 'normal' ? 'selected' : ''}>Normal 普通</option>
+            <option value="verified" ${currentUserType === 'verified' ? 'selected' : ''}>Verified 已验证</option>
+            <option value="organization" ${currentUserType === 'organization' ? 'selected' : ''}>Organization 组织</option>
+          </select>
         </div>
       </div>
       <div id="editError" class="text-red-400 text-sm mt-2 hidden"></div>
@@ -514,6 +541,8 @@ function openEditModal(userId, currentGrade, currentClass) {
     const password = document.getElementById('editPassword').value;
     const grade = document.getElementById('editGrade').value;
     const cls = document.getElementById('editClass').value;
+    const userType = document.getElementById('editUserType').value;
+    const fullName = document.getElementById('editFullName').value;
     const editError = document.getElementById('editError');
     const saveBtn = document.getElementById('editSave');
 
@@ -525,6 +554,8 @@ function openEditModal(userId, currentGrade, currentClass) {
     if (password) body.password = password;
     if (grade !== currentGrade) body.grade = grade;
     if (cls !== currentClass) body.class = cls;
+    if (userType !== currentUserType) body.user_type = userType;
+    if (fullName !== currentFullName) body.full_name = fullName;
 
     try {
       await adminApi(`/users/${userId}`, {
@@ -558,6 +589,8 @@ async function openProfileModal(userId) {
           <p class="text-white font-semibold">${escapeHtml(user.username)}</p>
           <p class="text-white/60 text-xs">Grade 年级</p>
           <p class="text-white">${escapeHtml(user.grade)} - Class 班级 ${escapeHtml(user.class)}</p>
+          <p class="text-white/60 text-xs">User Type 用户类型</p>
+          <p>${renderUserTypeBadge(user.user_type)}</p>
           <p class="text-white/60 text-xs">Days with OriLink 加入元联天数</p>
           <p class="text-white">${daysSince} days 天</p>
           <p class="text-white/60 text-xs">Warning Count 警告次数</p>
@@ -597,6 +630,7 @@ adminAddUserForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('adminNewPassword').value;
   const grade = document.getElementById('adminNewGrade').value.trim();
   const cls = document.getElementById('adminNewClass').value.trim();
+  const userType = document.getElementById('adminNewUserType').value;
 
   const msg = adminAddUserMsg;
   msg.className = 'text-center text-sm mt-2 hidden';
@@ -608,7 +642,7 @@ adminAddUserForm.addEventListener('submit', async (e) => {
   try {
     const data = await adminApi('/users', {
       method: 'POST',
-      body: JSON.stringify({ username, password, grade, class: cls })
+      body: JSON.stringify({ username, password, grade, class: cls, user_type: userType })
     });
     msg.textContent = `User "${data.user.username}" created successfully! 用户 "${data.user.username}" 创建成功！`;
     msg.className = 'text-center text-sm mt-2 text-green-400';
