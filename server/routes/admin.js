@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../db');
+const { authStore, generalStore, AUTH_LIMITER_MAX, GENERAL_LIMITER_MAX } = require('../rate-limit-store');
 
 const router = express.Router();
 
@@ -290,6 +291,37 @@ router.get('/warnings/:userId', authenticateAdmin, async (req, res) => {
     res.json(warnings);
   } catch (error) {
     console.error('Get warnings error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/rate-limits', authenticateAdmin, (req, res) => {
+  try {
+    const getStoreData = (store, max) => {
+      const clientMap = store.current;
+      let totalHits = 0;
+      const ips = [];
+
+      if (clientMap && clientMap instanceof Map) {
+        for (const [ip, data] of clientMap.entries()) {
+          if (data && typeof data === 'object' && typeof data.totalHits === 'number') {
+            totalHits += data.totalHits;
+            ips.push({ ip, hits: data.totalHits, resetTime: data.resetTime ? new Date(data.resetTime).toISOString() : null });
+          }
+        }
+      }
+
+      ips.sort((a, b) => b.hits - a.hits);
+
+      return { totalHits, max, ips };
+    };
+
+    res.json({
+      auth: getStoreData(authStore, AUTH_LIMITER_MAX),
+      general: getStoreData(generalStore, GENERAL_LIMITER_MAX),
+    });
+  } catch (error) {
+    console.error('Get rate limits error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

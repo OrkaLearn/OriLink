@@ -1,3 +1,13 @@
+async function parseJSON(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    if (res.status === 429) throw new Error('Too many requests, please try again later 请求次数过多，请稍后再试');
+    throw new Error('Server error 服务器错误');
+  }
+}
+
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
 const authSwitch = document.getElementById('authSwitch');
@@ -78,7 +88,7 @@ async function loadCaptcha(form) {
   if (inputEl) inputEl.value = '';
   try {
     const res = await fetch('/api/captcha');
-    const data = await res.json();
+    const data = await parseJSON(res);
     tokenEl.value = data.token;
     svgEl.innerHTML = data.svg;
     svgEl.querySelector('svg').style.width = '100%';
@@ -118,7 +128,7 @@ loginForm.addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, ...captcha })
     });
-    const data = await res.json();
+    const data = await parseJSON(res);
 
     if (!res.ok) {
       throw new Error(data.error || 'Login failed 登录失败');
@@ -160,7 +170,7 @@ signupForm.addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, ...captcha })
     });
-    const data = await res.json();
+    const data = await parseJSON(res);
 
     if (!res.ok) {
       throw new Error(data.error || 'Registration failed 注册失败');
@@ -251,13 +261,13 @@ signupUsernameInput.addEventListener('input', () => {
   usernameCheckTimeout = setTimeout(async () => {
     try {
       const res = await fetch(`/api/check-username?username=${encodeURIComponent(username)}`);
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const data = await res.json();
+      const data = await parseJSON(res);
 
       usernameStatus.classList.remove('hidden');
-      if (data.available) {
+      if (!res.ok) {
+        usernameStatus.textContent = data.error || 'Check failed 检查失败';
+        usernameStatus.className = 'text-xs mt-1 text-red-400';
+      } else if (data.available) {
         usernameStatus.textContent = 'Username available 用户名可用';
         usernameStatus.className = 'text-xs mt-1 text-green-400';
       } else {
@@ -316,11 +326,84 @@ function showAdminDashboard() {
   document.getElementById('adminProfanityCheckBtn').classList.remove('hidden');
   document.getElementById('adminLogoutBtn').classList.remove('hidden');
   loadAdminUsers();
+  loadRateLimits();
+}
+
+async function loadRateLimits() {
+  const authCount = document.getElementById('authRateLimitCount');
+  const authBar = document.getElementById('authRateLimitBar');
+  const authMaxEl = document.getElementById('authRateLimitMax');
+  const generalCount = document.getElementById('generalRateLimitCount');
+  const generalBar = document.getElementById('generalRateLimitBar');
+  const generalMaxEl = document.getElementById('generalRateLimitMax');
+  const ipsEl = document.getElementById('rateLimitIps');
+
+  try {
+    const data = await adminApi('/rate-limits');
+
+    const authPct = data.auth.max > 0 ? Math.min((data.auth.totalHits / data.auth.max) * 100, 100) : 0;
+    authCount.textContent = `${data.auth.totalHits} / ${data.auth.max}`;
+    authBar.style.width = `${authPct}%`;
+    authBar.className = `h-2 rounded-full transition-all ${authPct > 80 ? 'bg-red-400' : authPct > 50 ? 'bg-yellow-400' : 'bg-green-400'}`;
+    authMaxEl.textContent = data.auth.max;
+
+    const generalPct = data.general.max > 0 ? Math.min((data.general.totalHits / data.general.max) * 100, 100) : 0;
+    generalCount.textContent = `${data.general.totalHits} / ${data.general.max}`;
+    generalBar.style.width = `${generalPct}%`;
+    generalBar.className = `h-2 rounded-full transition-all ${generalPct > 80 ? 'bg-red-400' : generalPct > 50 ? 'bg-yellow-400' : 'bg-blue-400'}`;
+    generalMaxEl.textContent = data.general.max;
+
+    const allIps = [...data.auth.ips, ...data.general.ips];
+    const merged = {};
+    allIps.forEach(ipData => {
+      if (!merged[ipData.ip]) merged[ipData.ip] = { ip: ipData.ip, authHits: 0, generalHits: 0, resetTime: null };
+      if (data.auth.ips.find(a => a.ip === ipData.ip)) {
+        merged[ipData.ip].authHits = ipData.hits;
+        merged[ipData.ip].resetTime = ipData.resetTime;
+      }
+      if (data.general.ips.find(g => g.ip === ipData.ip)) {
+        merged[ipData.ip].generalHits = ipData.hits;
+        if (!merged[ipData.ip].resetTime) merged[ipData.ip].resetTime = ipData.resetTime;
+      }
+    });
+    const sortedIps = Object.values(merged).sort((a, b) => (b.authHits + b.generalHits) - (a.authHits + a.generalHits));
+
+    if (sortedIps.length === 0) {
+      ipsEl.innerHTML = '<p class="text-white/40 text-xs text-center py-3">No request data yet 暂无请求数据</p>';
+    } else {
+      ipsEl.innerHTML = `
+        <table class="w-full text-xs">
+          <thead class="sticky top-0 bg-white/10">
+            <tr class="text-white/60">
+              <th class="px-2 py-1 text-left">IP</th>
+              <th class="px-2 py-1 text-right">Auth 认证</th>
+              <th class="px-2 py-1 text-right">General 通用</th>
+              <th class="px-2 py-1 text-right">Resets 重置</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sortedIps.map(ip => `
+              <tr class="border-t border-white/5">
+                <td class="px-2 py-1 text-white/90">${escapeHtml(ip.ip)}</td>
+                <td class="px-2 py-1 text-right text-white/80">${ip.authHits}</td>
+                <td class="px-2 py-1 text-right text-white/80">${ip.generalHits}</td>
+                <td class="px-2 py-1 text-right text-white/50">${ip.resetTime ? new Date(ip.resetTime).toLocaleTimeString() : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+  } catch (err) {
+    authCount.textContent = 'Error 错误';
+    generalCount.textContent = 'Error 错误';
+  }
 }
 
 document.getElementById('closeAdminPanel').addEventListener('click', closeAdminPanel);
 document.getElementById('adminBackdrop').addEventListener('click', closeAdminPanel);
 document.getElementById('adminLogoutBtn').addEventListener('click', adminLogout);
+document.getElementById('refreshRateLimitsBtn').addEventListener('click', loadRateLimits);
 
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.shiftKey && e.key === 'A') {
@@ -342,7 +425,7 @@ async function adminLogin(password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password })
   });
-  const data = await res.json();
+  const data = await parseJSON(res);
   if (!res.ok) throw new Error(data.error || 'Login failed 登录失败');
   localStorage.setItem('adminToken', data.token);
   return data.token;
@@ -358,7 +441,7 @@ async function adminApi(endpoint, options = {}) {
       ...(options.headers || {})
     }
   });
-  const data = await res.json();
+  const data = await parseJSON(res);
   if (!res.ok) throw new Error(data.error || 'Request failed 请求失败');
   return data;
 }
@@ -889,7 +972,8 @@ async function loadUserCount() {
   if (!el) return;
   try {
     const res = await fetch('/api/stats/users');
-    const data = await res.json();
+    const data = await parseJSON(res);
+    if (!res.ok) throw new Error(data.error || 'Error 错误');
     el.textContent = `${data.count} Registered Users 注册用户`;
   } catch (err) {
     el.textContent = 'Error 错误';
