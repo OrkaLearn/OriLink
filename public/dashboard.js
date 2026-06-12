@@ -104,6 +104,8 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
     personality_type: escapeHtml(invitation.personality_type || 'N/A'),
     user_type: escapeHtml(invitation.user_type || 'normal')
   };
+
+  const isInviterPrivileged = invitation.user_type === 'verified' || invitation.user_type === 'organization';
   
   const descriptionHtml = truncated 
     ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
@@ -113,11 +115,11 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   if (invitation.max_participants !== undefined || invitation.event_start || invitation.event_end) {
     metaInfo += '<div class="mt-2 flex flex-wrap gap-2">';
     if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
-      const joinedCount = (invitation.joined_count || 0) + 1;
+      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
       const isFull = joinedCount >= invitation.max_participants;
       metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</span>`;
     } else if (invitation.max_participants === null) {
-      const joinedCount = (invitation.joined_count || 0) + 1;
+      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
       metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/∞</span>`;
     }
     if (invitation.event_start && invitation.event_end) {
@@ -145,7 +147,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
         <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
       </div>`;
   } else {
-    const joinedCount = (invitation.joined_count || 0) + 1;
+    const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
     const isFull = invitation.max_participants !== null && invitation.max_participants !== undefined && joinedCount >= invitation.max_participants;
     const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
     actionButtons = isFull
