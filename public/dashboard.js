@@ -243,7 +243,7 @@ function getCurrentUser() {
 function renderInvitationsPage() {
   const container = document.getElementById('page-description');
   container.innerHTML = `
-    <div class="flex justify-end items-center mb-5">
+    <div class="flex justify-start items-center mb-5">
       <div class="flex items-center gap-2">
         <span class="text-white/60 text-xs">Sort by 排序:</span>
         <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
