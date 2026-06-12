@@ -679,30 +679,37 @@ function highlightProfanity(text) {
   return { html: result, flagged: found };
 }
 
-function bindWarnDeleteButtons() {
-  document.querySelectorAll('.warn-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const userId = btn.dataset.userId;
-      const invitationId = btn.dataset.invitationId;
-      if (!confirm('Warn this user and delete the invitation? 警告此用户并删除邀请？')) return;
+function setupProfanityPanelHandlers() {
+  const handleWarnDelete = async (e) => {
+    const btn = e.target.closest('.warn-delete-btn');
+    if (!btn) return;
+    const userId = btn.dataset.userId;
+    const invitationId = btn.dataset.invitationId;
+    const isFromReportedList = !!btn.closest('#reportedList');
+    if (!confirm('Warn this user and delete the invitation? 警告此用户并删除邀请？')) return;
 
-      btn.disabled = true;
-      btn.textContent = 'Processing... 处理中...';
+    btn.disabled = true;
+    btn.textContent = 'Processing... 处理中...';
 
-      try {
-        await adminApi('/warn-and-delete', {
-          method: 'POST',
-          body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation 不当内容' })
-        });
-        scanInvitations();
-        loadAdminUsers();
-      } catch (err) {
-        alert('Failed: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Warn & Delete 警告并删除';
+    try {
+      await adminApi('/warn-and-delete', {
+        method: 'POST',
+        body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation 不当内容' })
+      });
+      scanInvitations();
+      loadAdminUsers();
+      if (isFromReportedList) {
+        loadReportedInvitations();
       }
-    });
-  });
+    } catch (err) {
+      alert('Failed: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Warn & Delete 警告并删除';
+    }
+  };
+
+  document.getElementById('profanityResults').addEventListener('click', handleWarnDelete);
+  document.getElementById('reportedList').addEventListener('click', handleWarnDelete);
 }
 
 function bindIgnoreButtons() {
@@ -790,7 +797,6 @@ async function scanInvitations() {
     });
 
     results.innerHTML = html;
-    bindWarnDeleteButtons();
     summary.textContent = `Total 总计: ${invitations.length} | Flagged 标记: ${flaggedCount} | Clean 正常: ${cleanCount}`;
     summary.classList.remove('hidden');
 
@@ -850,7 +856,6 @@ async function loadReportedInvitations() {
     });
 
     results.innerHTML = html;
-    bindWarnDeleteButtons();
     bindIgnoreButtons();
   } catch (err) {
     results.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${err.message}</p>`;
@@ -897,3 +902,5 @@ async function loadUserCount() {
 }
 
 loadUserCount();
+
+setupProfanityPanelHandlers();
