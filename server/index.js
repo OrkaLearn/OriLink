@@ -40,7 +40,7 @@ app.use(express.json());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   message: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试',
   standardHeaders: true,
   legacyHeaders: false,
