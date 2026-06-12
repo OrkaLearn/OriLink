@@ -264,6 +264,67 @@ router.post('/invitations/:id/join', async (req, res) => {
   }
 });
 
+router.delete('/invitations/:id/leave', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const currentUserId = await getUserIdFromToken(authHeader);
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const invitationId = req.params.id;
+
+    const [inv] = await pool.query(
+      'SELECT id, user_id FROM invitations WHERE id = ?',
+      [invitationId]
+    );
+
+    if (inv.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    if (inv[0].user_id === currentUserId) {
+      return res.status(400).json({ error: 'You cannot leave your own invitation 你不能退出自己发布的邀请' });
+    }
+
+    const [joinCheck] = await pool.query(
+      'SELECT id FROM joined_invitations WHERE user_id = ? AND invitation_id = ?',
+      [currentUserId, invitationId]
+    );
+
+    if (joinCheck.length === 0) {
+      return res.status(400).json({ error: 'You have not joined this invitation 你尚未加入此邀请' });
+    }
+
+    await pool.query(
+      'DELETE FROM joined_invitations WHERE user_id = ? AND invitation_id = ?',
+      [currentUserId, invitationId]
+    );
+
+    const [userResult] = await pool.query('SELECT username FROM users WHERE id = ?', [currentUserId]);
+    const username = userResult[0]?.username || 'User';
+    const systemContent = `__SYSTEM__:${username} left the invitation 退出了邀请`;
+
+    await pool.query(
+      'INSERT INTO messages (invitation_id, user_id, content) VALUES (?, ?, ?)',
+      [invitationId, currentUserId, systemContent]
+    );
+
+    if (io) {
+      io.to(`invitation:${invitationId}`).emit('user_left', {
+        invitationId: parseInt(invitationId),
+        username
+      });
+    }
+
+    res.json({ message: 'Left invitation successfully' });
+  } catch (err) {
+    console.error('Error leaving invitation:', err);
+    res.status(500).json({ error: 'Failed to leave invitation' });
+  }
+});
+
 router.post('/invitations/:id/report', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;

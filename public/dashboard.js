@@ -145,6 +145,7 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
       <div class="flex gap-2 mt-3">
         <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
         <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+        <button class="leave-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Leave 退出</button>
       </div>`;
   } else {
     const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
@@ -222,6 +223,16 @@ function initSocket() {
   socket.on('user_joined', (data) => {
     if (currentChatInvitationId == data.invitationId) {
       updateChatUsers();
+    }
+  });
+  socket.on('user_left', (data) => {
+    if (currentChatInvitationId == data.invitationId) {
+      appendMessageToChat({
+        userId: 0,
+        username: data.username,
+        content: `__SYSTEM__:${data.username} left the invitation 退出了邀请`,
+        created_at: new Date().toISOString()
+      });
     }
   });
   socket.on('error', (data) => {
@@ -468,6 +479,40 @@ function handleJoin(e) {
     });
 }
 
+function handleLeave(e) {
+  const btn = e.target;
+  const invitationId = btn.dataset.id;
+  if (!confirm('Sure to leave this invitation? 确定要退出此邀请吗？')) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Leaving... 退出中...';
+
+  fetch(`/api/invitations/${invitationId}/leave`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        btn.textContent = data.error;
+        btn.classList.add('bg-red-500/80');
+        return;
+      }
+      btn.textContent = 'Left! 已退出！';
+      btn.classList.add('bg-gray-500/60');
+      setTimeout(() => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('[data-page="invitations"]').classList.add('active');
+        document.getElementById('page-title').innerHTML = pages.invitations.title;
+        renderInvitationsPage();
+      }, 1000);
+    })
+    .catch(() => {
+      btn.textContent = 'Leave 退出';
+      btn.disabled = false;
+    });
+}
+
 function openChatModal(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
@@ -487,6 +532,15 @@ function openChatModal(e) {
   }
   
   loadChatMessages(invitationId);
+}
+
+function renderSystemMessage(content, time) {
+  const text = content.replace(/^__SYSTEM__:/, '');
+  return `
+    <div class="text-center my-2">
+      <p class="text-white/40 text-xs font-mono italic">[system] ${escapeHtml(text)} · ${time}</p>
+    </div>
+  `;
 }
 
 function loadChatMessages(invitationId) {
@@ -509,6 +563,9 @@ function loadChatMessages(invitationId) {
       container.innerHTML = messages.map(msg => {
         const isOwn = msg.user_id == currentUserId;
         const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (msg.content.startsWith('__SYSTEM__:')) {
+          return renderSystemMessage(msg.content, time);
+        }
         return `
           <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
             <div class="inline-block max-w-[80%]">
@@ -535,14 +592,20 @@ function appendMessageToChat(data) {
   
   const isOwn = data.userId == currentUserId;
   const time = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const html = `
-    <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
-      <div class="inline-block max-w-[80%]">
-        <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
-        <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(data.content)}</p>
+  
+  let html;
+  if (data.content.startsWith('__SYSTEM__:')) {
+    html = renderSystemMessage(data.content, time);
+  } else {
+    html = `
+      <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
+        <div class="inline-block max-w-[80%]">
+          <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
+          <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(data.content)}</p>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
   
   const placeholder = container.querySelector('p.text-white\\/60');
   if (placeholder) {
@@ -811,6 +874,10 @@ function loadJoinedInvitations() {
       
       document.querySelectorAll('.chat-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openChatModal(e));
+      });
+      
+      document.querySelectorAll('.leave-btn').forEach(btn => {
+        btn.addEventListener('click', handleLeave);
       });
       
       document.querySelectorAll('.members-btn').forEach(btn => {
