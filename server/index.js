@@ -14,6 +14,8 @@ const invitationRoutes = require('./routes/invitations');
 const adminRoutes = require('./routes/admin');
 const captchaStore = require('./captcha-store');
 
+const { authStore, generalStore, AUTH_LIMITER_MAX, GENERAL_LIMITER_MAX } = require('./rate-limit-store');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -40,16 +42,18 @@ app.use(express.json());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试',
+  max: AUTH_LIMITER_MAX,
+  store: authStore,
+  message: { error: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests, please try again later 请求次数过多，请稍后再试',
+  max: GENERAL_LIMITER_MAX,
+  store: generalStore,
+  message: { error: 'Too many requests, please try again later 请求次数过多，请稍后再试' },
   standardHeaders: true,
   legacyHeaders: false,
 });
