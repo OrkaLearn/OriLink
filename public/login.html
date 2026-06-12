@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OriLink 元联 - Login 登录</title>
+  <link rel="icon" type="image/svg+xml" href="imgs/logo.svg">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
@@ -323,7 +324,7 @@
         <!-- Add User Form -->
         <div class="bg-white/10 rounded-xl p-4">
           <h3 class="text-white font-semibold text-sm mb-3">Add New User 添加新用户</h3>
-          <form id="adminAddUserForm" class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+          <form id="adminAddUserForm" class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
             <div class="col-span-2 md:col-span-1">
               <input type="text" id="adminNewUsername" placeholder="Username 用户名" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
             </div>
@@ -335,6 +336,13 @@
             </div>
             <div>
               <input type="text" id="adminNewClass" placeholder="Class 班级" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            </div>
+            <div>
+              <select id="adminNewUserType" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+                <option value="normal">Normal 普通</option>
+                <option value="verified">Verified 已验证</option>
+                <option value="organization">Organization 组织</option>
+              </select>
             </div>
             <button type="submit" class="login-btn px-4 py-2 rounded-lg text-sm font-semibold">Add User 添加用户</button>
           </form>
@@ -362,6 +370,7 @@
                   <th class="px-3 py-2 text-left hidden md:table-cell">Full Name 姓名</th>
                   <th class="px-3 py-2 text-left">Grade 年级</th>
                   <th class="px-3 py-2 text-left">Class 班级</th>
+                  <th class="px-3 py-2 text-left">Type 类型</th>
                   <th class="px-3 py-2 text-left hidden lg:table-cell">Registered At 注册时间</th>
                   <th class="px-3 py-2 text-left">Warnings 警告</th>
                   <th class="px-3 py-2 text-right">Actions 操作</th>

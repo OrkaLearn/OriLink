@@ -2,11 +2,11 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('./db');
 
 async function listUsers() {
-  const [users] = await pool.query('SELECT id, username, full_name, personality_type, created_at FROM users ORDER BY id');
+  const [users] = await pool.query('SELECT id, username, full_name, personality_type, user_type, created_at FROM users ORDER BY id');
   console.log('\nUsers:');
-  console.log('ID | Username | Full Name         | MBTI   | Created At');
-  console.log('---|----------|-------------------|--------|-------------------');
-  users.forEach(u => console.log(`${u.id} | ${u.username} | ${(u.full_name || '-').padEnd(17)} | ${u.personality_type || '-'}    | ${u.created_at}`));
+  console.log('ID | Username | Full Name         | MBTI   | Type         | Created At');
+  console.log('---|----------|-------------------|--------|--------------|-------------------');
+  users.forEach(u => console.log(`${u.id} | ${u.username} | ${(u.full_name || '-').padEnd(17)} | ${u.personality_type || '-'}    | ${u.user_type || 'normal'} | ${u.created_at}`));
   console.log(`\nTotal: ${users.length} user(s)\n`);
 }
 

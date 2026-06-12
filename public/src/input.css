@@ -74,6 +74,10 @@ body {
   color: rgba(255, 255, 255, 0.6);
 }
 
+select.input-field option {
+  color: #000000;
+}
+
 .login-btn {
   background: #40a9b8;
   color: white;

@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
 router.get('/users', authenticateAdmin, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users ORDER BY id'
+      'SELECT id, username, full_name, grade, class, personality_type, user_type, warning_count, created_at FROM users ORDER BY id'
     );
     res.json(users);
   } catch (error) {
@@ -58,7 +58,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
 
 router.post('/users', authenticateAdmin, async (req, res) => {
   try {
-    const { username, password, grade, class: classNum } = req.body;
+    const { username, password, grade, class: classNum, user_type } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -81,14 +81,17 @@ router.post('/users', authenticateAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Class must be a valid number 班级必须是有效数字' });
     }
 
+    const validTypes = ['normal', 'verified', 'organization'];
+    const userTypeValue = user_type && validTypes.includes(user_type) ? user_type : 'normal';
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await pool.query(
-      'INSERT INTO users (username, password, full_name, grade, class) VALUES (?, ?, ?, ?, ?)',
-      [username, hashedPassword, '', gradeNum, classNumInt]
+      'INSERT INTO users (username, password, full_name, grade, class, user_type) VALUES (?, ?, ?, ?, ?, ?)',
+      [username, hashedPassword, '', gradeNum, classNumInt, userTypeValue]
     );
 
-    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users WHERE username = ?', [username]);
+    const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, user_type, warning_count, created_at FROM users WHERE username = ?', [username]);
 
     res.json({ message: 'User created successfully', user: newUser[0] });
   } catch (error) {
@@ -103,7 +106,7 @@ router.post('/users', authenticateAdmin, async (req, res) => {
 router.put('/users/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { password, grade, class: classNum } = req.body;
+    const { password, grade, class: classNum, user_type, full_name } = req.body;
 
     const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
     if (users.length === 0) {
@@ -140,6 +143,24 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
       params.push(classNumInt);
     }
 
+    if (user_type) {
+      const validTypes = ['normal', 'verified', 'organization'];
+      if (!validTypes.includes(user_type)) {
+        return res.status(400).json({ error: 'Invalid user type. Must be normal, verified, or organization 无效的用户类型' });
+      }
+      updates.push('user_type = ?');
+      params.push(user_type);
+    }
+
+    if (full_name !== undefined) {
+      const trimmedName = full_name.trim();
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return res.status(400).json({ error: 'Full name must be between 2 and 100 characters 姓名必须在2到100个字符之间' });
+      }
+      updates.push('full_name = ?');
+      params.push(trimmedName);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
@@ -148,7 +169,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
 
-    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, warning_count, created_at FROM users WHERE id = ?', [id]);
+    const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, user_type, warning_count, created_at FROM users WHERE id = ?', [id]);
 
     res.json({ message: 'User updated successfully', user: updatedUser[0] });
   } catch (error) {
