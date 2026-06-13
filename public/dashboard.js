@@ -1216,7 +1216,7 @@ async function handleAccountSubmit(e) {
   }
 
   const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
-  const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{8,}$/;
+  const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
 
   if (username && !usernameRegex.test(username)) {
     messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores or dots (max 20 chars) 用户名必须以字母开头，只能包含字母、数字、下划线或点（最多 20 个字符）';
@@ -1225,7 +1225,7 @@ async function handleAccountSubmit(e) {
   }
 
   if (password && !passwordRegex.test(password)) {
-    messageEl.textContent = 'Password must be at least 8 characters, containing only letters, numbers, and common symbols 密码至少 8 个字符，只能包含字母、数字和常用符号';
+    messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 密码至少 5 个字符，只能包含字母、数字和常用符号';
     messageEl.className = 'text-center text-xs mt-2 text-red-400';
     return;
   }

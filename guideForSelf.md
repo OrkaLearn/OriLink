@@ -4,14 +4,57 @@ Quick commands to run the OriLink backend server.
 
 ---
 
-## 1. Local Development
+## 1. Local Development (WSL)
+
+### Prerequisites (First-time setup)
+
+#### Install npm (if not present)
+
+WSL may only have Node.js installed without npm. Install it via dnf:
+
+```bash
+sudo dnf install -y nodejs-npm
+```
+
+#### Start MySQL
+
+```bash
+sudo systemctl start mysqld
+```
+
+#### Create MySQL user and database
+
+```bash
+sudo mysql -u root -p
+```
+
+```sql
+CREATE USER IF NOT EXISTS 'kevin'@'localhost' IDENTIFIED BY 'your-password-here';
+CREATE DATABASE IF NOT EXISTS orilink;
+GRANT ALL PRIVILEGES ON orilink.* TO 'kevin'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+#### Set up environment variables
+
+```bash
+cd /home/orka/projects/orilink/server
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+- `JWT_SECRET` - random string for JWT signing
+- `DB_PASSWORD` - MySQL password for user 'kevin'
+- `ADMIN_PASSWORD` - admin panel password
+- `ADMIN_TOKEN` - admin API token
 
 ### Build CSS (required before first run)
 
 The project uses **Tailwind CSS CLI** (not CDN). CSS must be compiled before the server can serve styled pages:
 
 ```bash
-cd /home/kevin/projects/orilink/server
+cd /home/orka/projects/orilink/server
 npm run build:css
 ```
 
@@ -21,26 +64,30 @@ This compiles Tailwind utilities + custom styles from `public/src/input.css` int
 
 **Option A: Using npm (auto-builds CSS)**
 ```bash
-cd /home/kevin/projects/orilink/server
+cd /home/orka/projects/orilink/server
 npm start
 ```
 
 **Option B: Using nodemon for auto-restart (auto-builds CSS)**
 ```bash
-cd /home/kevin/projects/orilink/server
+cd /home/orka/projects/orilink/server
 npm run dev
 ```
 
 **Option C: Direct node (manual CSS build required)**
 ```bash
-cd /home/kevin/projects/orilink/server
+cd /home/orka/projects/orilink/server
 npm run build:css  # Must run this first
 node index.js
 ```
 
 > **Note:** `npm start` and `npm run dev` automatically run `npm run build:css` via `prestart`/`predev` hooks. Direct `node index.js` does NOT auto-build CSS.
 
-Stop the server (port 3210):
+### Access the server
+
+From Windows browser: `http://localhost:3210`
+
+### Stop the server (port 3210)
 
 ```bash
 fuser -k 3210/tcp
