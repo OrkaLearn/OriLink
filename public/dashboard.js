@@ -14,6 +14,18 @@ let invitationsSort = 'event';
 let myInvitationsSort = 'event';
 let joinedInvitationsSort = 'event';
 
+function getTokenExpiry() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
 function escapeHtml(text) {
   if (typeof text !== 'string') return '';
   const div = document.createElement('div');
@@ -1328,10 +1340,97 @@ Note: By clicking "Sign Up," you acknowledge that you have read and agreed to th
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
   localStorage.removeItem('token');
   localStorage.removeItem('username');
   window.location.href = '/login.html';
 });
+
+let sessionWarningShown = false;
+
+function forceLogout() {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  window.location.href = '/login.html';
+}
+
+function showSessionExpiryModal(timeLeft) {
+  const modal = document.getElementById('sessionExpiryModal');
+  const countdown = document.getElementById('sessionCountdown');
+  const countdown2 = document.getElementById('sessionCountdown2');
+  const remainingMins = Math.max(1, Math.ceil(timeLeft / 60000));
+  countdown.textContent = remainingMins;
+  countdown2.textContent = remainingMins;
+  modal.classList.remove('hidden');
+
+  let timeRemaining = timeLeft;
+
+  const interval = setInterval(() => {
+    timeRemaining -= 60000;
+    if (timeRemaining <= 0) {
+      clearInterval(interval);
+      forceLogout();
+    } else {
+      const mins = Math.max(1, Math.ceil(timeRemaining / 60000));
+      countdown.textContent = mins;
+      countdown2.textContent = mins;
+    }
+  }, 60000);
+
+  document.getElementById('sessionExtendBtn').onclick = async () => {
+    modal.classList.add('hidden');
+    clearInterval(interval);
+
+    try {
+      const res = await fetch('/api/extend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        sessionWarningShown = false;
+      } else {
+        forceLogout();
+      }
+    } catch {
+      forceLogout();
+    }
+  };
+}
+
+function checkSessionExpiry() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const expiry = getTokenExpiry();
+  if (!expiry) return;
+
+  const now = Date.now();
+  const timeLeft = expiry - now;
+  const oneHour = 60 * 60 * 1000;
+
+  if (timeLeft <= 0) {
+    forceLogout();
+    return;
+  }
+
+  if (timeLeft <= oneHour && !sessionWarningShown) {
+    sessionWarningShown = true;
+    showSessionExpiryModal(timeLeft);
+  }
+}
+
+setInterval(checkSessionExpiry, 60000);
+checkSessionExpiry();
 
 renderInvitationsPage();
 

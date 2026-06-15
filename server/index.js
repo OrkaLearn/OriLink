@@ -61,6 +61,7 @@ const generalLimiter = rateLimit({
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 app.use('/api/admin/login', authLimiter);
+app.use('/api/extend', authLimiter);
 app.use('/api', generalLimiter);
 
 app.use('/api', authRoutes);

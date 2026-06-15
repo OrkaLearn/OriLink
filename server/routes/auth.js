@@ -53,6 +53,40 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/extend', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized 未授权' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Token expired or invalid 令牌已过期或无效' });
+    }
+
+    const [users] = await pool.query('SELECT id, username FROM users WHERE id = ?', [decoded.id]);
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'User not found 用户未找到' });
+    }
+
+    const newToken = jwt.sign(
+      { id: users[0].id, username: users[0].username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ token: newToken });
+  } catch (error) {
+    console.error('Extend token error:', error);
+    res.status(500).json({ error: 'Server error 服务器错误' });
+  }
+});
+
 router.get('/check-username', async (req, res) => {
   try {
     const { username } = req.query;

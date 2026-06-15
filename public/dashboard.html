@@ -149,5 +149,14 @@
       </div>
     </div>
   </div>
+
+  <div id="sessionExpiryModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative glass-panel rounded-2xl p-6 max-w-sm w-full mx-4 text-center">
+      <h3 class="text-white font-bold text-lg mb-2">Session Expiring 会话即将过期</h3>
+      <p class="text-white/70 text-sm mb-4">You will be logged out in <span id="sessionCountdown" class="font-semibold">60</span> minutes for your account security. 为了账户安全，您将在<span id="sessionCountdown2" class="font-semibold">60</span>分钟后被登出。</p>
+      <button id="sessionExtendBtn" class="w-full py-2.5 rounded-lg bg-green-500/70 hover:bg-green-500/90 text-white text-sm font-semibold transition-all">Stay Logged In 保持登录</button>
+    </div>
+  </div>
 </body>
 </html>
