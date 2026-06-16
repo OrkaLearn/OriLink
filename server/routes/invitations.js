@@ -157,14 +157,14 @@ router.post('/invitations', async (req, res) => {
     let endTime = null;
 
     if (event_start) {
-      startTime = new Date(event_start);
+      startTime = new Date(event_start + '+08:00');
       if (isNaN(startTime.getTime())) {
         return res.status(400).json({ error: 'Invalid event_start date' });
       }
     }
 
     if (event_end) {
-      endTime = new Date(event_end);
+      endTime = new Date(event_end + '+08:00');
       if (isNaN(endTime.getTime())) {
         return res.status(400).json({ error: 'Invalid event_end date' });
       }

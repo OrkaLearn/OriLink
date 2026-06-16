@@ -135,10 +135,11 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
       metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/∞</span>`;
     }
     if (invitation.event_start && invitation.event_end) {
+      const cstOpts = { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
       const startDate = new Date(invitation.event_start);
       const endDate = new Date(invitation.event_end);
-      const startStr = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-      const endStr = `${endDate.toLocaleDateString()} ${endDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      const startStr = startDate.toLocaleString('zh-CN', cstOpts);
+      const endStr = endDate.toLocaleString('zh-CN', cstOpts);
       metaInfo += `<span class="text-white/60 text-xs">📅 Start 开始: ${startStr} - End 结束: ${endStr}</span>`;
     }
     metaInfo += '</div>';
@@ -800,8 +801,9 @@ function renderJoinedPage() {
     document.getElementById('postForm').classList.remove('hidden');
     document.getElementById('showPostForm').classList.add('hidden');
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    const minDatetime = now.toISOString().slice(0, 16);
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now);
+    const g = t => parts.find(p => p.type === t).value;
+    const minDatetime = `${g('year')}-${g('month')}-${g('day')}T${g('hour')}:${g('minute')}`;
     document.getElementById('invEventStart').setAttribute('min', minDatetime);
     document.getElementById('invEventEnd').setAttribute('min', minDatetime);
   });
@@ -947,8 +949,8 @@ function handlePostInvitation(e) {
     return;
   }
 
-  const startDate = new Date(event_start);
-  const endDate = new Date(event_end);
+  const startDate = new Date(event_start + '+08:00');
+  const endDate = new Date(event_end + '+08:00');
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     messageEl.textContent = 'Invalid date format 日期格式无效';
