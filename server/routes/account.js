@@ -54,7 +54,7 @@ router.get('/account', authenticateToken, async (req, res) => {
 
 router.put('/account', authenticateToken, async (req, res) => {
   try {
-    const { username, password, personality_type, currentPassword } = req.body;
+    const { username, password, personality_type, full_name, grade, class: classValue, currentPassword } = req.body;
     
     const [users] = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
     
@@ -86,6 +86,30 @@ router.put('/account', authenticateToken, async (req, res) => {
       
       updates.push('username = ?');
       params.push(username);
+    }
+    
+    if (full_name !== undefined) {
+      if (typeof full_name !== 'string' || full_name.length > 100) {
+        return res.status(400).json({ error: 'Full name must be 100 characters or less 姓名不能超过100个字符' });
+      }
+      updates.push('full_name = ?');
+      params.push(full_name.trim());
+    }
+    
+    if (grade !== undefined) {
+      if (typeof grade !== 'string' || grade.length > 2) {
+        return res.status(400).json({ error: 'Grade must be 2 characters or less 年级不能超过2个字符' });
+      }
+      updates.push('grade = ?');
+      params.push(grade.trim());
+    }
+    
+    if (classValue !== undefined) {
+      if (typeof classValue !== 'string' || classValue.length > 2) {
+        return res.status(400).json({ error: 'Class must be 2 characters or less 班级不能超过2个字符' });
+      }
+      updates.push('class = ?');
+      params.push(classValue.trim());
     }
     
     if (password) {
@@ -124,6 +148,34 @@ router.put('/account', authenticateToken, async (req, res) => {
     res.json({ message: 'Account updated successfully' });
   } catch (error) {
     console.error('Update account error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/account', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Current password is required 请输入当前密码' });
+    }
+    
+    const [users] = await pool.query('SELECT password, user_type FROM users WHERE id = ?', [req.user.id]);
+    
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const isValidPassword = await bcrypt.compare(currentPassword, users[0].password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect 当前密码不正确' });
+    }
+    
+    await pool.query('DELETE FROM users WHERE id = ?', [req.user.id]);
+    
+    res.json({ message: 'Account deleted successfully 账号已成功删除' });
+  } catch (error) {
+    console.error('Delete account error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

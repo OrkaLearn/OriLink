@@ -198,16 +198,25 @@ function checkForChanges() {
   const usernameEl = document.getElementById('username');
   const passwordEl = document.getElementById('password');
   const personalityEl = document.getElementById('personalityType');
+  const fullNameEl = document.getElementById('fullName');
+  const gradeEl = document.getElementById('grade');
+  const classEl = document.getElementById('classField');
   const saveBtn = document.getElementById('saveBtn');
   if (!usernameEl || !passwordEl || !saveBtn) return;
 
   const currentUsername = usernameEl.value.trim();
   const currentPassword = passwordEl.value;
   const currentPersonality = personalityEl ? personalityEl.value : '';
+  const currentFullName = fullNameEl ? fullNameEl.value.trim() : '';
+  const currentGrade = gradeEl ? gradeEl.value.trim() : '';
+  const currentClass = classEl ? classEl.value.trim() : '';
 
   const hasChanges = currentUsername !== accountOriginalValues.username ||
                      currentPassword !== accountOriginalValues.password ||
-                     currentPersonality !== accountOriginalValues.personalityType;
+                     currentPersonality !== accountOriginalValues.personalityType ||
+                     currentFullName !== accountOriginalValues.fullName ||
+                     currentGrade !== accountOriginalValues.grade ||
+                     currentClass !== accountOriginalValues.classField;
 
   if (hasChanges) {
     saveBtn.className = 'w-full py-2 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-sm font-medium transition-all';
@@ -1131,20 +1140,20 @@ function renderAccountPage() {
           <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
             <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
             <div>
-              <label class="block text-white/50 text-xs mb-1">Full Name 姓名</label>
-              <input type="text" value="${user.full_name || 'N/A 无'}" disabled
-                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
+              <label class="block text-white/80 text-xs mb-1">Full Name (max 100 chars) 姓名（最多100字）</label>
+              <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}"
+                class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-white/50 text-xs mb-1">Grade 年级</label>
-                <input type="text" value="${user.grade || 'N/A 无'}" disabled
-                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
+                <label class="block text-white/80 text-xs mb-1">Grade (max 2 chars) 年级（最多2字）</label>
+                <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}"
+                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
               <div>
-                <label class="block text-white/50 text-xs mb-1">Class 班级</label>
-                <input type="text" value="${user.class || 'N/A 无'}" disabled
-                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm cursor-not-allowed">
+                <label class="block text-white/80 text-xs mb-1">Class (max 2 chars) 班级（最多2字）</label>
+                <input type="text" id="classField" name="classField" maxlength="2" value="${escapeHtml(user.class || '')}"
+                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
               </div>
             </div>
             <div>
@@ -1152,7 +1161,7 @@ function renderAccountPage() {
               <input type="text" value="${user.warning_count || 0}" disabled
                 class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
             </div>
-            <p class="text-white/60 text-xs italic mt-2">Contact admin to change these info. 请联系管理员修改这些信息。</p>
+            <p class="text-white/60 text-xs italic mt-2">Contact admin for other inquiries. 联系管理员进行其他查询。</p>
           </div>
           <div>
             <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
@@ -1187,7 +1196,10 @@ function renderAccountPage() {
 保存更改 Save Changes
         </button>
         <p id="accountMessage" class="text-center text-xs mt-2"></p>
-      </form>
+        </form>
+        <div class="mt-8 pt-4 border-t border-white/10 text-center">
+          <button id="deleteAccountBtn" class="text-white/30 hover:text-red-400 text-xs transition-all">Delete Account 删除账号</button>
+        </div>
     `;
 
       document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
@@ -1195,15 +1207,23 @@ function renderAccountPage() {
       accountOriginalValues = {
         username: user.username,
         password: '',
-        personalityType: user.personality_type || ''
+        personalityType: user.personality_type || '',
+        fullName: user.full_name || '',
+        grade: user.grade || '',
+        classField: user.class || ''
       };
 
       document.getElementById('username').addEventListener('input', checkForChanges);
       document.getElementById('password').addEventListener('input', checkForChanges);
+      document.getElementById('fullName').addEventListener('input', checkForChanges);
+      document.getElementById('grade').addEventListener('input', checkForChanges);
+      document.getElementById('classField').addEventListener('input', checkForChanges);
       const personalityTypeEl = document.getElementById('personalityType');
       if (personalityTypeEl) {
         personalityTypeEl.addEventListener('change', checkForChanges);
       }
+
+      document.getElementById('deleteAccountBtn').addEventListener('click', showDeleteAccountModal);
     })
     .catch(err => {
       document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
@@ -1219,6 +1239,9 @@ async function handleAccountSubmit(e) {
   const password = document.getElementById('password').value;
   const personalityTypeEl = document.getElementById('personalityType');
   const personality_type = personalityTypeEl ? personalityTypeEl.value : undefined;
+  const full_name = document.getElementById('fullName').value.trim();
+  const grade = document.getElementById('grade').value.trim();
+  const classValue = document.getElementById('classField').value.trim();
   const currentPassword = document.getElementById('currentPassword').value;
 
   if (!currentPassword) {
@@ -1249,7 +1272,7 @@ async function handleAccountSubmit(e) {
     const res = await fetch('/api/account', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-      body: JSON.stringify({ username, password, personality_type, currentPassword })
+      body: JSON.stringify({ username, password, personality_type, full_name, grade, class: classValue, currentPassword })
     });
     const data = await res.json();
     
@@ -1264,6 +1287,9 @@ async function handleAccountSubmit(e) {
     accountOriginalValues.username = username;
     accountOriginalValues.password = '';
     accountOriginalValues.personalityType = personality_type;
+    accountOriginalValues.fullName = full_name;
+    accountOriginalValues.grade = grade;
+    accountOriginalValues.classField = classValue;
     saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
     saveBtn.textContent = '保存更改 Save Changes';
   } catch (err) {
@@ -1275,6 +1301,71 @@ async function handleAccountSubmit(e) {
     saveBtn.textContent = '保存更改 Save Changes';
     checkForChanges();
   }
+}
+
+function showDeleteAccountModal() {
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50';
+  modalOverlay.innerHTML = `
+    <div class="bg-gray-900 border border-red-500/50 rounded-xl p-6 max-w-sm w-full mx-4">
+      <h3 class="text-red-400 font-bold text-lg mb-2">Delete Account 删除账号</h3>
+      <p class="text-white/70 text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
+      <div class="mb-4">
+        <label class="block text-white/80 text-xs mb-1">Current password 当前密码</label>
+        <input type="password" id="deleteConfirmPassword" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-red-400">
+        <p id="deleteMessage" class="text-xs mt-1"></p>
+      </div>
+      <div class="flex gap-3">
+        <button id="cancelDeleteBtn" class="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all">Cancel 取消</button>
+        <button id="confirmDeleteBtn" class="flex-1 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-sm font-medium transition-all">Delete 删除</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalOverlay);
+
+  modalOverlay.querySelector('#cancelDeleteBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.remove();
+  });
+
+  modalOverlay.querySelector('#confirmDeleteBtn').addEventListener('click', async () => {
+    const password = document.getElementById('deleteConfirmPassword').value;
+    const deleteMessage = document.getElementById('deleteMessage');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+    if (!password) {
+      deleteMessage.textContent = 'Please enter your current password 请输入当前密码';
+      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Deleting... 删除中...';
+
+    try {
+      const res = await fetch('/api/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ currentPassword: password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Delete failed 删除失败');
+      }
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = '/';
+    } catch (err) {
+      deleteMessage.textContent = err.message;
+      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Delete 删除';
+    }
+  });
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
