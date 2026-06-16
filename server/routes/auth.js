@@ -133,8 +133,8 @@ router.post('/register', async (req, res) => {
 
     const gradeNum = parseInt(grade, 10);
     const classNumInt = parseInt(classNum, 10);
-    if (isNaN(gradeNum) || gradeNum < 9 || gradeNum > 12) {
-      return res.status(400).json({ error: 'Grade must be between 9 and 12' });
+    if (isNaN(gradeNum) || gradeNum < 8 || gradeNum > 12) {
+      return res.status(400).json({ error: 'Grade must be between 8 and 12' });
     }
     if (isNaN(classNumInt) || classNumInt < 1 || classNumInt > 10) {
       return res.status(400).json({ error: 'Class must be between 1 and 10' });
