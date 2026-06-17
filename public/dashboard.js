@@ -67,7 +67,7 @@ const pages = {
     finding a student tutor or seeking teammates for competitions, you can do all these things on this platform. 
     <br></br>
     Founder, Developer & Maintainer: Kevin Kaiwen Chai <br>
-    Past Contributors (Planning & Surveying): Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
+    Co-founders, Past Contributors (Planning & Surveying): Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
     <br></br>
     <h3 class="text-white font-semibold text-sm mt-4 mb-2">Terms and Conditions</h3>
     <div id="aboutTermsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>`
