@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OriLink 元联 - Login</title>
-  <link rel="icon" type="image/svg+xml" href="imgs/logo.svg">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="fonts/login-fonts.css">
@@ -140,18 +140,21 @@
       </div>
 
       <!-- Admin Login Form -->
-      <div id="adminLoginForm" class="space-y-4">
-        <p class="text-white-70 text-sm text-center">Enter admin password to access panel 输入管理员密码访问面板</p>
-        <div class="flex gap-3">
+      <div id="adminLoginForm" class="space-y-5">
+        <p class="text-center text-white/80">Enter admin password to access panel 输入管理员密码访问面板</p>
+        <div class="auth-form-row">
+          <label for="adminPassword" class="form-label-light">Admin password 管理员密码</label>
           <input
             type="password"
             id="adminPassword"
-            placeholder="Admin password 管理员密码"
-            class="input-field flex-1 px-4 py-3 rounded-xl text-sm"
+            placeholder="Enter admin password 请输入管理员密码"
+            class="pill-input w-full px-5 py-3 text-base"
           >
-          <button id="adminLoginBtn" class="login-btn px-6 py-3 rounded-xl text-sm font-semibold">登录 Login</button>
         </div>
-        <p id="adminLoginError" class="text-center text-red-400 text-sm hidden"></p>
+        <div class="auth-link-row">
+          <button id="adminLoginBtn" class="btn-link btn-link-xl">登录 Login</button>
+        </div>
+        <p id="adminLoginError" class="auth-message error hidden"></p>
       </div>
 
       <!-- Admin Dashboard -->
@@ -159,88 +162,83 @@
 
         <!-- Rate Limits Section -->
         <div class="card">
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center justify-between mb-4">
             <h3 class="text-white font-semibold text-sm">Rate Limits 速率限制</h3>
-            <button id="refreshRateLimitsBtn" class="text-white-60 hover:text-white text-xs transition-colors flex items-center gap-1">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
- 刷新 Refresh
-            </button>
+            <button id="refreshRateLimitsBtn" class="btn-link text-xs">刷新 Refresh</button>
           </div>
-          <div class="grid grid-cols-2 gap-4 mb-3">
+          <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white-70 text-xs">Auth (Login/Register) 认证</span>
+                <span class="text-white/70 text-xs">Auth (Login/Register) 认证</span>
                 <span id="authRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
               <div class="progress-bar">
                 <div id="authRateLimitBar" class="progress-bar-fill green" style="width: 0%"></div>
               </div>
               <div class="flex justify-between mt-1">
-                <span class="text-white-40 text-xs">0</span>
-                <span id="authRateLimitMax" class="text-white-40 text-xs">200</span>
+                <span class="text-white/40 text-xs">0</span>
+                <span id="authRateLimitMax" class="text-white/40 text-xs">200</span>
               </div>
             </div>
             <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white-70 text-xs">General (All APIs) 通用</span>
+                <span class="text-white/70 text-xs">General (All APIs) 通用</span>
                 <span id="generalRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
               <div class="progress-bar">
                 <div id="generalRateLimitBar" class="progress-bar-fill blue" style="width: 0%"></div>
               </div>
               <div class="flex justify-between mt-1">
-                <span class="text-white-40 text-xs">0</span>
-                <span id="generalRateLimitMax" class="text-white-40 text-xs">100</span>
+                <span class="text-white/40 text-xs">0</span>
+                <span id="generalRateLimitMax" class="text-white/40 text-xs">100</span>
               </div>
             </div>
           </div>
-          <div id="rateLimitIps" class="max-h-32 overflow-y-auto rounded-lg border border-white-10">
-            <p class="text-white-40 text-xs text-center py-3">No request data yet 暂无请求数据</p>
+          <div id="rateLimitIps" class="max-h-32 overflow-y-auto rounded-xl border border-white/10 p-3">
+            <p class="text-white/40 text-xs text-center py-3">No request data yet 暂无请求数据</p>
           </div>
         </div>
 
         <!-- Add User Form -->
         <div class="card">
-          <h3 class="text-white font-semibold text-sm mb-3">Add New User 添加新用户</h3>
-          <form id="adminAddUserForm" class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
-            <div class="col-span-2 md:col-span-1">
-              <input type="text" id="adminNewUsername" placeholder="Username 用户名" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+          <h3 class="text-white font-semibold text-sm mb-4">Add New User 添加新用户</h3>
+          <form id="adminAddUserForm" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            <div class="auth-form-row md:col-span-1">
+              <label for="adminNewUsername" class="form-label-light text-sm">Username 用户名</label>
+              <input type="text" id="adminNewUsername" placeholder="Choose username 选择用户名" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="password" id="adminNewPassword" placeholder="Password 密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewPassword" class="form-label-light text-sm">Password 密码</label>
+              <input type="password" id="adminNewPassword" placeholder="Create password 创建密码" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="text" id="adminNewGrade" placeholder="Grade 年级" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewGrade" class="form-label-light text-sm">Grade 年级</label>
+              <input type="text" id="adminNewGrade" placeholder="8-12" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="text" id="adminNewClass" placeholder="Class 班级" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewClass" class="form-label-light text-sm">Class 班级</label>
+              <input type="text" id="adminNewClass" placeholder="1-10" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <select id="adminNewUserType" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <div class="auth-form-row">
+              <label for="adminNewUserType" class="form-label-light text-sm">Type 类型</label>
+              <select id="adminNewUserType" class="pill-input w-full px-4 py-2.5 text-sm bg-transparent">
                 <option value="normal">Normal 普通</option>
                 <option value="verified">Verified 已验证</option>
                 <option value="organization">Organization 组织</option>
               </select>
             </div>
-            <button type="submit" class="login-btn px-4 py-2 rounded-lg text-sm font-semibold">Add User 添加用户</button>
+            <div class="auth-link-row md:justify-start">
+              <button type="submit" class="btn-link btn-link-xl text-sm">Add User 添加用户</button>
+            </div>
           </form>
-          <p id="adminAddUserMsg" class="text-center text-sm mt-2 hidden"></p>
+          <p id="adminAddUserMsg" class="auth-message hidden"></p>
         </div>
 
         <!-- User List -->
         <div class="flex-1 overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-4">
             <h3 class="text-white font-semibold text-sm">Registered Users 已注册用户</h3>
-            <button id="adminRefreshUsers" class="text-white-60 hover:text-white text-xs transition-colors flex items-center gap-1">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
- 刷新 Refresh
-            </button>
+            <button id="adminRefreshUsers" class="btn-link text-xs">刷新 Refresh</button>
           </div>
           <div class="table-container">
             <table class="data-table">

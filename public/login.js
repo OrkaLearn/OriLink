@@ -409,38 +409,40 @@ function openEditModal(userId, currentGrade, currentClass, currentUserType, curr
     <div class="modal-backdrop" id="editModalBackdrop"></div>
     <div class="modal glass-panel rounded-2xl p-6 relative z-10">
       <h3 class="modal-title mb-4">Edit User #${userId} 编辑用户</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="form-label">Full Name 姓名</label>
-          <input type="text" id="editFullName" value="${escapeHtml(currentFullName)}" maxlength="100" class="form-input">
+      <div class="space-y-4">
+        <div class="auth-form-row">
+          <label class="form-label-light">Full Name 姓名</label>
+          <input type="text" id="editFullName" value="${escapeHtml(currentFullName)}" maxlength="100" class="pill-input w-full px-5 py-3 text-base">
         </div>
-        <div>
-          <label class="form-label">New password (leave empty to keep current) 新密码（留空保持当前密码）</label>
-          <input type="password" id="editPassword" placeholder="New password 新密码" maxlength="20" class="form-input">
+        <div class="auth-form-row">
+          <label class="form-label-light">New password (leave empty to keep current) 新密码（留空保持当前密码）</label>
+          <input type="password" id="editPassword" placeholder="New password 新密码" maxlength="20" class="pill-input w-full px-5 py-3 text-base">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="auth-form-row two-col">
           <div>
-            <label class="form-label">Grade 年级</label>
-            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" class="form-input">
+            <label class="form-label-light">Grade 年级</label>
+            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" class="pill-input w-full px-5 py-3 text-base">
           </div>
           <div>
-            <label class="form-label">Class 班级</label>
-            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="form-input">
+            <label class="form-label-light">Class 班级</label>
+            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="pill-input w-full px-5 py-3 text-base">
           </div>
         </div>
-        <div>
-          <label class="form-label">User Type 用户类型</label>
-          <select id="editUserType" class="form-select">
+        <div class="auth-form-row">
+          <label class="form-label-light text-sm">User Type 用户类型</label>
+          <select id="editUserType" class="pill-input w-full px-5 py-3 text-base bg-transparent">
             <option value="normal" ${currentUserType === 'normal' ? 'selected' : ''}>Normal 普通</option>
             <option value="verified" ${currentUserType === 'verified' ? 'selected' : ''}>Verified 已验证</option>
             <option value="organization" ${currentUserType === 'organization' ? 'selected' : ''}>Organization 组织</option>
           </select>
         </div>
       </div>
-      <div id="editError" class="form-message-error text-sm mt-2 hidden"></div>
-      <div class="flex gap-3 mt-5">
-        <button id="editCancel" class="flex-1 btn btn-secondary text-sm py-2 text-white-70">Cancel 取消</button>
-        <button id="editSave" class="flex-1 btn btn-login text-sm py-2" data-id="${userId}">Save Changes 保存更改</button>
+      <div id="editError" class="auth-message error hidden"></div>
+      <div class="auth-link-row">
+        <button id="editSave" class="btn-link btn-link-xl" data-id="${userId}">Save Changes 保存更改</button>
+      </div>
+      <div class="text-center mt-2">
+        <button id="editCancel" class="btn-link text-xs text-white/70 hover:text-white">Cancel 取消</button>
       </div>
     </div>
   `;
@@ -497,26 +499,26 @@ async function openProfileModal(userId) {
 
     document.getElementById('profileContent').innerHTML = `
       <div class="space-y-4">
-        <div class="bg-white-5 rounded-lg p-4 space-y-2">
-          <p class="form-label">Username 用户名</p>
+        <div class="card space-y-2">
+          <p class="form-label-light text-sm">Username 用户名</p>
           <p class="text-white font-semibold">${escapeHtml(user.username)}</p>
-          <p class="form-label">Grade 年级</p>
+          <p class="form-label-light text-sm">Grade 年级</p>
           <p class="text-white">${escapeHtml(user.grade)} - Class 班级 ${escapeHtml(user.class)}</p>
-          <p class="form-label">User Type 用户类型</p>
+          <p class="form-label-light text-sm">User Type 用户类型</p>
           <p>${renderUserTypeBadge(user.user_type)}</p>
-          <p class="form-label">Days with OriLink 加入元联天数</p>
+          <p class="form-label-light text-sm">Days with OriLink 加入元联天数</p>
           <p class="text-white">${daysSince} days 天</p>
-          <p class="form-label">Warning Count 警告次数</p>
+          <p class="form-label-light text-sm">Warning Count 警告次数</p>
           <p class="text-red-400 font-semibold">${user.warning_count || 0}</p>
         </div>
         ${warnings.length > 0 ? `
           <div>
-            <p class="form-label mb-2">Warning History 警告记录</p>
+            <p class="form-label-light text-sm mb-2">Warning History 警告记录</p>
             ${warnings.map(w => `
               <div class="warning-card">
                 <p class="text-white text-xs font-medium">${escapeHtml(w.invitation_title)}</p>
-                <p class="text-red-400-70 text-xs">${escapeHtml(w.reason)}</p>
-                <p class="text-white-40 text-xs">${new Date(w.created_at).toLocaleDateString()}</p>
+                <p class="text-red-400/70 text-xs">${escapeHtml(w.reason)}</p>
+                <p class="text-white/40 text-xs">${new Date(w.created_at).toLocaleDateString()}</p>
               </div>
             `).join('')}
           </div>
@@ -558,12 +560,12 @@ adminAddUserForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ username, password, grade, class: cls, user_type: userType })
     });
     msg.textContent = `User "${data.user.username}" created successfully! 用户 "${data.user.username}" 创建成功！`;
-    msg.className = 'form-message form-message-success';
+    msg.className = 'auth-message';
     adminAddUserForm.reset();
     loadAdminUsers();
   } catch (err) {
     msg.textContent = err.message;
-    msg.className = 'form-message form-message-error';
+    msg.className = 'auth-message error';
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add User 添加用户';
