@@ -78,8 +78,10 @@ app.get('/api/captcha', (req, res) => {
     size: 4,
     ignoreChars: '0oO1iIlL',
     noise: 3,
-    color: true,
-    background: 'rgba(255,255,255,0.15)',
+    color: false,
+    background: 'transparent',
+    width: 140,
+    height: 46,
     fontPath: undefined,
   });
   const token = captchaStore.create(captcha.text);

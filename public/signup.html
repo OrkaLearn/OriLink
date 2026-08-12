@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OriLink 元联 - Sign Up</title>
+  <link rel="icon" type="image/svg+xml" href="imgs/logo.svg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="fonts/login-fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <style>
+    body { font-family: 'Lato', 'Noto Sans SC', sans-serif; }
+  </style>
+</head>
+<body class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-left-panel">
+    <div class="auth-brand">
+      <h1>OriLink</h1>
+      <p>元联</p>
+    </div>
+
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <p class="auth-hero-text">As many ways to</p>
+        <p class="auth-hero-connect">Connect</p>
+        <p class="auth-hero-text auth-hero-text-right">as there are people</p>
+      </div>
+    </div>
+
+    <div>
+      <p id="userCount" class="auth-stats">0 Registered</p>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-right-panel">
+    <h2 class="auth-title">Sign Up</h2>
+    <div class="auth-form-container">
+      <form id="signupForm" class="auth-form">
+        <div class="auth-form-row">
+          <label for="fullName" class="form-label-light">Full Name</label>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            placeholder="Enter full name"
+            maxlength="20"
+            class="pill-input w-full px-5 py-3 text-base"
+            required
+          >
+        </div>
+
+        <div class="auth-form-row">
+          <label for="signupUsername" class="form-label-light">Username</label>
+          <input
+            type="text"
+            id="signupUsername"
+            name="username"
+            placeholder="Choose username"
+            maxlength="20"
+            class="pill-input w-full px-5 py-3 text-base"
+            required
+          >
+          <p id="usernameStatus" class="form-hint hidden"></p>
+        </div>
+
+        <div class="auth-form-row">
+          <label for="signupPassword" class="form-label-light">Password</label>
+          <div class="auth-input-wrap">
+            <input
+              type="password"
+              id="signupPassword"
+              name="password"
+              placeholder="Create password"
+              maxlength="20"
+              class="pill-input w-full px-5 py-3 text-base pr-12"
+              required
+            >
+            <button
+              type="button"
+              id="toggleSignupPassword"
+              class="auth-toggle-password"
+            >
+              <svg id="signupEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg id="signupEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <p class="form-hint">At least 5 characters, letters/numbers/symbols</p>
+        </div>
+
+        <div class="auth-form-row">
+          <label for="confirmPassword" class="form-label-light">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="Confirm password"
+            maxlength="20"
+            class="pill-input w-full px-5 py-3 text-base"
+            required
+          >
+        </div>
+
+        <div class="auth-form-row two-col">
+          <div>
+            <label for="grade" class="form-label-light">Grade</label>
+            <input
+              type="text"
+              id="grade"
+              name="grade"
+              placeholder="8-12"
+              maxlength="2"
+              class="pill-input w-full px-5 py-3 text-base"
+              required
+            >
+          </div>
+          <div>
+            <label for="classNum" class="form-label-light">Class</label>
+            <input
+              type="text"
+              id="classNum"
+              name="classNum"
+              placeholder="1-10"
+              maxlength="2"
+              class="pill-input w-full px-5 py-3 text-base"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="auth-form-row auth-captcha-container">
+          <label class="form-label-light">Captcha</label>
+          <div class="auth-captcha-row">
+            <div
+              id="signupCaptchaSvg"
+              class="captcha-card auth-captcha-box"
+              title="Click to refresh captcha"
+              onclick="loadCaptcha('signup')"
+            >
+              <span class="text-slate-500 text-sm">Loading...</span>
+            </div>
+            <input
+              type="text"
+              name="captchaInput"
+              id="signupCaptchaInput"
+              placeholder="Enter captcha"
+              maxlength="4"
+              autocomplete="off"
+              class="pill-input auth-captcha-input px-4 text-base"
+              required
+            >
+            <input type="hidden" name="captchaToken" id="signupCaptchaToken">
+          </div>
+          <button type="button" id="refreshSignupCaptchaLink" class="link-underline text-sm mt-2">Click to Refresh</button>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <div class="checkbox-wrapper-19 shrink-0">
+            <input type="checkbox" id="agreeTerms" required>
+            <label for="agreeTerms" class="check-box"></label>
+          </div>
+          <span class="text-white text-sm">I agree to the <a href="#" id="showTerms" class="btn-link">Terms and Conditions</a></span>
+        </div>
+
+        <div id="termsSection" class="hidden terms-box">
+          <h4>Terms and Conditions</h4>
+          <div id="termsText"></div>
+        </div>
+
+        <div class="auth-link-row">
+          <button type="submit" class="btn-link btn-link-xl">Sign Up</button>
+        </div>
+      </form>
+
+      <p id="signupMessage" class="auth-message"></p>
+
+      <a href="login.html" class="btn-link auth-bottom-link">Log in</a>
+    </div>
+  </div>
+
+  <script src="signup.js" defer></script>
+</body>
+</html>

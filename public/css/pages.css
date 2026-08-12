@@ -1,0 +1,516 @@
+/* OriLink Page-Specific Styles */
+
+/* Login / Signup split layout */
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .auth-page {
+    flex-direction: row;
+  }
+}
+
+.auth-left-panel {
+  width: 100%;
+  min-height: 40vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .auth-left-panel {
+    width: 50%;
+    min-height: 100vh;
+    padding: 3rem;
+  }
+}
+
+.auth-brand h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.auth-brand p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.125rem;
+}
+
+.auth-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.auth-hero-content {
+  width: 100%;
+  max-width: 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .auth-hero-content {
+    max-width: 28rem;
+  }
+}
+
+.auth-hero-text {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+@media (min-width: 768px) {
+  .auth-hero-text {
+    font-size: 1.4rem;
+  }
+}
+
+.auth-hero-text-right {
+  text-align: right;
+}
+
+.auth-hero-connect {
+  font-size: 4.0rem;
+  font-family: 'Ms Madi', cursive;
+  text-align: center;
+  line-height: 1;
+  background: conic-gradient(from 134deg at 50% 55%, #689922 0deg, #3f84c9 110deg, #cfe341 260deg, #689922 360deg);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (min-width: 640px) {
+  .auth-hero-connect {
+    font-size: 4.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-hero-connect {
+    font-size: 6.5rem;
+  }
+}
+
+.auth-stats {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1;
+  text-align: right;
+}
+
+.auth-right-panel {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  background:
+    url('../imgs/gradient.png') center/cover no-repeat,
+    linear-gradient(135deg, #4ade80 0%, #3b82f6 50%, #06b6d4 100%);
+}
+
+@media (min-width: 1024px) {
+  .auth-right-panel {
+    width: 50%;
+    padding: 3rem;
+  }
+}
+
+.auth-right-panel .text-white {
+  text-shadow: none;
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  min-height: 100%;
+  padding-top: 5rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-form-container.login-form-container {
+  max-width: none;
+}
+
+@media (min-width: 1024px) {
+  .auth-form-container {
+    padding-top: 7rem;
+  }
+}
+
+.auth-title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-title {
+    top: 3rem;
+    left: 3rem;
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.auth-form-row.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.auth-captcha-container {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.auth-captcha-container .link-underline {
+  text-align: left;
+}
+
+.auth-input-wrap {
+  position: relative;
+}
+
+.auth-toggle-password {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  padding: 0;
+}
+
+.auth-toggle-password:hover {
+  color: #ffffff;
+}
+
+.auth-toggle-password svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.auth-captcha-row {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.auth-captcha-box {
+  width: 9rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .auth-captcha-box {
+    width: 10rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-captcha-box {
+    width: 12rem;
+  }
+}
+
+.auth-captcha-input {
+  flex: 1;
+  height: 3.5rem;
+}
+
+.auth-link-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.auth-bottom-link {
+  display: block;
+  text-align: right;
+}
+
+.auth-bottom-link.login-bottom-link {
+  position: absolute;
+  right: 2rem;
+  bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-bottom-link.login-bottom-link {
+    right: 3rem;
+    bottom: 3rem;
+  }
+}
+
+.auth-message {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #ffffff;
+}
+
+.auth-message.error {
+  color: #fecaca;
+}
+
+/* Dashboard */
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 1rem;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-page {
+    padding: 2rem;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+.dashboard-top-left {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 10;
+}
+
+@media (min-width: 768px) {
+  .dashboard-top-left {
+    top: 3rem;
+    left: 3rem;
+  }
+}
+
+.dashboard-top-right {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 10;
+}
+
+@media (min-width: 768px) {
+  .dashboard-top-right {
+    top: 3rem;
+    right: 3rem;
+  }
+}
+
+.dashboard-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-logo-box {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .dashboard-logo-box {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+.dashboard-logo-box img {
+  width: 2rem;
+  height: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-logo-box img {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.dashboard-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-brand-text .logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+  .dashboard-brand-text .logo-text {
+    font-size: 1.875rem;
+  }
+}
+
+.dashboard-brand-text .subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+@media (min-width: 768px) {
+  .dashboard-brand-text .subtitle {
+    font-size: 1rem;
+  }
+}
+
+.dashboard-content {
+  width: 100%;
+  max-width: 28rem;
+  position: relative;
+  z-index: 10;
+}
+
+.dashboard-card {
+  min-height: 400px;
+  margin-bottom: 6rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+.dashboard-page-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 768px) {
+  .dashboard-page-title {
+    font-size: 1.5rem;
+  }
+}
+
+.dashboard-page-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-nav {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  max-width: 95vw;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .dashboard-nav {
+    bottom: 1.5rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+}
+
+/* Admin panel within login page */
+.admin-panel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-panel-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 56rem;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.admin-panel-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.admin-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}

@@ -33,11 +33,11 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-const typeColors = {
-  'play/sports': 'bg-emerald-500/80',
-  'teammate finding': 'bg-blue-500/80',
-  'tutoring': 'bg-violet-500/80',
-  'other': 'bg-gray-500/80'
+const typeBadgeClasses = {
+  'play/sports': 'badge-type-sports',
+  'teammate finding': 'badge-type-teammate',
+  'tutoring': 'badge-type-tutoring',
+  'other': 'badge-type-other'
 };
 
 function getTypeLabel(type) {
@@ -94,20 +94,20 @@ function countWords(text) {
 function renderUserTypeBadge(userType, personalityType) {
   const safeType = escapeHtml(userType || 'normal');
   const safeMbti = escapeHtml(personalityType || 'N/A');
-  
+
   if (safeType === 'verified') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-500/80 text-white whitespace-nowrap">Verified 已验证</span>';
+    return '<span class="badge badge-verified">Verified 已验证</span>';
   }
   if (safeType === 'organization') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/80 text-white whitespace-nowrap">Organization 组织</span>';
+    return '<span class="badge badge-organization">Organization 组织</span>';
   }
-  return `<span class="text-white/80 text-xs whitespace-nowrap">${safeMbti}</span>`;
+  return `<span class="text-white-80 text-xs whitespace-nowrap">${safeMbti}</span>`;
 }
 
 function createInvitationCard(invitation, isOwn = false, showChat = false, showReport = false) {
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
-  const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
-  
+  const typeBadge = `<span class="badge ${typeBadgeClasses[invitation.type] || 'badge-type-other'}">${getTypeLabel(invitation.type)}</span>`;
+
   const safeInvitation = {
     ...invitation,
     title: escapeHtml(invitation.title),
@@ -149,24 +149,24 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   if (isOwn) {
     actionButtons = `
       <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete 删除</button>
+        <button class="chat-btn flex-1 btn bg-blue-500-60 hover:bg-blue-500-80 text-xs py-1_5" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
+        <button class="members-btn flex-1 btn bg-emerald-500-60 hover:bg-emerald-500-80 text-xs py-1_5" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+        <button class="delete-btn flex-1 btn btn-danger text-xs py-1_5" data-id="${invitation.id}">Delete 删除</button>
       </div>`;
   } else if (showChat) {
     actionButtons = `
       <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="leave-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Leave 退出</button>
+        <button class="chat-btn flex-1 btn bg-blue-500-60 hover:bg-blue-500-80 text-xs py-1_5" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
+        <button class="members-btn flex-1 btn bg-emerald-500-60 hover:bg-emerald-500-80 text-xs py-1_5" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+        <button class="leave-btn flex-1 btn bg-red-500-40 hover:bg-red-500-60 text-xs py-1_5" data-id="${invitation.id}">Leave 退出</button>
       </div>`;
   } else {
     const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
     const isFull = invitation.max_participants !== null && invitation.max_participants !== undefined && joinedCount >= invitation.max_participants;
-    const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
+    const reportBtn = showReport ? `<button class="report-btn mt-2 w-full btn badge-report text-xs py-1_5" data-id="${invitation.id}">Report 举报</button>` : '';
     actionButtons = isFull
-      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/70 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
-      : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
+      ? `<button class="join-btn mt-3 w-full btn bg-gray-500-40 text-white-70 text-xs py-1_5 cursor-not-allowed" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
+      : `<button class="join-btn mt-3 w-full btn btn-primary text-xs py-1_5" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
   }
 
   return `
@@ -220,10 +220,10 @@ function checkForChanges() {
                      currentClass !== accountOriginalValues.classField;
 
   if (hasChanges) {
-    saveBtn.className = 'w-full py-2 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-sm font-medium transition-all';
+    saveBtn.className = 'w-full btn btn-danger text-sm py-2';
     saveBtn.textContent = '保存更改* Save Changes*';
   } else {
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
     saveBtn.textContent = '保存更改 Save Changes';
   }
 }
@@ -280,8 +280,8 @@ function renderInvitationsPage() {
   container.innerHTML = `
     <div class="flex justify-start items-center mb-5">
       <div class="flex items-center gap-2">
-        <span class="text-white/60 text-xs">Sort by 排序:</span>
-        <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+        <span class="text-white-60 text-xs">Sort by 排序:</span>
+        <select id="invSortSelect" class="form-select form-select-xs">
           <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
           <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
         </select>
@@ -344,7 +344,7 @@ function loadInvitationsList() {
     })
     .catch(err => {
       console.error(err);
-      container.innerHTML = '<p class="text-red-400 text-sm">Error loading invitations 加载邀请出错</p>';
+      container.innerHTML = '<p class="form-message-error text-sm">Error loading invitations 加载邀请出错</p>';
     });
 }
 
@@ -559,8 +559,8 @@ function openChatModal(e) {
 function renderSystemMessage(content, time) {
   const text = content.replace(/^__SYSTEM__:/, '');
   return `
-    <div class="text-center my-2">
-      <p class="text-white/40 text-xs font-mono italic">[system] ${escapeHtml(text)} · ${time}</p>
+    <div class="chat-system">
+      <p>[system] ${escapeHtml(text)} · ${time}</p>
     </div>
   `;
 }
@@ -578,10 +578,10 @@ function loadChatMessages(invitationId) {
       if (!container) return;
       
       if (messages.length === 0) {
-        container.innerHTML = '<p class="text-white/60 text-sm text-center py-4">No messages yet. Start chatting! 暂无消息。开始聊天吧！</p>';
+        container.innerHTML = '<p class="text-white-60 text-sm text-center py-4">No messages yet. Start chatting! 暂无消息。开始聊天吧！</p>';
         return;
       }
-      
+
       container.innerHTML = messages.map(msg => {
         const isOwn = msg.user_id == currentUserId;
         const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -590,9 +590,9 @@ function loadChatMessages(invitationId) {
         }
         return `
           <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
-            <div class="inline-block max-w-[80%]">
-              <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(msg.username)} · ${time}</p>
-              <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(msg.content)}</p>
+            <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
+              <p class="chat-meta">${isOwn ? 'You 你' : '@' + escapeHtml(msg.username)} · ${time}</p>
+              <p class="chat-bubble-message">${escapeHtml(msg.content)}</p>
             </div>
           </div>
         `;
@@ -621,15 +621,15 @@ function appendMessageToChat(data) {
   } else {
     html = `
       <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
-        <div class="inline-block max-w-[80%]">
-          <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
-          <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(data.content)}</p>
+        <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
+          <p class="chat-meta">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
+          <p class="chat-bubble-message">${escapeHtml(data.content)}</p>
         </div>
       </div>
     `;
   }
   
-  const placeholder = container.querySelector('p.text-white\\/60');
+  const placeholder = container.querySelector('p.text-white-60');
   if (placeholder) {
     container.innerHTML = '';
   }
@@ -693,74 +693,69 @@ function renderJoinedPage() {
       ? 'People needed (excl. yourself) 所需人数（不含自己）'
       : 'Participants (incl. yourself) 所需人数（含自己）';
     container.innerHTML = `
-    <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
+    <button id="showPostForm" class="w-full btn btn-primary text-sm py-2_5 mb-4">
       Post Invitation 发布邀请
     </button>
-    <p id="invitationCount" class="text-white/60 text-xs text-center mb-2"></p>
-    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20 relative">
-      <button id="closePostForm" class="absolute top-3 right-3 text-white/60 hover:text-white">
+    <p id="invitationCount" class="text-white-60 text-xs text-center mb-2"></p>
+    <div id="postForm" class="hidden card relative mb-4">
+      <button id="closePostForm" class="absolute top-3 right-3 modal-close">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <form id="invitationForm" class="space-y-3">
         <div>
-          <label class="block text-white/80 text-xs mb-1">Title (max 15 words) 标题（最多 15 个字）</label>
+          <label class="form-label">Title (max 15 words) 标题（最多 15 个字）</label>
           <input type="text" id="invTitle" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
+            class="form-input"
             placeholder="e.g., Need tennis partner 例如：需要网球搭档">
-          <p class="text-white/60 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words 字</p>
+          <p class="form-hint text-right"><span id="titleCount">0</span>/15 words 字</p>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Description (max ${MAX_DESCRIPTION_LENGTH} chars) 描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
+          <label class="form-label">Description (max ${MAX_DESCRIPTION_LENGTH} chars) 描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
           <textarea id="invDescription" required maxlength="${MAX_DESCRIPTION_LENGTH}" rows="3"
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
+            class="form-input resize-none"
             placeholder="Describe your invitation... 描述你的邀请..."></textarea>
-          <p class="text-white/60 text-xs text-right mt-1"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
+          <p class="form-hint text-right"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Type 类型</label>
-          <select id="invType" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+          <label class="form-label">Type 类型</label>
+          <select id="invType" required class="form-select">
             <option value="">Select type... 选择类型...</option>
             ${INVITATION_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
           </select>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">${participantsLabel}</label>
+          <label class="form-label">${participantsLabel}</label>
           ${isPrivileged
             ? `<input type="number" id="invMaxParticipants" min="1"
-                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
+                 class="form-input"
                  placeholder="Leave blank if unlimited 留空表示不限">`
-            : `<select id="invMaxParticipants"
-                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            : `<select id="invMaxParticipants" class="form-select">
                  <option value="">Select... 选择...</option>
                  ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
                </select>`}
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event Start Time (Required) 活动开始时间（必填）</label>
-            <input type="datetime-local" id="invEventStart" required
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Event Start Time (Required) 活动开始时间（必填）</label>
+            <input type="datetime-local" id="invEventStart" required class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event End Time (Required) 活动结束时间（必填）</label>
-            <input type="datetime-local" id="invEventEnd" required
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Event End Time (Required) 活动结束时间（必填）</label>
+            <input type="datetime-local" id="invEventEnd" required class="form-input">
           </div>
         </div>
-        <button type="submit" id="postBtn"
-          class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
+        <button type="submit" id="postBtn" class="w-full btn btn-primary text-sm py-2">
           Post Invitation 发布邀请
         </button>
-        <p id="postMessage" class="text-center text-xs mt-2"></p>
+        <p id="postMessage" class="form-message"></p>
       </form>
     </div>
     <div id="myInvitations">
       <div class="flex justify-between items-center mb-2">
         <p class="text-white text-xs">My Invitations 我的邀请</p>
         <div class="flex items-center gap-2">
-          <span class="text-white/60 text-xs">Sort by 排序:</span>
-          <select id="myInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+          <span class="text-white-60 text-xs">Sort by 排序:</span>
+          <select id="myInvSortSelect" class="form-select form-select-xs">
             <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
             <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
           </select>
@@ -768,12 +763,12 @@ function renderJoinedPage() {
       </div>
       <div id="myInvitationsList"></div>
     </div>
-    <div id="joinedInvitations" class="mt-6 pt-6 border-t border-white/10">
+    <div id="joinedInvitations" class="mt-6 pt-6 border-t border-white-10">
       <div class="flex justify-between items-center mb-2">
         <p class="text-white text-xs">Joined Invitations 已参与的邀请</p>
         <div class="flex items-center gap-2">
-          <span class="text-white/60 text-xs">Sort by 排序:</span>
-          <select id="joinedInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
+          <span class="text-white-60 text-xs">Sort by 排序:</span>
+          <select id="joinedInvSortSelect" class="form-select form-select-xs">
             <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
             <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
           </select>
@@ -791,7 +786,7 @@ function renderJoinedPage() {
         messageEl = document.getElementById('postMessage');
         if (messageEl) {
           messageEl.textContent = 'You have reached the maximum of 4 active invitations 您已达到4个活跃邀请的上限';
-          messageEl.className = 'text-center text-xs mt-2 text-red-400';
+          messageEl.className = 'form-message form-message-error';
         }
         return;
       }
@@ -939,13 +934,13 @@ function handlePostInvitation(e) {
 
   if (!title || !description || !type) {
     messageEl.textContent = 'Please fill in all required fields 请填写所有必填字段';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (!event_start || !event_end) {
     messageEl.textContent = 'Event start and end times are required 活动开始和结束时间为必填项';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -954,19 +949,19 @@ function handlePostInvitation(e) {
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     messageEl.textContent = 'Invalid date format 日期格式无效';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (startDate <= new Date()) {
     messageEl.textContent = 'Event start time must be in the future 活动开始时间必须在当前时间之后';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (endDate <= startDate) {
     messageEl.textContent = 'Event end time must be after start time 活动结束时间必须在开始时间之后';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -975,27 +970,27 @@ function handlePostInvitation(e) {
     messageEl.textContent = isPrivileged
       ? 'Event duration cannot exceed 7 days 活动时长不能超过7天'
       : 'Event duration cannot exceed 24 hours 活动时长不能超过24小时';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (isPrivileged) {
     if (!isNaN(max_participants) && max_participants < 1) {
       messageEl.textContent = 'Number of people must be at least 1 (leave blank for unlimited) 人数至少为1（留空表示不限）';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.className = 'form-message form-message-error';
       return;
     }
   } else {
     if (isNaN(max_participants) || max_participants < 1 || max_participants > 10) {
       messageEl.textContent = 'Number of people must be between 1 and 10 人数必须在1到10之间';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.className = 'form-message form-message-error';
       return;
     }
   }
 
   if (countWords(title) > 15) {
     messageEl.textContent = 'Title cannot exceed 15 words 标题不能超过 15 个字';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -1020,12 +1015,12 @@ function handlePostInvitation(e) {
       if (!result) return;
       if (!result.ok) {
         messageEl.textContent = result.data.error || 'Failed to post invitation 发布邀请失败';
-        messageEl.className = 'text-center text-xs mt-2 text-red-400';
+        messageEl.className = 'form-message form-message-error';
         return;
       }
       const data = result.data;
       messageEl.textContent = 'Invitation posted successfully! 邀请发布成功！';
-      messageEl.className = 'text-center text-xs mt-2 text-green-400';
+      messageEl.className = 'form-message form-message-success';
       document.getElementById('invitationForm').reset();
       document.getElementById('titleCount').textContent = '0';
       document.getElementById('descCount').textContent = '0';
@@ -1040,7 +1035,7 @@ function handlePostInvitation(e) {
     })
     .catch(err => {
       messageEl.textContent = err.message || 'Failed to post invitation 发布邀请失败';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.className = 'form-message form-message-error';
     })
     .finally(() => {
       postBtn.disabled = false;
@@ -1051,14 +1046,14 @@ function handlePostInvitation(e) {
 function showInviteModal(inv) {
   const modal = document.getElementById('inviteModal');
   const modalBody = document.getElementById('modalBody');
-  const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
-  
+  const typeBadge = `<span class="badge ${typeBadgeClasses[inv.type] || 'badge-type-other'}">${getTypeLabel(inv.type)}</span>`;
+
   modalBody.innerHTML = `
-    <p class="text-white/80 text-xs">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
-    <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
+    <p class="text-white-80 text-xs">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
+    <h3 class="modal-title mt-1">${inv.title}</h3>
     <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
-    <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>
+    <button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close 关闭</button>
   `;
   modal.classList.remove('hidden');
   
@@ -1076,8 +1071,8 @@ function showMembersModal(invitationId, title) {
   const modalBody = document.getElementById('modalBody');
 
   modalBody.innerHTML = `
-    <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
-    <p class="text-white/60 text-xs mt-1 mb-3">Loading members... 加载成员中...</p>
+    <h3 class="modal-title">${escapeHtml(title)} — Members 成员</h3>
+    <p class="text-white-60 text-xs mt-1 mb-3">Loading members... 加载成员中...</p>
   `;
   modal.classList.remove('hidden');
   document.getElementById('closeModal').onclick = hideInviteModal;
@@ -1090,37 +1085,37 @@ function showMembersModal(invitationId, title) {
       return res.json();
     })
     .then(data => {
-      let html = `<h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>`;
-      html += `<p class="text-white/60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
+      let html = `<h3 class="modal-title">${escapeHtml(title)} — Members 成员</h3>`;
+      html += `<p class="text-white-60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
 
       if (data.members.length === 0) {
-        html += '<p class="text-white/60 text-sm">No members have joined yet 暂无成员加入</p>';
+        html += '<p class="text-white-60 text-sm">No members have joined yet 暂无成员加入</p>';
       } else {
         html += '<div class="space-y-2">';
         data.members.forEach(m => {
           const joinedTime = new Date(m.joined_at).toLocaleString();
           html += `
-            <div class="flex items-center justify-between p-2 rounded-lg bg-white/10">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-white-10">
               <div>
                 <p class="text-white text-sm font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
-                <p class="text-white/60 text-xs">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
+                <p class="text-white-60 text-xs">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
               </div>
-              <p class="text-white/40 text-xs">${joinedTime}</p>
+              <p class="text-white-40 text-xs">${joinedTime}</p>
             </div>
           `;
         });
         html += '</div>';
       }
 
-      html += `<button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>`;
+      html += `<button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close 关闭</button>`;
       modalBody.innerHTML = html;
       modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
     })
     .catch(err => {
       modalBody.innerHTML = `
-        <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
-        <p class="text-red-400 text-sm mt-2">${escapeHtml(err.message)}</p>
-        <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>
+        <h3 class="modal-title">${escapeHtml(title)} — Members 成员</h3>
+        <p class="form-message-error text-sm mt-2">${escapeHtml(err.message)}</p>
+        <button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close 关闭</button>
       `;
       modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
     });
@@ -1139,68 +1134,59 @@ function renderAccountPage() {
 
       document.getElementById('page-description').innerHTML = `
         <form id="accountForm" class="space-y-4">
-          <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
-            <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
+          <div class="bg-white-5 border border-white-10 rounded-lg p-4 space-y-3">
+            <h3 class="text-white-60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
             <div>
-              <label class="block text-white/80 text-xs mb-1">Full Name (max 100 chars) 姓名（最多100字）</label>
-              <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}"
-                class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+              <label class="form-label">Full Name (max 100 chars) 姓名（最多100字）</label>
+              <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}" class="form-input">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-white/80 text-xs mb-1">Grade (max 2 chars) 年级（最多2字）</label>
-                <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}"
-                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                <label class="form-label">Grade (max 2 chars) 年级（最多2字）</label>
+                <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}" class="form-input">
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Class (max 2 chars) 班级（最多2字）</label>
-                <input type="text" id="classField" name="classField" maxlength="2" value="${escapeHtml(user.class || '')}"
-                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                <label class="form-label">Class (max 2 chars) 班级（最多2字）</label>
+                <input type="text" id="classField" name="classField" maxlength="2" value="${escapeHtml(user.class || '')}" class="form-input">
               </div>
             </div>
             <div>
-              <label class="block text-white/50 text-xs mb-1">Warning Count 警告次数</label>
-              <input type="text" value="${user.warning_count || 0}" disabled
-                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
+              <label class="form-label text-white-50">Warning Count 警告次数</label>
+              <input type="text" value="${user.warning_count || 0}" disabled class="form-input cursor-not-allowed text-red-400 bg-white-5 border-white-10">
             </div>
-            <p class="text-white/60 text-xs italic mt-2">Contact admin for other inquiries. 联系管理员进行其他查询。</p>
+            <p class="form-hint italic mt-2">Contact admin for other inquiries. 联系管理员进行其他查询。</p>
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
-            <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
+            <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}" class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">New password (max ${MAX_CHARS} chars, leave empty to keep current) 新密码（最多${MAX_CHARS}字，留空保持当前密码）</label>
-            <input type="password" id="password" name="password" maxlength="${MAX_CHARS}"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">New password (max ${MAX_CHARS} chars, leave empty to keep current) 新密码（最多${MAX_CHARS}字，留空保持当前密码）</label>
+            <input type="password" id="password" name="password" maxlength="${MAX_CHARS}" class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Personality Type (MBTI) 性格类型（MBTI）</label>
+            <label class="form-label">Personality Type (MBTI) 性格类型（MBTI）</label>
             ${user.user_type === 'normal' ? `
-            <select id="personalityType" name="personalityType"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-<option value="">Select type... 选择类型...</option>
-            ${mbtiOptions}
-          </select>` : `
-            <div class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+            <select id="personalityType" name="personalityType" class="form-select">
+              <option value="">Select type... 选择类型...</option>
+              ${mbtiOptions}
+            </select>` : `
+            <div class="form-input bg-white-5 border-white-10">
               ${renderUserTypeBadge(user.user_type, user.personality_type)}
             </div>
-            <p class="text-white/60 text-xs italic mt-1">Verified and organization accounts cannot change their type. 已验证和组织账户不能更改其类型。</p>`}
+            <p class="form-hint italic mt-1">Verified and organization accounts cannot change their type. 已验证和组织账户不能更改其类型。</p>`}
           </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Current password (required to save) 当前密码（保存时必填）</label>
-          <input type="password" id="currentPassword" name="currentPassword" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+          <label class="form-label">Current password (required to save) 当前密码（保存时必填）</label>
+          <input type="password" id="currentPassword" name="currentPassword" required class="form-input">
         </div>
-        <button type="submit" id="saveBtn"
-          class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-保存更改 Save Changes
+        <button type="submit" id="saveBtn" class="w-full btn btn-primary text-sm py-2">
+          保存更改 Save Changes
         </button>
-        <p id="accountMessage" class="text-center text-xs mt-2"></p>
+        <p id="accountMessage" class="form-message"></p>
         </form>
-        <div class="mt-8 pt-4 border-t border-white/10 text-center">
-          <button id="deleteAccountBtn" class="text-white/30 hover:text-red-400 text-xs transition-all">Delete Account 删除账号</button>
+        <div class="mt-8 pt-4 border-t border-white-10 text-center">
+          <button id="deleteAccountBtn" class="text-white-30 hover:text-red-400 text-xs transition-all">Delete Account 删除账号</button>
         </div>
     `;
 
@@ -1248,7 +1234,7 @@ async function handleAccountSubmit(e) {
 
   if (!currentPassword) {
     messageEl.textContent = 'Please enter current password 请输入当前密码';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -1257,13 +1243,13 @@ async function handleAccountSubmit(e) {
 
   if (username && !usernameRegex.test(username)) {
     messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores or dots (max 20 chars) 用户名必须以字母开头，只能包含字母、数字、下划线或点（最多 20 个字符）';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (password && !passwordRegex.test(password)) {
     messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 密码至少 5 个字符，只能包含字母、数字和常用符号';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -1283,7 +1269,7 @@ async function handleAccountSubmit(e) {
     }
     
     messageEl.textContent = 'Account updated successfully! 账号更新成功！';
-    messageEl.className = 'text-center text-xs mt-2 text-green-400';
+    messageEl.className = 'form-message form-message-success';
     document.getElementById('password').value = '';
     document.getElementById('currentPassword').value = '';
     accountOriginalValues.username = username;
@@ -1292,14 +1278,14 @@ async function handleAccountSubmit(e) {
     accountOriginalValues.fullName = full_name;
     accountOriginalValues.grade = grade;
     accountOriginalValues.classField = classValue;
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
     saveBtn.textContent = '保存更改 Save Changes';
   } catch (err) {
     messageEl.textContent = err.message;
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
   } finally {
     saveBtn.disabled = false;
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
     saveBtn.textContent = '保存更改 Save Changes';
     checkForChanges();
   }
@@ -1307,19 +1293,19 @@ async function handleAccountSubmit(e) {
 
 function showDeleteAccountModal() {
   const modalOverlay = document.createElement('div');
-  modalOverlay.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50';
+  modalOverlay.className = 'modal-overlay z-50 bg-black-70';
   modalOverlay.innerHTML = `
-    <div class="bg-gray-900 border border-red-500/50 rounded-xl p-6 max-w-sm w-full mx-4">
+    <div class="delete-modal">
       <h3 class="text-red-400 font-bold text-lg mb-2">Delete Account 删除账号</h3>
-      <p class="text-white/70 text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
+      <p class="text-white-70 text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
       <div class="mb-4">
-        <label class="block text-white/80 text-xs mb-1">Current password 当前密码</label>
-        <input type="password" id="deleteConfirmPassword" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-red-400">
+        <label class="form-label">Current password 当前密码</label>
+        <input type="password" id="deleteConfirmPassword" class="form-input focus:border-red-400">
         <p id="deleteMessage" class="text-xs mt-1"></p>
       </div>
       <div class="flex gap-3">
-        <button id="cancelDeleteBtn" class="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all">Cancel 取消</button>
-        <button id="confirmDeleteBtn" class="flex-1 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-sm font-medium transition-all">Delete 删除</button>
+        <button id="cancelDeleteBtn" class="flex-1 btn btn-secondary text-sm py-2">Cancel 取消</button>
+        <button id="confirmDeleteBtn" class="flex-1 btn bg-red-600-80 hover:bg-red-600 text-sm py-2">Delete 删除</button>
       </div>
     </div>
   `;
@@ -1339,7 +1325,7 @@ function showDeleteAccountModal() {
 
     if (!password) {
       deleteMessage.textContent = 'Please enter your current password 请输入当前密码';
-      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      deleteMessage.className = 'form-message-error text-xs mt-1';
       return;
     }
 
@@ -1363,7 +1349,7 @@ function showDeleteAccountModal() {
       window.location.href = '/';
     } catch (err) {
       deleteMessage.textContent = err.message;
-      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      deleteMessage.className = 'form-message-error text-xs mt-1';
       confirmBtn.disabled = false;
       confirmBtn.textContent = 'Delete 删除';
     }

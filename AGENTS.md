@@ -35,20 +35,26 @@ This file provides comprehensive guidelines for agentic coding agents operating 
   - `Error loading invitations 加载邀请出错` (error message)
 - Any agent modifying or adding UI text MUST follow this bilingual format
 
+**Exception:** The public login page (`public/login.html`) and signup page (`public/signup.html`) are permitted to use English-only user-facing text, except for the OriLink bilingual logo (`OriLink 元联`). All other pages and components remain subject to the bilingual requirement above.
+
 ## 1. Build / Lint / Test Commands
 
 Agents must prioritize security and stability in all operations.
 
 ### Build
 ```bash
-# Build CSS (Tailwind CLI) - runs automatically before start/dev
-npm run build:css
-
-# Build the entire project (CSS only, frontend is static)
+# The frontend is static; no CSS build step is required.
+# CSS lives in public/css/ as normal, split stylesheets.
 npm run build
 ```
 
-**Note:** The CSS build runs automatically via `prestart` and `predev` hooks. The Tailwind CDN has been replaced with a compiled `style.css` generated from `public/src/input.css`.
+**Note:** The project no longer uses Tailwind CSS. Styles are maintained as normal CSS files in `public/css/`:
+- `base.css` — reset and base styles
+- `utilities.css` — utility classes derived from the previous compiled stylesheet
+- `components.css` — reusable components and semantic classes
+- `pages.css` — page-specific layouts (login/signup split, dashboard)
+
+The `prestart` and `predev` hooks and the `tailwindcss` dependency have been removed.
 
 ### Lint & Format
 ```bash
@@ -89,7 +95,9 @@ npm audit
 ### Kill Server
 ```bash
 # OriLink backend listens on port 3210 (see server/index.js)
-fuser -k 3210/tcp
+# Windows + git bash: find the PID (last column), then taskkill with double slashes
+netstat -ano | grep ':3210 .*LISTENING'
+taskkill //PID <PID> //F
 ```
 
 ## 2. Deployment & Nginx
@@ -157,13 +165,12 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ```bash
 cd /home/kevin/projects/orilink/server
-npm run build:css  # Build CSS before starting (auto-runs with npm start)
 node index.js
 # or with nodemon for development
 npx nodemon index.js
 ```
 
-**Note:** When deploying, always run `npm run build:css` in the `server/` directory before starting the server to ensure the compiled CSS is up to date. The `prestart` hook handles this automatically when using `npm start`.
+**Note:** The frontend CSS is now maintained as normal static files in `public/css/`. No build step is required before starting the server.
 
 ### Verify
 
