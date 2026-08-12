@@ -13,6 +13,7 @@ const DESCRIPTION_TRUNCATE_LENGTH = 50;
 let invitationsSort = 'event';
 let myInvitationsSort = 'event';
 let joinedInvitationsSort = 'event';
+let invitationsFilter = null;
 
 function getTokenExpiry() {
   const token = localStorage.getItem('token');
@@ -47,30 +48,16 @@ function getTypeLabel(type) {
 
 const pages = {
   invitations: {
-    title: "Others' Invitations 他人邀请",
+    title: "Invitations 邀请",
     render: renderInvitationsPage
   },
   joined: {
-    title: "Joined Invitations 参与邀请",
+    title: "Ongoing 进行中",
     render: renderJoinedPage
   },
   account: {
-    title: "My Account 账号",
+    title: "Profile 资料",
     render: renderAccountPage
-  },
-  about: {
-    title: "About OriLink 关于元联",
-    description: `OriLink or 元联 is an in-school 
-    online social platform founded and developed by a student who sought the need to 
-    develop a more efficient method to connect students with similar needs/wants and interests to promote 
-    socializing and build a stronger community. Compared to other online social platforms, our platform is unique in that it prioritizes offline/real-world socializing, as stated in our motto: “Promoting offline social interactions through online methods 用线上方式促进线下社交“. Whether it's finding someone to play sports with, 
-    finding a student tutor or seeking teammates for competitions, you can do all these things on this platform. 
-    <br></br>
-    Founder, Developer & Maintainer: Kevin Kaiwen Chai <br>
-    Co-founders, Past Contributors (Planning & Surveying): Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
-    <br></br>
-    <h3 class="text-white font-semibold text-sm mt-4 mb-2">Terms and Conditions</h3>
-    <div id="aboutTermsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>`
   }
 };
 
@@ -101,12 +88,11 @@ function renderUserTypeBadge(userType, personalityType) {
   if (safeType === 'organization') {
     return '<span class="badge badge-organization">Organization 组织</span>';
   }
-  return `<span class="text-white-80 text-xs whitespace-nowrap">${safeMbti}</span>`;
+  return `<span class="user-type-mbti">${safeMbti}</span>`;
 }
 
 function createInvitationCard(invitation, isOwn = false, showChat = false, showReport = false) {
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
-  const typeBadge = `<span class="badge ${typeBadgeClasses[invitation.type] || 'badge-type-other'}">${getTypeLabel(invitation.type)}</span>`;
 
   const safeInvitation = {
     ...invitation,
@@ -118,71 +104,65 @@ function createInvitationCard(invitation, isOwn = false, showChat = false, showR
   };
 
   const isInviterPrivileged = invitation.user_type === 'verified' || invitation.user_type === 'organization';
-  
-  const descriptionHtml = truncated 
-    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
-    : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
-  
-  let metaInfo = '';
-  if (invitation.max_participants !== undefined || invitation.event_start || invitation.event_end) {
-    metaInfo += '<div class="mt-2 flex flex-wrap gap-2">';
-    if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
-      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
-      const isFull = joinedCount >= invitation.max_participants;
-      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</span>`;
-    } else if (invitation.max_participants === null) {
-      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
-      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/∞</span>`;
-    }
-    if (invitation.event_start && invitation.event_end) {
-      const cstOpts = { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
-      const startDate = new Date(invitation.event_start);
-      const endDate = new Date(invitation.event_end);
-      const startStr = startDate.toLocaleString('zh-CN', cstOpts);
-      const endStr = endDate.toLocaleString('zh-CN', cstOpts);
-      metaInfo += `<span class="text-white/60 text-xs">📅 Start 开始: ${startStr} - End 结束: ${endStr}</span>`;
-    }
-    metaInfo += '</div>';
+
+  const descriptionHtml = truncated
+    ? `<p class="card-desc cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="card-desc-more">View More 查看更多</span></p>`
+    : `<p class="card-desc">${truncatedDesc}</p>`;
+
+  let timeHtml = '';
+  if (invitation.event_start && invitation.event_end) {
+    const cstOpts = { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+    const startDate = new Date(invitation.event_start);
+    const endDate = new Date(invitation.event_end);
+    const startStr = startDate.toLocaleString('zh-CN', cstOpts);
+    const endStr = endDate.toLocaleString('zh-CN', cstOpts);
+    timeHtml = `<p class="card-meta"><strong>Time 时间:</strong> ${startStr} - ${endStr}</p>`;
   }
-  
+
+  let participantsHtml = '';
+  const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
+  if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
+    const isFull = joinedCount >= invitation.max_participants;
+    participantsHtml = `<p class="card-meta"><strong>Participants 参与人数:</strong> ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</p>`;
+  } else if (invitation.max_participants === null) {
+    participantsHtml = `<p class="card-meta"><strong>Participants 参与人数:</strong> ${joinedCount}/∞</p>`;
+  }
+
   let actionButtons = '';
   if (isOwn) {
     actionButtons = `
-      <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 btn bg-blue-500-60 hover:bg-blue-500-80 text-xs py-1_5" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 btn bg-emerald-500-60 hover:bg-emerald-500-80 text-xs py-1_5" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="delete-btn flex-1 btn btn-danger text-xs py-1_5" data-id="${invitation.id}">Delete 删除</button>
+      <div class="card-manage-actions">
+        <button class="chat-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
+        <button class="members-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+        <button class="delete-btn" data-id="${invitation.id}">Delete 删除</button>
       </div>`;
   } else if (showChat) {
     actionButtons = `
-      <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 btn bg-blue-500-60 hover:bg-blue-500-80 text-xs py-1_5" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 btn bg-emerald-500-60 hover:bg-emerald-500-80 text-xs py-1_5" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="leave-btn flex-1 btn bg-red-500-40 hover:bg-red-500-60 text-xs py-1_5" data-id="${invitation.id}">Leave 退出</button>
+      <div class="card-manage-actions">
+        <button class="chat-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
+        <button class="members-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
+        <button class="leave-btn" data-id="${invitation.id}">Leave 退出</button>
       </div>`;
   } else {
-    const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
     const isFull = invitation.max_participants !== null && invitation.max_participants !== undefined && joinedCount >= invitation.max_participants;
-    const reportBtn = showReport ? `<button class="report-btn mt-2 w-full btn badge-report text-xs py-1_5" data-id="${invitation.id}">Report 举报</button>` : '';
-    actionButtons = isFull
-      ? `<button class="join-btn mt-3 w-full btn bg-gray-500-40 text-white-70 text-xs py-1_5 cursor-not-allowed" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
-      : `<button class="join-btn mt-3 w-full btn btn-primary text-xs py-1_5" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
+    const reportBtn = showReport ? `<button class="report-btn" data-id="${invitation.id}">Report 举报</button>` : '';
+    actionButtons = `
+      <div class="card-actions">
+        ${isFull
+          ? `<button class="join-btn" disabled data-id="${invitation.id}">Full 已满</button>`
+          : `<button class="join-btn" data-id="${invitation.id}">Join 加入</button>`}
+        ${reportBtn}
+      </div>`;
   }
 
   return `
-    <div class="invitation-card glass-panel rounded-xl p-4 mb-3">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-1 min-w-0">
-          <h3 class="text-white font-semibold text-sm truncate">${safeInvitation.title}</h3>
-          ${descriptionHtml}
-          <div class="mt-2">${typeBadge}</div>
-          ${metaInfo}
-        </div>
-        <div class="text-right">
-          <p class="text-white text-xs whitespace-nowrap">@${safeInvitation.username}</p>
-          ${renderUserTypeBadge(safeInvitation.user_type, safeInvitation.personality_type)}
-        </div>
-      </div>
+    <div class="dashboard-invitation-card">
+      <h3>${safeInvitation.title}</h3>
+      ${descriptionHtml}
+      <p class="card-meta"><strong>Type 类型:</strong> ${getTypeLabel(invitation.type)}</p>
+      ${timeHtml}
+      ${participantsHtml}
+      <p class="card-meta"><strong>Organizer 组织者:</strong> @${safeInvitation.username} ${renderUserTypeBadge(safeInvitation.user_type, safeInvitation.personality_type)}</p>
       ${actionButtons}
     </div>
   `;
@@ -277,75 +257,78 @@ function getCurrentUser() {
 
 function renderInvitationsPage() {
   const container = document.getElementById('page-description');
-  container.innerHTML = `
-    <div class="flex justify-start items-center mb-5">
-      <div class="flex items-center gap-2">
-        <span class="text-white-60 text-xs">Sort by 排序:</span>
-        <select id="invSortSelect" class="form-select form-select-xs">
-          <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-          <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
-        </select>
-      </div>
-    </div>
-  `;
-
+  container.innerHTML = '<div class="dashboard-empty">Loading invitations 加载中...</div>';
   loadInvitationsList();
-
-  document.getElementById('invSortSelect').addEventListener('change', () => {
-    invitationsSort = document.getElementById('invSortSelect').value;
-    loadInvitationsList();
-  });
 }
 
 function loadInvitationsList() {
   const container = document.getElementById('page-description');
-  const sortHtml = container.querySelector('#invSortSelect')?.parentElement?.parentElement?.outerHTML || '';
 
   Promise.all([
     fetch(`/api/invitations?sort=${invitationsSort}`, { headers: getAuthHeader() }).then(res => res.json()),
     getCurrentUser()
   ])
     .then(([invitations, user]) => {
-      let html = sortHtml;
-      if (invitations.length === 0) {
-        html += '<p class="text-white text-sm text-center py-4">No invitations yet. Be the first to post one! 暂无邀请。来做第一个发布邀请的人吧！</p>';
-      } else {
-        html += invitations.map(inv => {
-          const isOwn = inv.username === user.username;
-          return createInvitationCard(inv, isOwn, false, !isOwn);
-        }).join('');
-      }
-      container.innerHTML = html;
+      const filtered = invitationsFilter
+        ? invitations.filter(inv => inv.type === invitationsFilter)
+        : invitations;
 
-      document.getElementById('invSortSelect').value = invitationsSort;
-      document.getElementById('invSortSelect').addEventListener('change', () => {
-        invitationsSort = document.getElementById('invSortSelect').value;
-        loadInvitationsList();
-      });
-      
-      document.querySelectorAll('.join-btn').forEach(btn => {
-        btn.addEventListener('click', handleJoin);
-      });
-      
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => handleDelete(e, 'invitations'));
-      });
-      
-      document.querySelectorAll('.report-btn').forEach(btn => {
-        btn.addEventListener('click', handleReport);
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      if (filtered.length === 0) {
+        const emptyMessage = invitationsFilter
+          ? 'No matching invitations for this category. 该类别暂无匹配邀请。'
+          : 'No invitations yet. Be the first to post one! 暂无邀请。来做第一个发布邀请的人吧！';
+        container.innerHTML = `<p class="dashboard-empty">${emptyMessage}</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${filtered.map(inv => {
+            const isOwn = inv.username === user.username;
+            return createInvitationCard(inv, isOwn, false, !isOwn);
+          }).join('')}
+        </div>
+      `;
+
+      attachInvitationListeners(container);
     })
     .catch(err => {
       console.error(err);
-      container.innerHTML = '<p class="form-message-error text-sm">Error loading invitations 加载邀请出错</p>';
+      container.innerHTML = '<p class="dashboard-empty">Error loading invitations 加载邀请出错</p>';
     });
+}
+
+function attachInvitationListeners(container) {
+  container.querySelectorAll('.join-btn').forEach(btn => {
+    btn.addEventListener('click', handleJoin);
+  });
+
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleDelete(e, 'invitations'));
+  });
+
+  container.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', handleReport);
+  });
+
+  container.querySelectorAll('.expand-desc').forEach(el => {
+    el.addEventListener('click', function() {
+      const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
+      showInviteModal(inv);
+    });
+  });
+
+  container.querySelectorAll('.chat-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => openChatModal(e));
+  });
+
+  container.querySelectorAll('.members-btn').forEach(btn => {
+    btn.addEventListener('click', () => showMembersModal(btn.dataset.id, btn.dataset.title));
+  });
+
+  container.querySelectorAll('.leave-btn').forEach(btn => {
+    btn.addEventListener('click', handleLeave);
+  });
 }
 
 function handleDelete(e, pageContext) {
@@ -488,8 +471,8 @@ function handleJoin(e) {
       btn.classList.add('bg-green-500/80');
       
       setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelector('[data-page="joined"]').classList.add('active');
+        document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.dashboard-rail-item[data-page="joined"]').classList.add('active');
         document.getElementById('page-title').innerHTML = pages.joined.title;
         renderJoinedPage();
       }, 1000);
@@ -523,8 +506,8 @@ function handleLeave(e) {
       btn.textContent = 'Left! 已退出！';
       btn.classList.add('bg-gray-500/60');
       setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelector('[data-page="invitations"]').classList.add('active');
+        document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.dashboard-rail-item[data-page="invitations"]').classList.add('active');
         document.getElementById('page-title').innerHTML = pages.invitations.title;
         renderInvitationsPage();
       }, 1000);
@@ -560,7 +543,7 @@ function renderSystemMessage(content, time) {
   const text = content.replace(/^__SYSTEM__:/, '');
   return `
     <div class="chat-system">
-      <p>[system] ${escapeHtml(text)} · ${time}</p>
+      [system] ${escapeHtml(text)} · ${time}
     </div>
   `;
 }
@@ -578,7 +561,7 @@ function loadChatMessages(invitationId) {
       if (!container) return;
       
       if (messages.length === 0) {
-        container.innerHTML = '<p class="text-white-60 text-sm text-center py-4">No messages yet. Start chatting! 暂无消息。开始聊天吧！</p>';
+        container.innerHTML = '<p class="dashboard-empty">No messages yet. Start chatting! 暂无消息。开始聊天吧！</p>';
         return;
       }
 
@@ -589,7 +572,7 @@ function loadChatMessages(invitationId) {
           return renderSystemMessage(msg.content, time);
         }
         return `
-          <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
+          <div style="margin-bottom:0.75rem;text-align:${isOwn ? 'right' : 'left'};">
             <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
               <p class="chat-meta">${isOwn ? 'You 你' : '@' + escapeHtml(msg.username)} · ${time}</p>
               <p class="chat-bubble-message">${escapeHtml(msg.content)}</p>
@@ -611,16 +594,16 @@ function loadChatMessages(invitationId) {
 function appendMessageToChat(data) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
-  
+
   const isOwn = data.userId == currentUserId;
   const time = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
+
   let html;
   if (data.content.startsWith('__SYSTEM__:')) {
     html = renderSystemMessage(data.content, time);
   } else {
     html = `
-      <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
+      <div style="margin-bottom:0.75rem;text-align:${isOwn ? 'right' : 'left'};">
         <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
           <p class="chat-meta">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
           <p class="chat-bubble-message">${escapeHtml(data.content)}</p>
@@ -628,12 +611,12 @@ function appendMessageToChat(data) {
       </div>
     `;
   }
-  
-  const placeholder = container.querySelector('p.text-white-60');
+
+  const placeholder = container.querySelector('.dashboard-empty');
   if (placeholder) {
-    container.innerHTML = '';
+    placeholder.remove();
   }
-  container.innerHTML += html;
+  container.insertAdjacentHTML('beforeend', html);
   container.scrollTop = container.scrollHeight;
 }
 
@@ -696,10 +679,10 @@ function renderJoinedPage() {
     <button id="showPostForm" class="w-full btn btn-primary text-sm py-2_5 mb-4">
       Post Invitation 发布邀请
     </button>
-    <p id="invitationCount" class="text-white-60 text-xs text-center mb-2"></p>
-    <div id="postForm" class="hidden card relative mb-4">
-      <button id="closePostForm" class="absolute top-3 right-3 modal-close">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <p id="invitationCount" class="dashboard-empty" style="padding:0 0 1rem;"></p>
+    <div id="postForm" class="hidden dashboard-post-form relative mb-4">
+      <button id="closePostForm" class="dashboard-post-close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <form id="invitationForm" class="space-y-3">
         <div>
@@ -734,7 +717,7 @@ function renderJoinedPage() {
                  ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
                </select>`}
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="dashboard-datetime-row">
           <div>
             <label class="form-label">Event Start Time (Required) 活动开始时间（必填）</label>
             <input type="datetime-local" id="invEventStart" required class="form-input">
@@ -751,26 +734,26 @@ function renderJoinedPage() {
       </form>
     </div>
     <div id="myInvitations">
-      <div class="flex justify-between items-center mb-2">
-        <p class="text-white text-xs">My Invitations 我的邀请</p>
-        <div class="flex items-center gap-2">
-          <span class="text-white-60 text-xs">Sort by 排序:</span>
-          <select id="myInvSortSelect" class="form-select form-select-xs">
-            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
+      <div class="dashboard-section-header">
+        <p>My Invitations 我的邀请</p>
+        <div class="dashboard-section-sort">
+          <span>Sorted by 排序:</span>
+          <select id="myInvSortSelect" class="dashboard-sort-select">
+            <option value="event">start time 开始时间</option>
+            <option value="newest">post time 发布时间</option>
           </select>
         </div>
       </div>
       <div id="myInvitationsList"></div>
     </div>
-    <div id="joinedInvitations" class="mt-6 pt-6 border-t border-white-10">
-      <div class="flex justify-between items-center mb-2">
-        <p class="text-white text-xs">Joined Invitations 已参与的邀请</p>
-        <div class="flex items-center gap-2">
-          <span class="text-white-60 text-xs">Sort by 排序:</span>
-          <select id="joinedInvSortSelect" class="form-select form-select-xs">
-            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
+    <div id="joinedInvitations" class="dashboard-joined-section">
+      <div class="dashboard-section-header">
+        <p>Joined Invitations 已参与的邀请</p>
+        <div class="dashboard-section-sort">
+          <span>Sorted by 排序:</span>
+          <select id="joinedInvSortSelect" class="dashboard-sort-select">
+            <option value="event">start time 开始时间</option>
+            <option value="newest">post time 发布时间</option>
           </select>
         </div>
       </div>
@@ -844,36 +827,20 @@ function loadMyInvitations() {
         countEl.textContent = `${invitations.length}/4 active invitations 活跃邀请`;
       }
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
+        container.innerHTML = '<p class="dashboard-empty">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true, false)).join('');
-      
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => handleDelete(e, 'joined'));
-      });
-      
-      document.querySelectorAll('.chat-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => openChatModal(e));
-      });
-
-      document.querySelectorAll('.members-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          showMembersModal(btn.dataset.id, btn.dataset.title);
-        });
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true, false)).join('')}
+        </div>
+      `;
+      attachInvitationListeners(container);
     })
     .catch(err => {
       const container = document.getElementById('myInvitationsList');
       if (container) {
-        container.innerHTML = '<p class="text-red-400 text-sm">Error loading my invitations 加载我的邀请出错</p>';
+        container.innerHTML = '<p class="dashboard-empty">Error loading my invitations 加载我的邀请出错</p>';
       }
     });
 }
@@ -885,36 +852,20 @@ function loadJoinedInvitations() {
       const container = document.getElementById('joinedInvitationsList');
       if (!container) return;
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t joined any invitations yet. 你还没有参与任何邀请。</p>';
+        container.innerHTML = '<p class="dashboard-empty">You haven\'t joined any invitations yet. 你还没有参与任何邀请。</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true, false)).join('');
-      
-      document.querySelectorAll('.chat-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => openChatModal(e));
-      });
-      
-      document.querySelectorAll('.leave-btn').forEach(btn => {
-        btn.addEventListener('click', handleLeave);
-      });
-      
-      document.querySelectorAll('.members-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          showMembersModal(btn.dataset.id, btn.dataset.title);
-        });
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true, false)).join('')}
+        </div>
+      `;
+      attachInvitationListeners(container);
     })
     .catch(err => {
       const container = document.getElementById('joinedInvitationsList');
       if (container) {
-        container.innerHTML = '<p class="text-red-400 text-sm">Error loading joined invitations 加载已参与的邀请出错</p>';
+        container.innerHTML = '<p class="dashboard-empty">Error loading joined invitations 加载已参与的邀请出错</p>';
       }
     });
 }
@@ -1028,8 +979,8 @@ function handlePostInvitation(e) {
       document.getElementById('showPostForm').classList.remove('hidden');
       loadMyInvitations();
       
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.querySelector('[data-page="joined"]').classList.add('active');
+      document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+      document.querySelector('.dashboard-rail-item[data-page="joined"]').classList.add('active');
       document.getElementById('page-title').innerHTML = pages.joined.title;
       renderJoinedPage();
     })
@@ -1049,9 +1000,9 @@ function showInviteModal(inv) {
   const typeBadge = `<span class="badge ${typeBadgeClasses[inv.type] || 'badge-type-other'}">${getTypeLabel(inv.type)}</span>`;
 
   modalBody.innerHTML = `
-    <p class="text-white-80 text-xs">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
+    <p class="text-sm text-slate-500">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
     <h3 class="modal-title mt-1">${inv.title}</h3>
-    <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
+    <p class="text-sm mt-3" style="word-break:break-word;">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
     <button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close 关闭</button>
   `;
@@ -1072,7 +1023,7 @@ function showMembersModal(invitationId, title) {
 
   modalBody.innerHTML = `
     <h3 class="modal-title">${escapeHtml(title)} — Members 成员</h3>
-    <p class="text-white-60 text-xs mt-1 mb-3">Loading members... 加载成员中...</p>
+    <p class="text-xs text-slate-500 mt-1 mb-3">Loading members... 加载成员中...</p>
   `;
   modal.classList.remove('hidden');
   document.getElementById('closeModal').onclick = hideInviteModal;
@@ -1086,21 +1037,21 @@ function showMembersModal(invitationId, title) {
     })
     .then(data => {
       let html = `<h3 class="modal-title">${escapeHtml(title)} — Members 成员</h3>`;
-      html += `<p class="text-white-60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
+      html += `<p class="text-xs text-slate-500 mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
 
       if (data.members.length === 0) {
-        html += '<p class="text-white-60 text-sm">No members have joined yet 暂无成员加入</p>';
+        html += '<p class="dashboard-empty">No members have joined yet 暂无成员加入</p>';
       } else {
-        html += '<div class="space-y-2">';
+        html += '<div class="dashboard-members-list">';
         data.members.forEach(m => {
           const joinedTime = new Date(m.joined_at).toLocaleString();
           html += `
-            <div class="flex items-center justify-between p-2 rounded-lg bg-white-10">
+            <div class="dashboard-member-row">
               <div>
-                <p class="text-white text-sm font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
-                <p class="text-white-60 text-xs">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
+                <p class="font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
+                <p class="text-xs text-slate-500">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
               </div>
-              <p class="text-white-40 text-xs">${joinedTime}</p>
+              <p class="text-xs text-slate-400">${joinedTime}</p>
             </div>
           `;
         });
@@ -1133,14 +1084,14 @@ function renderAccountPage() {
       ).join('');
 
       document.getElementById('page-description').innerHTML = `
-        <form id="accountForm" class="space-y-4">
-          <div class="bg-white-5 border border-white-10 rounded-lg p-4 space-y-3">
-            <h3 class="text-white-60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
+        <form id="accountForm" class="space-y-4 dashboard-account-form">
+          <div class="dashboard-account-section">
+            <h3>Account Info 账号信息</h3>
             <div>
               <label class="form-label">Full Name (max 100 chars) 姓名（最多100字）</label>
               <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}" class="form-input">
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="dashboard-account-row">
               <div>
                 <label class="form-label">Grade (max 2 chars) 年级（最多2字）</label>
                 <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}" class="form-input">
@@ -1151,8 +1102,8 @@ function renderAccountPage() {
               </div>
             </div>
             <div>
-              <label class="form-label text-white-50">Warning Count 警告次数</label>
-              <input type="text" value="${user.warning_count || 0}" disabled class="form-input cursor-not-allowed text-red-400 bg-white-5 border-white-10">
+              <label class="form-label">Warning Count 警告次数</label>
+              <input type="text" value="${user.warning_count || 0}" disabled class="form-input">
             </div>
             <p class="form-hint italic mt-2">Contact admin for other inquiries. 联系管理员进行其他查询。</p>
           </div>
@@ -1171,7 +1122,7 @@ function renderAccountPage() {
               <option value="">Select type... 选择类型...</option>
               ${mbtiOptions}
             </select>` : `
-            <div class="form-input bg-white-5 border-white-10">
+            <div class="form-input">
               ${renderUserTypeBadge(user.user_type, user.personality_type)}
             </div>
             <p class="form-hint italic mt-1">Verified and organization accounts cannot change their type. 已验证和组织账户不能更改其类型。</p>`}
@@ -1185,8 +1136,8 @@ function renderAccountPage() {
         </button>
         <p id="accountMessage" class="form-message"></p>
         </form>
-        <div class="mt-8 pt-4 border-t border-white-10 text-center">
-          <button id="deleteAccountBtn" class="text-white-30 hover:text-red-400 text-xs transition-all">Delete Account 删除账号</button>
+        <div class="dashboard-account-delete">
+          <button id="deleteAccountBtn">Delete Account 删除账号</button>
         </div>
     `;
 
@@ -1296,16 +1247,16 @@ function showDeleteAccountModal() {
   modalOverlay.className = 'modal-overlay z-50 bg-black-70';
   modalOverlay.innerHTML = `
     <div class="delete-modal">
-      <h3 class="text-red-400 font-bold text-lg mb-2">Delete Account 删除账号</h3>
-      <p class="text-white-70 text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
+      <h3 class="text-red-600 font-bold text-lg mb-2">Delete Account 删除账号</h3>
+      <p class="text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
       <div class="mb-4">
         <label class="form-label">Current password 当前密码</label>
-        <input type="password" id="deleteConfirmPassword" class="form-input focus:border-red-400">
+        <input type="password" id="deleteConfirmPassword" class="form-input">
         <p id="deleteMessage" class="text-xs mt-1"></p>
       </div>
       <div class="flex gap-3">
         <button id="cancelDeleteBtn" class="flex-1 btn btn-secondary text-sm py-2">Cancel 取消</button>
-        <button id="confirmDeleteBtn" class="flex-1 btn bg-red-600-80 hover:bg-red-600 text-sm py-2">Delete 删除</button>
+        <button id="confirmDeleteBtn" class="flex-1 btn btn-danger text-sm py-2">Delete 删除</button>
       </div>
     </div>
   `;
@@ -1356,65 +1307,51 @@ function showDeleteAccountModal() {
   });
 }
 
-document.querySelectorAll('.nav-item').forEach(item => {
+document.querySelectorAll('.dashboard-rail-item').forEach(item => {
   item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    
+
     const page = item.dataset.page;
     document.getElementById('page-title').innerHTML = pages[page].title;
-    
+
     if (pages[page].render) {
       pages[page].render();
-    } else {
-      document.getElementById('page-description').innerHTML = pages[page].description;
-      if (page === 'about') {
-        const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const termsText = `Effective Date: ${currentDate}
-
-Welcome to the OriLink 元联 social platform. By creating an account, you agree to follow these rules. This platform is built for our community, and staying on it is a privilege, not a right.
-
-1. Security and "No Hacking" Policy
-We take the security of our community seriously. By using this site, you agree to the following:
-
-No Unauthorized Access: You may not attempt to access, "hack," or bypass any security features of this website. This includes trying to guess passwords, using automated "brute force" tools, or exploiting bugs.
-
-No Data Mining: You are prohibited from using scripts, crawlers, or "scrapers" to extract user data or site content.
-
-Reporting Vulnerabilities: If you find a security flaw or a "glitch," you must report it to the Site Administrator immediately. Exploiting a known flaw for fun or profit will result in an immediate permanent ban and referral to school administration.
-
-Account Integrity: You are responsible for your login credentials. Sharing your password or "lending" your account to others is strictly prohibited.
-
-2. Intellectual Property
-This website, including its layout, design, custom code, and graphics, is the property of OriLink 元联.
-
-No Cloning: You may not copy the source code, CSS, or design elements to create a "clone" or a competing site.
-
-Content Ownership: While you own the posts you make, the "look and feel" of the platform belongs to us. Redistribution of any site assets without written permission is a violation of these terms.
-
-3. User Conduct
-Since this is a school-only platform, the school's Student Code of Conduct applies here 24/7.
-
-No Harassment: Cyberbullying, hate speech, and harassment will not be tolerated.
-
-School Use Only: This site is for Shanghai New Epoch Bilingual School students and staff. Do not invite or share access with people outside of our school.
-
-4. Consequences
-Failure to follow these rules—especially those regarding hacking or intellectual property theft—may result in:
-
-Immediate account suspension or deletion.
-
-Disciplinary action through the School Administration.
-
-Legal action, if the "hacking" results in data breaches or significant damage to the system.
-
-Note: By clicking "Sign Up," you acknowledge that you have read and agreed to these terms. Stay safe and be respectful!`;
-        const termsEl = document.getElementById('aboutTermsText');
-        if (termsEl) {
-          termsEl.textContent = termsText;
-        }
-      }
     }
+  });
+});
+
+document.getElementById('globalSortSelect').addEventListener('change', () => {
+  invitationsSort = document.getElementById('globalSortSelect').value;
+  myInvitationsSort = invitationsSort;
+  joinedInvitationsSort = invitationsSort;
+
+  const activeItem = document.querySelector('.dashboard-rail-item.active');
+  const page = activeItem ? activeItem.dataset.page : 'invitations';
+
+  if (page === 'invitations') {
+    loadInvitationsList();
+  } else if (page === 'joined') {
+    loadMyInvitations();
+    loadJoinedInvitations();
+  }
+});
+
+document.querySelectorAll('.tagline-action').forEach(action => {
+  action.addEventListener('click', (e) => {
+    e.preventDefault();
+    const filter = action.dataset.filter;
+    invitationsFilter = filter === invitationsFilter ? null : filter;
+
+    document.querySelectorAll('.tagline-action').forEach(a => a.classList.remove('active'));
+    if (invitationsFilter) {
+      action.classList.add('active');
+    }
+
+    document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('.dashboard-rail-item[data-page="invitations"]').classList.add('active');
+    document.getElementById('page-title').innerHTML = pages.invitations.title;
+    renderInvitationsPage();
   });
 });
 

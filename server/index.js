@@ -33,6 +33,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "https://cdn.socket.io"],
       "upgrade-insecure-requests": null,
     }
   }
