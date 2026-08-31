@@ -76,10 +76,10 @@ router.post('/users', authenticateAdmin, async (req, res) => {
     const gradeNum = parseInt(grade, 10);
     const classNumInt = parseInt(classNum, 10);
     if (isNaN(gradeNum)) {
-      return res.status(400).json({ error: 'Grade must be a valid number 年级必须是有效数字' });
+      return res.status(400).json({ error: 'Grade must be a valid number' });
     }
     if (isNaN(classNumInt)) {
-      return res.status(400).json({ error: 'Class must be a valid number 班级必须是有效数字' });
+      return res.status(400).json({ error: 'Class must be a valid number' });
     }
 
     const validTypes = ['normal', 'verified', 'organization'];
@@ -88,8 +88,8 @@ router.post('/users', authenticateAdmin, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await pool.query(
-      'INSERT INTO users (username, password, full_name, grade, class, user_type) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, hashedPassword, '', gradeNum, classNumInt, userTypeValue]
+      'INSERT INTO users (username, password, grade, class, user_type) VALUES (?, ?, ?, ?, ?)',
+      [username, hashedPassword, gradeNum, classNumInt, userTypeValue]
     );
 
     const [newUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, user_type, warning_count, created_at FROM users WHERE username = ?', [username]);
@@ -129,7 +129,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
     if (grade !== undefined) {
       const gradeNum = parseInt(grade, 10);
       if (isNaN(gradeNum)) {
-        return res.status(400).json({ error: 'Grade must be a valid number 年级必须是有效数字' });
+        return res.status(400).json({ error: 'Grade must be a valid number' });
       }
       updates.push('grade = ?');
       params.push(gradeNum);
@@ -138,7 +138,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
     if (classNum !== undefined) {
       const classNumInt = parseInt(classNum, 10);
       if (isNaN(classNumInt)) {
-        return res.status(400).json({ error: 'Class must be a valid number 班级必须是有效数字' });
+        return res.status(400).json({ error: 'Class must be a valid number' });
       }
       updates.push('class = ?');
       params.push(classNumInt);
@@ -147,7 +147,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
     if (user_type) {
       const validTypes = ['normal', 'verified', 'organization'];
       if (!validTypes.includes(user_type)) {
-        return res.status(400).json({ error: 'Invalid user type. Must be normal, verified, or organization 无效的用户类型' });
+        return res.status(400).json({ error: 'Invalid user type. Must be normal, verified, or organization' });
       }
       updates.push('user_type = ?');
       params.push(user_type);
@@ -156,7 +156,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
     if (full_name !== undefined) {
       const trimmedName = full_name.trim();
       if (trimmedName.length < 2 || trimmedName.length > 100) {
-        return res.status(400).json({ error: 'Full name must be between 2 and 100 characters 姓名必须在2到100个字符之间' });
+        return res.status(400).json({ error: 'Full name must be between 2 and 100 characters2100' });
       }
       updates.push('full_name = ?');
       params.push(trimmedName);
@@ -168,7 +168,7 @@ router.put('/users/:id', authenticateAdmin, async (req, res) => {
 
     params.push(id);
 
-    await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+    await pool.query(`UPDATE users SET ${updates.join(',')} WHERE id = ?`, params);
 
     const [updatedUser] = await pool.query('SELECT id, username, full_name, grade, class, personality_type, user_type, warning_count, created_at FROM users WHERE id = ?', [id]);
 
@@ -248,7 +248,7 @@ router.get('/reported', authenticateAdmin, async (req, res) => {
               i.event_start, i.event_end, i.created_at, i.user_id,
               u.username,
               COUNT(r.id) as report_count,
-              GROUP_CONCAT(r.reason SEPARATOR ' ||| ') as reasons
+              GROUP_CONCAT(r.reason SEPARATOR ' |||') as reasons
        FROM reported_invitations r
        JOIN invitations i ON r.invitation_id = i.id
        JOIN users u ON i.user_id = u.id
@@ -275,7 +275,7 @@ router.delete('/reports/:invitationId', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    res.json({ message: 'Report ignored and cleared successfully 已忽略并清除举报' });
+    res.json({ message: 'Report ignored and cleared successfully' });
   } catch (error) {
     console.error('Ignore report error:', error);
     res.status(500).json({ error: 'Server error' });

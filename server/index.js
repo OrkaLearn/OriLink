@@ -45,7 +45,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: AUTH_LIMITER_MAX,
   store: authStore,
-  message: { error: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试' },
+  message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -54,7 +54,7 @@ const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: GENERAL_LIMITER_MAX,
   store: generalStore,
-  message: { error: 'Too many requests, please try again later 请求次数过多，请稍后再试' },
+  message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -114,7 +114,7 @@ async function verifyUserMembership(userId, invitationId) {
 
 function extractUserIdFromToken(authHeader) {
   return new Promise((resolve) => {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
       resolve(null);
       return;
     }
