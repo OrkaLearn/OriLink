@@ -132,10 +132,10 @@
     <div id="adminBackdrop" class="modal-backdrop"></div>
     <div class="admin-panel-content glass-panel">
       <div class="admin-panel-header">
-        <h2 class="admin-panel-title">Admin Panel 管理面板</h2>
+        <h2 class="admin-panel-title">Admin Panel</h2>
         <div class="admin-panel-actions">
-          <button id="adminProfanityCheckBtn" class="hidden btn btn-warning text-xs px-3 py-1_5">Check Invitations 检查邀请</button>
-          <button id="adminLogoutBtn" class="hidden btn btn-danger text-xs px-3 py-1_5">Logout 退出</button>
+          <button id="adminProfanityCheckBtn" class="hidden btn btn-warning text-xs px-3 py-1_5">Check Invitations</button>
+          <button id="adminLogoutBtn" class="hidden btn btn-danger text-xs px-3 py-1_5">Logout</button>
           <button id="closeAdminPanel" class="modal-close">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
@@ -147,18 +147,18 @@
 
       <!-- Admin Login Form -->
       <div id="adminLoginForm" class="space-y-5">
-        <p class="text-center text-white/80">Enter admin password to access panel 输入管理员密码访问面板</p>
+        <p class="text-center text-white/80">Enter admin password to access panel</p>
         <div class="auth-form-row">
-          <label for="adminPassword" class="form-label-light">Admin password 管理员密码</label>
+          <label for="adminPassword" class="form-label-light">Admin password</label>
           <input
             type="password"
             id="adminPassword"
-            placeholder="Enter admin password 请输入管理员密码"
+            placeholder="Enter admin password"
             class="pill-input w-full px-5 py-3 text-base"
           >
         </div>
         <div class="auth-link-row">
-          <button id="adminLoginBtn" class="btn-link btn-link-xl">登录 Login</button>
+          <button id="adminLoginBtn" class="btn-link btn-link-xl"> Login</button>
         </div>
         <p id="adminLoginError" class="auth-message error hidden"></p>
       </div>
@@ -169,13 +169,13 @@
         <!-- Rate Limits Section -->
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-white font-semibold text-sm">Rate Limits 速率限制</h3>
-            <button id="refreshRateLimitsBtn" class="btn-link text-xs">刷新 Refresh</button>
+            <h3 class="text-white font-semibold text-sm">Rate Limits</h3>
+            <button id="refreshRateLimitsBtn" class="btn-link text-xs"> Refresh</button>
           </div>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white/70 text-xs">Auth (Login/Register) 认证</span>
+                <span class="text-white/70 text-xs">Auth (Login/Register)</span>
                 <span id="authRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
               <div class="progress-bar">
@@ -188,7 +188,7 @@
             </div>
             <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white/70 text-xs">General (All APIs) 通用</span>
+                <span class="text-white/70 text-xs">General (All APIs)</span>
                 <span id="generalRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
               <div class="progress-bar">
@@ -201,40 +201,40 @@
             </div>
           </div>
           <div id="rateLimitIps" class="max-h-32 overflow-y-auto rounded-xl border border-white/10 p-3">
-            <p class="text-white/40 text-xs text-center py-3">No request data yet 暂无请求数据</p>
+            <p class="text-white/40 text-xs text-center py-3">No request data yet</p>
           </div>
         </div>
 
         <!-- Add User Form -->
         <div class="card">
-          <h3 class="text-white font-semibold text-sm mb-4">Add New User 添加新用户</h3>
+          <h3 class="text-white font-semibold text-sm mb-4">Add New User</h3>
           <form id="adminAddUserForm" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
             <div class="auth-form-row md:col-span-1">
-              <label for="adminNewUsername" class="form-label-light text-sm">Username 用户名</label>
-              <input type="text" id="adminNewUsername" placeholder="Choose username 选择用户名" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
+              <label for="adminNewUsername" class="form-label-light text-sm">Username</label>
+              <input type="text" id="adminNewUsername" placeholder="Choose username" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
             <div class="auth-form-row">
-              <label for="adminNewPassword" class="form-label-light text-sm">Password 密码</label>
-              <input type="password" id="adminNewPassword" placeholder="Create password 创建密码" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
+              <label for="adminNewPassword" class="form-label-light text-sm">Password</label>
+              <input type="password" id="adminNewPassword" placeholder="Create password" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
             <div class="auth-form-row">
-              <label for="adminNewGrade" class="form-label-light text-sm">Grade 年级</label>
+              <label for="adminNewGrade" class="form-label-light text-sm">Grade</label>
               <input type="text" id="adminNewGrade" placeholder="8-12" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
             <div class="auth-form-row">
-              <label for="adminNewClass" class="form-label-light text-sm">Class 班级</label>
+              <label for="adminNewClass" class="form-label-light text-sm">Class</label>
               <input type="text" id="adminNewClass" placeholder="1-10" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
             <div class="auth-form-row">
-              <label for="adminNewUserType" class="form-label-light text-sm">Type 类型</label>
+              <label for="adminNewUserType" class="form-label-light text-sm">Type</label>
               <select id="adminNewUserType" class="pill-input w-full px-4 py-2.5 text-sm bg-transparent">
-                <option value="normal">Normal 普通</option>
-                <option value="verified">Verified 已验证</option>
-                <option value="organization">Organization 组织</option>
+                <option value="normal">Normal</option>
+                <option value="verified">Verified</option>
+                <option value="organization">Organization</option>
               </select>
             </div>
             <div class="auth-link-row md:justify-start">
-              <button type="submit" class="btn-link btn-link-xl text-sm">Add User 添加用户</button>
+              <button type="submit" class="btn-link btn-link-xl text-sm">Add User</button>
             </div>
           </form>
           <p id="adminAddUserMsg" class="auth-message hidden"></p>
@@ -243,29 +243,29 @@
         <!-- User List -->
         <div class="flex-1 overflow-hidden flex flex-col">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-white font-semibold text-sm">Registered Users 已注册用户</h3>
-            <button id="adminRefreshUsers" class="btn-link text-xs">刷新 Refresh</button>
+            <h3 class="text-white font-semibold text-sm">Registered Users</h3>
+            <button id="adminRefreshUsers" class="btn-link text-xs"> Refresh</button>
           </div>
           <div class="table-container">
             <table class="data-table">
               <thead>
                 <tr class="text-white-60 text-xs uppercase">
                   <th>ID</th>
-                  <th>Username 用户名</th>
-                  <th class="hidden md:table-cell">Full Name 姓名</th>
-                  <th>Grade 年级</th>
-                  <th>Class 班级</th>
-                  <th>Type 类型</th>
-                  <th class="hidden lg:table-cell">Registered At 注册时间</th>
-                  <th>Warnings 警告</th>
-                  <th class="text-right">Actions 操作</th>
+                  <th>Username</th>
+                  <th class="hidden md:table-cell">Full Name</th>
+                  <th>Grade</th>
+                  <th>Class</th>
+                  <th>Type</th>
+                  <th class="hidden lg:table-cell">Registered At</th>
+                  <th>Warnings</th>
+                  <th class="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="adminUserList" class="text-white-90">
                 <!-- Users populated by JS -->
               </tbody>
             </table>
-            <p id="adminNoUsers" class="text-center text-white-50 text-sm py-6 hidden">No users yet 暂无用户</p>
+            <p id="adminNoUsers" class="text-center text-white-50 text-sm py-6 hidden">No users yet</p>
           </div>
           <p id="adminUserListError" class="text-center text-red-400 text-sm mt-2 hidden"></p>
         </div>
@@ -277,7 +277,7 @@
     <div id="profileBackdrop" class="modal-backdrop"></div>
     <div class="modal glass-panel rounded-2xl p-6 max-h-80vh overflow-hidden flex flex-col">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="modal-title">User Profile 用户资料</h2>
+        <h2 class="modal-title">User Profile</h2>
         <button id="closeProfileModal" class="modal-close">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
@@ -293,7 +293,7 @@
     <div id="profanityBackdrop" class="modal-backdrop"></div>
     <div class="glass-panel rounded-2xl p-6 w-full max-w-3xl max-h-85vh overflow-hidden flex flex-col relative z-10">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="modal-title">Invitation Profanity Check 邀请内容检查</h2>
+        <h2 class="modal-title">Invitation Profanity Check</h2>
         <button id="closeProfanityPanel" class="modal-close">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
@@ -304,19 +304,19 @@
       <div class="mb-4">
         <div class="flex items-center gap-3 mb-3">
           <button id="scanInvitationsBtn" class="btn btn-primary text-sm px-4 py-2">
-            Scan Invitations 扫描邀请
+            Scan Invitations
           </button>
           <button id="loadReportedBtn" class="btn badge-report text-sm px-4 py-2">
-            Reported Invitations 被举报邀请
+            Reported Invitations
           </button>
         </div>
         <div id="reportedResults" class="hidden rounded-xl border border-yellow-500-20 p-4 mb-4">
-          <h3 class="text-white font-semibold text-sm mb-3">Reported Invitations 被举报邀请</h3>
+          <h3 class="text-white font-semibold text-sm mb-3">Reported Invitations</h3>
           <div id="reportedList"></div>
         </div>
       </div>
       <div id="profanityResults" class="flex-1 overflow-y-auto rounded-xl border border-white-10 p-4">
-        <p class="text-white-50 text-sm text-center">Click "Scan Invitations" to check all invitations for inappropriate content. 点击"扫描邀请"检查所有邀请的不当内容。</p>
+        <p class="text-white-50 text-sm text-center">Click "Scan Invitations" to check all invitations for inappropriate content.""</p>
       </div>
       <div id="profanitySummary" class="mt-3 text-sm text-white-70 hidden"></div>
     </div>
