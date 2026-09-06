@@ -33,6 +33,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "https://cdn.socket.io"],
       "upgrade-insecure-requests": null,
     }
   }
@@ -44,7 +45,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: AUTH_LIMITER_MAX,
   store: authStore,
-  message: { error: 'Too many authentication attempts, please try again later 登录尝试次数过多，请稍后再试' },
+  message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -53,7 +54,7 @@ const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: GENERAL_LIMITER_MAX,
   store: generalStore,
-  message: { error: 'Too many requests, please try again later 请求次数过多，请稍后再试' },
+  message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -78,8 +79,10 @@ app.get('/api/captcha', (req, res) => {
     size: 4,
     ignoreChars: '0oO1iIlL',
     noise: 3,
-    color: true,
-    background: 'rgba(255,255,255,0.15)',
+    color: false,
+    background: 'transparent',
+    width: 140,
+    height: 46,
     fontPath: undefined,
   });
   const token = captchaStore.create(captcha.text);
@@ -111,7 +114,7 @@ async function verifyUserMembership(userId, invitationId) {
 
 function extractUserIdFromToken(authHeader) {
   return new Promise((resolve) => {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
       resolve(null);
       return;
     }

@@ -27,7 +27,7 @@ function setSocketIO(socketIO) {
 
 function getUserIdFromToken(authHeader) {
   return new Promise((resolve, reject) => {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
       resolve(null);
       return;
     }
@@ -112,7 +112,7 @@ router.post('/invitations', async (req, res) => {
       [currentUserId]
     );
     if (countResult[0].count >= MAX_ACTIVE_INVITATIONS) {
-      return res.status(400).json({ error: `You can only have ${MAX_ACTIVE_INVITATIONS} active invitations at a time 您最多只能同时发布${MAX_ACTIVE_INVITATIONS}个邀请` });
+      return res.status(400).json({ error: `You can only have ${MAX_ACTIVE_INVITATIONS} active invitations at a time${MAX_ACTIVE_INVITATIONS}` });
     }
 
     const [userRows] = await pool.query('SELECT user_type FROM users WHERE id = ?', [currentUserId]);
@@ -140,16 +140,16 @@ router.post('/invitations', async (req, res) => {
     let participants;
     if (max_participants === null || max_participants === undefined || max_participants === '' || max_participants === 0) {
       if (!isPrivileged) {
-        return res.status(400).json({ error: 'Only verified and organization users can post unlimited invitations 仅已验证和组织用户可以发布无限人数的邀请' });
+        return res.status(400).json({ error: 'Only verified and organization users can post unlimited invitations' });
       }
       participants = null;
     } else {
       participants = parseInt(max_participants, 10);
       if (isNaN(participants) || participants < 1) {
-        return res.status(400).json({ error: 'max_participants must be at least 1 (or 0/unset for unlimited for verified/organization accounts) 人数至少为1（已验证/组织账户可为0或留空表示不限）' });
+        return res.status(400).json({ error: 'max_participants must be at least 1 (or 0/unset for unlimited for verified/organization accounts)1/0' });
       }
       if (!isPrivileged && participants > 10) {
-        return res.status(400).json({ error: 'max_participants must be between 1 and 10 (verified/organization users have no limit) 人数必须在1到10之间（已验证/组织账户无限制）' });
+        return res.status(400).json({ error: 'max_participants must be between 1 and 10 (verified/organization users have no limit)110/' });
       }
     }
 
@@ -180,10 +180,10 @@ router.post('/invitations', async (req, res) => {
 
     const maxDuration = isPrivileged ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     if (startTime && endTime && (endTime - startTime) > maxDuration) {
-      return res.status(400).json({ 
-        error: isPrivileged 
-          ? 'Event duration cannot exceed 7 days 活动时长不能超过7天' 
-          : 'Event duration cannot exceed 24 hours 活动时长不能超过24小时' 
+      return res.status(400).json({
+        error: isPrivileged
+          ? 'Event duration cannot exceed 7 days7'
+          : 'Event duration cannot exceed 24 hours24'
       });
     }
 
@@ -285,7 +285,7 @@ router.delete('/invitations/:id/leave', async (req, res) => {
     }
 
     if (inv[0].user_id === currentUserId) {
-      return res.status(400).json({ error: 'You cannot leave your own invitation 你不能退出自己发布的邀请' });
+      return res.status(400).json({ error: 'You cannot leave your own invitation' });
     }
 
     const [joinCheck] = await pool.query(
@@ -294,7 +294,7 @@ router.delete('/invitations/:id/leave', async (req, res) => {
     );
 
     if (joinCheck.length === 0) {
-      return res.status(400).json({ error: 'You have not joined this invitation 你尚未加入此邀请' });
+      return res.status(400).json({ error: 'You have not joined this invitation' });
     }
 
     await pool.query(
@@ -304,7 +304,7 @@ router.delete('/invitations/:id/leave', async (req, res) => {
 
     const [userResult] = await pool.query('SELECT username FROM users WHERE id = ?', [currentUserId]);
     const username = userResult[0]?.username || 'User';
-    const systemContent = `__SYSTEM__:${username} left the invitation 退出了邀请`;
+    const systemContent = `__SYSTEM__:${username} left the invitation`;
 
     await pool.query(
       'INSERT INTO messages (invitation_id, user_id, content) VALUES (?, ?, ?)',
@@ -338,7 +338,7 @@ router.post('/invitations/:id/report', async (req, res) => {
     const { reason } = req.body;
 
     if (!reason || !reason.trim()) {
-      return res.status(400).json({ error: 'Report reason is required 举报时必须提供原因' });
+      return res.status(400).json({ error: 'Report reason is required' });
     }
 
     const sanitizedReason = xss(reason.trim(), {
@@ -348,7 +348,7 @@ router.post('/invitations/:id/report', async (req, res) => {
     });
 
     if (!sanitizedReason || sanitizedReason.length > 500) {
-      return res.status(400).json({ error: 'Report reason must be between 1 and 500 characters 举报原因必须在1到500个字符之间' });
+      return res.status(400).json({ error: 'Report reason must be between 1 and 500 characters1500' });
     }
 
     const [rows] = await pool.query(
@@ -472,7 +472,7 @@ router.get('/invitations/:id/members', async (req, res) => {
       );
 
       if (joinCheck.length === 0) {
-        return res.status(403).json({ error: 'Only the invitation creator or joined members can view members 只有邀请创建者或已加入的成员可以查看成员' });
+        return res.status(403).json({ error: 'Only the invitation creator or joined members can view members' });
       }
     }
 

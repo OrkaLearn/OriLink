@@ -3,298 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OriLink 元联 - Login 登录</title>
-  <link rel="icon" type="image/svg+xml" href="imgs/logo.svg">
+  <title>OriLink 元联 - Login</title>
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="fonts/login-fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
   <style>
-    body { font-family: 'InstrumentSans', 'Noto Sans SC', sans-serif; }
-    input[type="checkbox"] { width: 18px; height: 18px; }
+    body { font-family: 'Lato', 'Noto Sans SC', sans-serif; }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
-  
-  <div class="bg-container">
-    <img src="imgs/bridge.jpg" alt="Network background 网络背景">
-    <div class="bg-overlay"></div>
+<body class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-left-panel">
+    <div class="auth-brand">
+      <h1>OriLink</h1>
+      <p>元联</p>
+    </div>
+
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <p class="auth-hero-text">As many ways to</p>
+        <p class="auth-hero-connect">Connect</p>
+        <p class="auth-hero-text auth-hero-text-right">as there are people</p>
+      </div>
+    </div>
+
+    <div>
+      <p id="userCount" class="auth-stats">0 Registered</p>
+    </div>
+
+    <a href="https://github.com/OrkaLearn/OriLink" target="_blank" rel="noopener noreferrer" class="auth-github-link" aria-label="View OriLink on GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.382 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.838 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+      </svg>
+    </a>
   </div>
 
-  <!-- Motto section - hidden on mobile, visible on lg+ screens -->
-  <div class="hidden lg:block fixed inset-0 z-0 pointer-events-none">
-    <!-- English motto - left side -->
-    <div class="absolute left-8 xl:left-16 top-1/2 -translate-y-1/2">
-      <h2 class="text-white text-4xl xl:text-5xl font-bold leading-tight max-w-sm" style="font-family: 'Ogg', serif; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">
-        Promoting<br>offline<br>social<br>interactions<br>through<br>online<br>methods
-      </h2>
-    </div>
+  <!-- Right panel -->
+  <div class="auth-right-panel">
+    <div class="auth-form-container login-form-container">
+      <h2 class="auth-title">Login</h2>
 
-    <!-- Chinese motto - right side, vertical text -->
-    <div class="absolute right-8 xl:right-16 top-1/2 -translate-y-1/2">
-      <h2 class="text-white text-4xl xl:text-5xl font-bold leading-tight" style="font-family: 'Source Han Serif', 'Noto Serif SC', serif; text-shadow: 0 2px 8px rgba(0,0,0,0.5); writing-mode: vertical-rl; text-orientation: mixed;">
-        用线上方式促进线下社交
-      </h2>
-    </div>
-  </div>
-
-  <div class="fixed top-8 left-8 md:top-12 md:left-12 z-20">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-white/20 to-white/5 rounded-xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
-        <img src="imgs/logo.svg" alt="OriLink Logo OriLink 标志" class="w-8 h-8 md:w-10 md:h-10">
-      </div>
-      <div class="flex flex-col">
-        <span class="logo-text text-2xl md:text-3xl font-bold tracking-tight">OriLink</span>
-        <span class="text-white/70 text-sm md:text-base font-medium tracking-wide">元联</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="glass-panel rounded-2xl p-8 md:p-10 w-full max-w-md relative z-20">
-    <div class="text-center mb-8">
-      <h1 class="text-white text-2xl md:text-3xl font-bold mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Welcome! 欢迎！</h1>
-      <p class="text-white/80 text-sm md:text-base" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Sprouting New Connections 新联系从这里萌发</p>
-    </div>
-
-    <!-- Login Form -->
-    <form id="loginForm" class="space-y-5">
-      <div>
-        <label for="loginUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username 用户名</label>
-        <input 
-          type="text" 
-          id="loginUsername" 
-          name="username"
-          placeholder="Enter username 请输入用户名"
-          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-          required
-        >
-      </div>
-
-      <div>
-        <label for="loginPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password 密码</label>
-        <div class="relative">
-          <input 
-            type="password" 
-            id="loginPassword" 
-            name="password"
-            placeholder="Enter password 请输入密码"
-            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
+      <form id="loginForm" class="auth-form">
+        <div class="auth-form-row">
+          <label for="loginUsername" class="form-label-light">Username</label>
+          <input
+            type="text"
+            id="loginUsername"
+            name="username"
+            placeholder="Enter username"
+            class="pill-input w-full px-5 py-3 text-base"
             required
           >
-          <button 
-            type="button" 
-            id="toggleLoginPassword"
-            class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-          >
-            <svg id="loginEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg id="loginEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
         </div>
-      </div>
 
-      <div class="captcha-container">
-        <div id="loginCaptchaSvg" class="captcha-box flex items-center justify-center rounded-xl p-3 cursor-pointer" title="Click to refresh captcha 点击刷新验证码" onclick="loadCaptcha('login')">
-          <span class="text-white/50 text-sm">Loading... 加载中...</span>
+        <div class="auth-form-row">
+          <label for="loginPassword" class="form-label-light">Password</label>
+          <div class="auth-input-wrap">
+            <input
+              type="password"
+              id="loginPassword"
+              name="password"
+              placeholder="Enter password"
+              class="pill-input w-full px-5 py-3 text-base pr-12"
+              required
+            >
+            <button
+              type="button"
+              id="toggleLoginPassword"
+              class="auth-toggle-password"
+            >
+              <svg id="loginEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg id="loginEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <input type="hidden" name="captchaToken" id="loginCaptchaToken">
-        <div class="flex gap-2 mt-2">
-          <input type="text" name="captchaInput" id="loginCaptchaInput" placeholder="Enter captcha above 请输入上方验证码" maxlength="4" autocomplete="off" class="input-field flex-1 px-3 py-2 rounded-lg text-sm" required>
-          <button type="button" id="refreshLoginCaptchaBtn" class="refresh-btn text-white rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-1">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+
+        <div class="auth-form-row auth-captcha-container">
+          <label class="form-label-light">Captcha</label>
+          <div class="auth-captcha-row">
+            <div
+              id="loginCaptchaSvg"
+              class="captcha-card auth-captcha-box"
+              title="Click to refresh captcha"
+              onclick="loadCaptcha('login')"
+            >
+              <span class="text-slate-500 text-sm">Loading...</span>
+            </div>
+            <input
+              type="text"
+              name="captchaInput"
+              id="loginCaptchaInput"
+              placeholder="Enter captcha"
+              maxlength="4"
+              autocomplete="off"
+              class="pill-input auth-captcha-input px-4 text-base"
+              required
+            >
+            <input type="hidden" name="captchaToken" id="loginCaptchaToken">
+          </div>
+          <button type="button" id="refreshLoginCaptchaLink" class="link-underline text-sm mt-2">Click to Refresh</button>
         </div>
-      </div>
 
-      <button 
-        type="submit" 
-        class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
-      >
-        登录 Login
-      </button>
-    </form>
-
-    <!-- Signup Form (hidden by default) -->
-    <form id="signupForm" class="hidden space-y-4">
-      <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-        <p class="text-amber-400 text-base text-center font-medium">
-          <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          Grade, class and full name cannot be changed after registration. Used for account recovery.<br>
-          年级、班级和姓名注册后不可更改。用于账号找回。
-        </p>
-      </div>
-
-      <div>
-        <label for="fullName" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Full Name (Both English or Chinese Is Okay) 姓名 (中英文均可)</label>
-        <input 
-          type="text" 
-          id="fullName" 
-          name="fullName"
-          placeholder="Enter full name 请输入姓名"
-          maxlength="20"
-          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-          required
-        >
-        <p class="text-white/50 text-xs mt-1">Full name (required for account recovery) 姓和名（账号找回必需）</p>
-      </div>
-
-      <div>
-        <label for="signupUsername" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Username 用户名</label>
-        <input 
-          type="text" 
-          id="signupUsername" 
-          name="username"
-          placeholder="Choose username 选择用户名"
-          maxlength="20"
-          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-          required
-        >
-        <p class="text-white/50 text-xs mt-1">Start with letter, letters/numbers/underscores/dots only 以字母开头，仅限字母/数字/下划线/点</p>
-        <p id="usernameStatus" class="text-xs mt-1 hidden"></p>
-      </div>
-
-      <div>
-        <label for="signupPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Password 密码</label>
-        <div class="relative">
-          <input 
-            type="password" 
-            id="signupPassword" 
-            name="password"
-            placeholder="Create password 创建密码"
-            maxlength="20"
-            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base pr-12"
-            required
-          >
-          <button 
-            type="button" 
-            id="toggleSignupPassword"
-            class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-          >
-            <svg id="signupEyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg id="signupEyeOffIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+        <div class="auth-link-row">
+          <button type="submit" class="btn-link btn-link-xl">Enter</button>
         </div>
-        <p class="text-white/50 text-xs mt-1">At least 8 characters, letters/numbers/symbols 至少8个字符，字母/数字/符号</p>
-      </div>
+      </form>
 
-      <div>
-        <label for="confirmPassword" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Confirm Password 确认密码</label>
-        <input 
-          type="password" 
-          id="confirmPassword" 
-          name="confirmPassword"
-          placeholder="Confirm password 请确认密码"
-          maxlength="20"
-          class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-          required
-        >
-      </div>
+      <p id="loginMessage" class="auth-message"></p>
+    </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="grade" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Grade 年级</label>
-          <input 
-            type="text" 
-            id="grade" 
-            name="grade"
-            placeholder="8-12"
-            maxlength="2"
-            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-            required
-          >
-          <p class="text-white/50 text-xs mt-1">Enter number (8-12) 请输入数字（8-12）</p>
-        </div>
-        <div>
-          <label for="classNum" class="block text-white text-sm font-medium mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Class 班级</label>
-          <input 
-            type="text" 
-            id="classNum" 
-            name="classNum"
-            placeholder="1-10"
-            maxlength="2"
-            class="input-field w-full px-4 py-3 rounded-xl text-sm md:text-base"
-            required
-          >
-          <p class="text-white/50 text-xs mt-1">Enter number (1-10) 请输入数字（1-10）</p>
-        </div>
-      </div>
-
-      <div class="captcha-container">
-        <div id="signupCaptchaSvg" class="captcha-box flex items-center justify-center rounded-xl p-3 cursor-pointer" title="Click to refresh captcha 点击刷新验证码" onclick="loadCaptcha('signup')">
-          <span class="text-white/50 text-sm">Loading... 加载中...</span>
-        </div>
-        <input type="hidden" name="captchaToken" id="signupCaptchaToken">
-        <div class="flex gap-2 mt-2">
-          <input type="text" name="captchaInput" id="signupCaptchaInput" placeholder="Enter captcha above 请输入上方验证码" maxlength="4" autocomplete="off" class="input-field flex-1 px-3 py-2 rounded-lg text-sm" required>
-          <button type="button" id="refreshSignupCaptchaBtn" class="refresh-btn text-white rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-1">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <label class="flex items-start gap-2 cursor-pointer">
-          <input type="checkbox" id="agreeTerms" required>
-          <span class="text-white text-xs">I agree 我同意<a href="#" id="showTerms" class="link-text underline">Terms and Conditions 条款和条件</a></span>
-        </label>
-      </div>
-
-      <div id="termsSection" class="hidden mt-3 p-3 rounded-lg bg-white/10 border border-white/20 max-h-48 overflow-y-auto">
-        <h4 class="text-white font-semibold text-sm mb-2">Terms and Conditions 条款和条件</h4>
-        <div id="termsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>
-      </div>
-
-      <button 
-        type="submit" 
-        class="login-btn w-full py-3.5 px-6 rounded-xl text-base md:text-lg font-semibold"
-      >
-        注册 Sign Up
-      </button>
-    </form>
-
-    <p id="authSwitch" class="text-center mt-6 text-sm text-white/80" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-      还没有账号？Don't have an account? 
-      <a href="#" id="showSignup" class="link-text font-semibold">注册 Sign Up</a>
-    </p>
-
-    <p id="authSwitchLoggedIn" class="text-center mt-6 text-sm text-white/80 hidden" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-      已有账号？Already have an account? 
-      <a href="#" id="showLogin" class="link-text font-semibold">登录 Login</a>
-    </p>
-
-    <p id="loginMessage" class="text-center mt-4 text-sm"></p>
+    <a href="signup.html" class="btn-link auth-bottom-link login-bottom-link">Sign up</a>
   </div>
 
   <!-- Hidden Admin Panel -->
-  <div id="adminPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div id="adminBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="glass-panel rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative z-10">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-white text-xl font-bold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Admin Panel 管理面板</h2>
-        <div class="flex items-center gap-3">
-          <button id="adminProfanityCheckBtn" class="hidden px-3 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-white text-xs font-medium transition-colors">Check Invitations 检查邀请</button>
-          <button id="adminLogoutBtn" class="hidden px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-white text-xs font-medium transition-colors">Logout 退出</button>
-          <button id="closeAdminPanel" class="text-white/70 hover:text-white transition-colors">
+  <div id="adminPanel" class="hidden admin-panel-modal">
+    <div id="adminBackdrop" class="modal-backdrop"></div>
+    <div class="admin-panel-content glass-panel">
+      <div class="admin-panel-header">
+        <h2 class="admin-panel-title">Admin Panel</h2>
+        <div class="admin-panel-actions">
+          <button id="adminProfanityCheckBtn" class="hidden btn btn-warning text-xs px-3 py-1_5">Check Invitations</button>
+          <button id="adminLogoutBtn" class="hidden btn btn-danger text-xs px-3 py-1_5">Logout</button>
+          <button id="closeAdminPanel" class="modal-close">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
               <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
@@ -304,56 +146,53 @@
       </div>
 
       <!-- Admin Login Form -->
-      <div id="adminLoginForm" class="space-y-4">
-        <p class="text-white/70 text-sm text-center">Enter admin password to access panel 输入管理员密码访问面板</p>
-        <div class="flex gap-3">
+      <div id="adminLoginForm" class="space-y-5">
+        <p class="text-center text-white/80">Enter admin password to access panel</p>
+        <div class="auth-form-row">
+          <label for="adminPassword" class="form-label-light">Admin password</label>
           <input
             type="password"
             id="adminPassword"
-            placeholder="Admin password 管理员密码"
-            class="input-field flex-1 px-4 py-3 rounded-xl text-sm"
+            placeholder="Enter admin password"
+            class="pill-input w-full px-5 py-3 text-base"
           >
-          <button id="adminLoginBtn" class="login-btn px-6 py-3 rounded-xl text-sm font-semibold">登录 Login</button>
         </div>
-        <p id="adminLoginError" class="text-center text-red-400 text-sm hidden"></p>
+        <div class="auth-link-row">
+          <button id="adminLoginBtn" class="btn-link btn-link-xl"> Login</button>
+        </div>
+        <p id="adminLoginError" class="auth-message error hidden"></p>
       </div>
 
       <!-- Admin Dashboard -->
       <div id="adminDashboard" class="hidden flex flex-col flex-1 overflow-hidden gap-4">
 
         <!-- Rate Limits Section -->
-        <div class="bg-white/10 rounded-xl p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-white font-semibold text-sm">Rate Limits 速率限制</h3>
-            <button id="refreshRateLimitsBtn" class="text-white/60 hover:text-white text-xs transition-colors flex items-center gap-1">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-刷新 Refresh
-            </button>
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-white font-semibold text-sm">Rate Limits</h3>
+            <button id="refreshRateLimitsBtn" class="btn-link text-xs"> Refresh</button>
           </div>
-          <div class="grid grid-cols-2 gap-4 mb-3">
-            <div class="bg-white/5 rounded-lg p-3">
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white/70 text-xs">Auth (Login/Register) 认证</span>
+                <span class="text-white/70 text-xs">Auth (Login/Register)</span>
                 <span id="authRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
-              <div class="w-full bg-white/10 rounded-full h-2">
-                <div id="authRateLimitBar" class="h-2 rounded-full bg-green-400 transition-all" style="width: 0%"></div>
+              <div class="progress-bar">
+                <div id="authRateLimitBar" class="progress-bar-fill green" style="width: 0%"></div>
               </div>
               <div class="flex justify-between mt-1">
                 <span class="text-white/40 text-xs">0</span>
                 <span id="authRateLimitMax" class="text-white/40 text-xs">200</span>
               </div>
             </div>
-            <div class="bg-white/5 rounded-lg p-3">
+            <div class="rate-card">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-white/70 text-xs">General (All APIs) 通用</span>
+                <span class="text-white/70 text-xs">General (All APIs)</span>
                 <span id="generalRateLimitCount" class="text-white text-xs font-semibold">--</span>
               </div>
-              <div class="w-full bg-white/10 rounded-full h-2">
-                <div id="generalRateLimitBar" class="h-2 rounded-full bg-blue-400 transition-all" style="width: 0%"></div>
+              <div class="progress-bar">
+                <div id="generalRateLimitBar" class="progress-bar-fill blue" style="width: 0%"></div>
               </div>
               <div class="flex justify-between mt-1">
                 <span class="text-white/40 text-xs">0</span>
@@ -361,71 +200,72 @@
               </div>
             </div>
           </div>
-          <div id="rateLimitIps" class="max-h-32 overflow-y-auto rounded-lg border border-white/10">
-            <p class="text-white/40 text-xs text-center py-3">No request data yet 暂无请求数据</p>
+          <div id="rateLimitIps" class="max-h-32 overflow-y-auto rounded-xl border border-white/10 p-3">
+            <p class="text-white/40 text-xs text-center py-3">No request data yet</p>
           </div>
         </div>
 
         <!-- Add User Form -->
-        <div class="bg-white/10 rounded-xl p-4">
-          <h3 class="text-white font-semibold text-sm mb-3">Add New User 添加新用户</h3>
-          <form id="adminAddUserForm" class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
-            <div class="col-span-2 md:col-span-1">
-              <input type="text" id="adminNewUsername" placeholder="Username 用户名" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+        <div class="card">
+          <h3 class="text-white font-semibold text-sm mb-4">Add New User</h3>
+          <form id="adminAddUserForm" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            <div class="auth-form-row md:col-span-1">
+              <label for="adminNewUsername" class="form-label-light text-sm">Username</label>
+              <input type="text" id="adminNewUsername" placeholder="Choose username" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="password" id="adminNewPassword" placeholder="Password 密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewPassword" class="form-label-light text-sm">Password</label>
+              <input type="password" id="adminNewPassword" placeholder="Create password" maxlength="20" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="text" id="adminNewGrade" placeholder="Grade 年级" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewGrade" class="form-label-light text-sm">Grade</label>
+              <input type="text" id="adminNewGrade" placeholder="8-12" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <input type="text" id="adminNewClass" placeholder="Class 班级" class="input-field w-full px-3 py-2 rounded-lg text-sm" required>
+            <div class="auth-form-row">
+              <label for="adminNewClass" class="form-label-light text-sm">Class</label>
+              <input type="text" id="adminNewClass" placeholder="1-10" class="pill-input w-full px-4 py-2.5 text-sm" required>
             </div>
-            <div>
-              <select id="adminNewUserType" class="input-field w-full px-3 py-2 rounded-lg text-sm">
-                <option value="normal">Normal 普通</option>
-                <option value="verified">Verified 已验证</option>
-                <option value="organization">Organization 组织</option>
+            <div class="auth-form-row">
+              <label for="adminNewUserType" class="form-label-light text-sm">Type</label>
+              <select id="adminNewUserType" class="pill-input w-full px-4 py-2.5 text-sm bg-transparent">
+                <option value="normal">Normal</option>
+                <option value="verified">Verified</option>
+                <option value="organization">Organization</option>
               </select>
             </div>
-            <button type="submit" class="login-btn px-4 py-2 rounded-lg text-sm font-semibold">Add User 添加用户</button>
+            <div class="auth-link-row md:justify-start">
+              <button type="submit" class="btn-link btn-link-xl text-sm">Add User</button>
+            </div>
           </form>
-          <p id="adminAddUserMsg" class="text-center text-sm mt-2 hidden"></p>
+          <p id="adminAddUserMsg" class="auth-message hidden"></p>
         </div>
 
         <!-- User List -->
         <div class="flex-1 overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-white font-semibold text-sm">Registered Users 已注册用户</h3>
-            <button id="adminRefreshUsers" class="text-white/60 hover:text-white text-xs transition-colors flex items-center gap-1">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-刷新 Refresh
-            </button>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-white font-semibold text-sm">Registered Users</h3>
+            <button id="adminRefreshUsers" class="btn-link text-xs"> Refresh</button>
           </div>
-          <div class="overflow-y-auto flex-1 rounded-xl border border-white/10">
-            <table class="w-full text-sm">
-              <thead class="sticky top-0 bg-white/10">
-                <tr class="text-white/60 text-xs uppercase">
-                  <th class="px-3 py-2 text-left">ID</th>
-                  <th class="px-3 py-2 text-left">Username 用户名</th>
-                  <th class="px-3 py-2 text-left hidden md:table-cell">Full Name 姓名</th>
-                  <th class="px-3 py-2 text-left">Grade 年级</th>
-                  <th class="px-3 py-2 text-left">Class 班级</th>
-                  <th class="px-3 py-2 text-left">Type 类型</th>
-                  <th class="px-3 py-2 text-left hidden lg:table-cell">Registered At 注册时间</th>
-                  <th class="px-3 py-2 text-left">Warnings 警告</th>
-                  <th class="px-3 py-2 text-right">Actions 操作</th>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr class="text-white-60 text-xs uppercase">
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th class="hidden md:table-cell">Full Name</th>
+                  <th>Grade</th>
+                  <th>Class</th>
+                  <th>Type</th>
+                  <th class="hidden lg:table-cell">Registered At</th>
+                  <th>Warnings</th>
+                  <th class="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="adminUserList" class="text-white/90">
+              <tbody id="adminUserList" class="text-white-90">
                 <!-- Users populated by JS -->
               </tbody>
             </table>
-            <p id="adminNoUsers" class="text-center text-white/50 text-sm py-6 hidden">No users yet 暂无用户</p>
+            <p id="adminNoUsers" class="text-center text-white-50 text-sm py-6 hidden">No users yet</p>
           </div>
           <p id="adminUserListError" class="text-center text-red-400 text-sm mt-2 hidden"></p>
         </div>
@@ -433,12 +273,12 @@
     </div>
   </div>
 
-  <div id="profileModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-    <div id="profileBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative z-10">
+  <div id="profileModal" class="hidden modal-overlay z-60">
+    <div id="profileBackdrop" class="modal-backdrop"></div>
+    <div class="modal glass-panel rounded-2xl p-6 max-h-80vh overflow-hidden flex flex-col">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-white text-lg font-bold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">User Profile 用户资料</h2>
-        <button id="closeProfileModal" class="text-white/70 hover:text-white transition-colors">
+        <h2 class="modal-title">User Profile</h2>
+        <button id="closeProfileModal" class="modal-close">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
             <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
@@ -449,12 +289,12 @@
     </div>
   </div>
 
-  <div id="profanityPanel" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-    <div id="profanityBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative z-10">
+  <div id="profanityPanel" class="hidden modal-overlay z-60">
+    <div id="profanityBackdrop" class="modal-backdrop"></div>
+    <div class="glass-panel rounded-2xl p-6 w-full max-w-3xl max-h-85vh overflow-hidden flex flex-col relative z-10">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-white text-lg font-bold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Invitation Profanity Check 邀请内容检查</h2>
-        <button id="closeProfanityPanel" class="text-white/70 hover:text-white transition-colors">
+        <h2 class="modal-title">Invitation Profanity Check</h2>
+        <button id="closeProfanityPanel" class="modal-close">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
             <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
@@ -463,38 +303,22 @@
       </div>
       <div class="mb-4">
         <div class="flex items-center gap-3 mb-3">
-          <button id="scanInvitationsBtn" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-            Scan Invitations 扫描邀请
+          <button id="scanInvitationsBtn" class="btn btn-primary text-sm px-4 py-2">
+            Scan Invitations
           </button>
-          <button id="loadReportedBtn" class="px-4 py-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-white text-sm font-medium transition-all">
-            Reported Invitations 被举报邀请
+          <button id="loadReportedBtn" class="btn badge-report text-sm px-4 py-2">
+            Reported Invitations
           </button>
         </div>
-        <div id="reportedResults" class="hidden rounded-xl border border-yellow-500/20 p-4 mb-4">
-          <h3 class="text-white font-semibold text-sm mb-3">Reported Invitations 被举报邀请</h3>
+        <div id="reportedResults" class="hidden rounded-xl border border-yellow-500-20 p-4 mb-4">
+          <h3 class="text-white font-semibold text-sm mb-3">Reported Invitations</h3>
           <div id="reportedList"></div>
         </div>
       </div>
-      <div id="profanityResults" class="flex-1 overflow-y-auto rounded-xl border border-white/10 p-4">
-        <p class="text-white/50 text-sm text-center">Click "Scan Invitations" to check all invitations for inappropriate content. 点击"扫描邀请"检查所有邀请的不当内容。</p>
+      <div id="profanityResults" class="flex-1 overflow-y-auto rounded-xl border border-white-10 p-4">
+        <p class="text-white-50 text-sm text-center">Click "Scan Invitations" to check all invitations for inappropriate content.""</p>
       </div>
-      <div id="profanitySummary" class="mt-3 text-sm text-white/70 hidden"></div>
-    </div>
-  </div>
-
-  <div class="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-20">
-    <span class="text-white/40 text-xs font-medium">v1.0</span>
-  </div>
-
-  <div id="userStatsWidget" class="fixed top-4 right-4 md:top-8 md:right-8 z-20">
-    <div class="glass-panel rounded-xl px-4 py-2 flex items-center gap-2">
-      <svg class="w-4 h-4 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span id="userCount" class="text-white text-sm font-medium">Loading... 加载中...</span>
+      <div id="profanitySummary" class="mt-3 text-sm text-white-70 hidden"></div>
     </div>
   </div>
 

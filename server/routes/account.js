@@ -11,7 +11,7 @@ const USERNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_.]{0,19}$/;
 const PASSWORD_REGEX = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
 
 const MBTI_TYPES = [
-  'INFJ', 'INFP', 'INTJ', 'INTP', 
+  'INFJ', 'INFP', 'INTJ', 'INTP',
   'ISFJ', 'ISFP', 'ISTJ', 'ISTP',
   'ENFJ', 'ENFP', 'ENTJ', 'ENTP',
   'ESFJ', 'ESFP', 'ESTJ', 'ESTP'
@@ -20,11 +20,11 @@ const MBTI_TYPES = [
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  
+
   if (!token) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid token' });
@@ -40,11 +40,11 @@ router.get('/account', authenticateToken, async (req, res) => {
       'SELECT id, username, full_name, grade, class, personality_type, user_type, email, warning_count, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
-    
+
     if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.json(users[0]);
   } catch (error) {
     console.error('Get account error:', error);
@@ -55,77 +55,77 @@ router.get('/account', authenticateToken, async (req, res) => {
 router.put('/account', authenticateToken, async (req, res) => {
   try {
     const { username, password, personality_type, full_name, grade, class: classValue, currentPassword } = req.body;
-    
+
     const [users] = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
-    
+
     if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     const isValidPassword = await bcrypt.compare(currentPassword, users[0].password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
-    
+
     const updates = [];
     const params = [];
-    
+
     if (username) {
       if (!USERNAME_REGEX.test(username)) {
         return res.status(400).json({ error: 'Username must start with a letter and contain only letters, numbers, underscores, or periods (max 20 characters)' });
       }
-      
+
       const [existing] = await pool.query(
         'SELECT id FROM users WHERE username = ? AND id != ?',
         [username, req.user.id]
       );
-      
+
       if (existing.length > 0) {
         return res.status(400).json({ error: 'Username already taken' });
       }
-      
+
       updates.push('username = ?');
       params.push(username);
     }
-    
+
     if (full_name !== undefined) {
       if (typeof full_name !== 'string' || full_name.length > 100) {
-        return res.status(400).json({ error: 'Full name must be 100 characters or less 姓名不能超过100个字符' });
+        return res.status(400).json({ error: 'Full name must be 100 characters or less100' });
       }
       updates.push('full_name = ?');
       params.push(full_name.trim());
     }
-    
+
     if (grade !== undefined) {
       if (typeof grade !== 'string' || grade.length > 2) {
-        return res.status(400).json({ error: 'Grade must be 2 characters or less 年级不能超过2个字符' });
+        return res.status(400).json({ error: 'Grade must be 2 characters or less2' });
       }
       updates.push('grade = ?');
       params.push(grade.trim());
     }
-    
+
     if (classValue !== undefined) {
       if (typeof classValue !== 'string' || classValue.length > 2) {
-        return res.status(400).json({ error: 'Class must be 2 characters or less 班级不能超过2个字符' });
+        return res.status(400).json({ error: 'Class must be 2 characters or less2' });
       }
       updates.push('class = ?');
       params.push(classValue.trim());
     }
-    
+
     if (password) {
       if (!PASSWORD_REGEX.test(password)) {
         return res.status(400).json({ error: 'Password must be at least 5 characters and contain only letters, numbers, and common symbols' });
       }
-      
+
       const hashedPassword = await bcrypt.hash(password, 12);
       updates.push('password = ?');
       params.push(hashedPassword);
     }
-    
+
     if (personality_type) {
       const [userCheck] = await pool.query('SELECT user_type FROM users WHERE id = ?', [req.user.id]);
       if (userCheck.length > 0 && userCheck[0].user_type !== 'normal') {
-        return res.status(403).json({ error: 'Verified and organization accounts cannot change their personality type 已验证和组织账户不能更改其性格类型' });
+        return res.status(403).json({ error: 'Verified and organization accounts cannot change their personality type' });
       }
       if (!MBTI_TYPES.includes(personality_type)) {
         return res.status(400).json({ error: 'Invalid personality type' });
@@ -133,18 +133,18 @@ router.put('/account', authenticateToken, async (req, res) => {
       updates.push('personality_type = ?');
       params.push(personality_type);
     }
-    
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
-    
+
     params.push(req.user.id);
-    
+
     await pool.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE users SET ${updates.join(',')} WHERE id = ?`,
       params
     );
-    
+
     res.json({ message: 'Account updated successfully' });
   } catch (error) {
     console.error('Update account error:', error);
@@ -155,25 +155,25 @@ router.put('/account', authenticateToken, async (req, res) => {
 router.delete('/account', authenticateToken, async (req, res) => {
   try {
     const { currentPassword } = req.body;
-    
+
     if (!currentPassword) {
-      return res.status(400).json({ error: 'Current password is required 请输入当前密码' });
+      return res.status(400).json({ error: 'Current password is required' });
     }
-    
+
     const [users] = await pool.query('SELECT password, user_type FROM users WHERE id = ?', [req.user.id]);
-    
+
     if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     const isValidPassword = await bcrypt.compare(currentPassword, users[0].password);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Current password is incorrect 当前密码不正确' });
+      return res.status(401).json({ error: 'Current password is incorrect' });
     }
-    
+
     await pool.query('DELETE FROM users WHERE id = ?', [req.user.id]);
-    
-    res.json({ message: 'Account deleted successfully 账号已成功删除' });
+
+    res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Delete account error:', error);
     res.status(500).json({ error: 'Server error' });

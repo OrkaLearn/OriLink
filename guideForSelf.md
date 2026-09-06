@@ -4,29 +4,45 @@ Quick commands to run the OriLink backend server.
 
 ---
 
-## 1. Local Development (WSL)
+## 1. Local Development (Windows + Git Bash)
 
 ### Prerequisites (First-time setup)
 
-#### Install npm (if not present)
+#### Install Node.js (includes npm)
 
-WSL may only have Node.js installed without npm. Install it via dnf:
+Install Node.js for Windows from <https://nodejs.org> (npm is bundled). Verify in git bash:
 
 ```bash
-sudo dnf install -y nodejs-npm
+node -v && npm -v
 ```
+
+#### Install MySQL (one-time)
+
+From an **Administrator** PowerShell/Terminal (requires [Chocolatey](https://chocolatey.org)):
+
+```powershell
+choco install mysql -y
+```
+
+> Restart git bash after installation so the `mysql` client appears in PATH.
 
 #### Start MySQL
 
+MySQL runs as a Windows service (auto-starts with Windows). From an **Administrator** shell:
+
 ```bash
-sudo systemctl start mysqld
+net start MySQL
 ```
+
+(To stop: `net stop MySQL`. You can also manage it via `services.msc`.)
 
 #### Create MySQL user and database
 
 ```bash
-sudo mysql -u root -p
+mysql -u root -p
 ```
+
+> On a fresh Chocolatey install, root may have no password — just press Enter when prompted.
 
 ```sql
 CREATE USER IF NOT EXISTS 'kevin'@'localhost' IDENTIFIED BY 'your-password-here';
@@ -39,7 +55,7 @@ EXIT;
 #### Set up environment variables
 
 ```bash
-cd /home/orka/projects/orilink/server
+cd "/c/Users/Orka/Desktop/Kevin's Study Resources/Projects/OriLink/server"
 cp .env.example .env
 ```
 
@@ -48,13 +64,14 @@ Edit `.env` with your values:
 - `DB_PASSWORD` - MySQL password for user 'kevin'
 - `ADMIN_PASSWORD` - admin panel password
 - `ADMIN_TOKEN` - admin API token
+- `RESEND_API_KEY` - Resend API key (for email)
 
 ### Build CSS (required before first run)
 
 The project uses **Tailwind CSS CLI** (not CDN). CSS must be compiled before the server can serve styled pages:
 
 ```bash
-cd /home/orka/projects/orilink/server
+cd "/c/Users/Orka/Desktop/Kevin's Study Resources/Projects/OriLink/server"
 npm run build:css
 ```
 
@@ -64,19 +81,19 @@ This compiles Tailwind utilities + custom styles from `public/src/input.css` int
 
 **Option A: Using npm (auto-builds CSS)**
 ```bash
-cd /home/orka/projects/orilink/server
+cd "/c/Users/Orka/Desktop/Kevin's Study Resources/Projects/OriLink/server"
 npm start
 ```
 
 **Option B: Using nodemon for auto-restart (auto-builds CSS)**
 ```bash
-cd /home/orka/projects/orilink/server
+cd "/c/Users/Orka/Desktop/Kevin's Study Resources/Projects/OriLink/server"
 npm run dev
 ```
 
 **Option C: Direct node (manual CSS build required)**
 ```bash
-cd /home/orka/projects/orilink/server
+cd "/c/Users/Orka/Desktop/Kevin's Study Resources/Projects/OriLink/server"
 npm run build:css  # Must run this first
 node index.js
 ```
@@ -85,15 +102,27 @@ node index.js
 
 ### Access the server
 
-From Windows browser: `http://localhost:3210`
+Open in browser: `http://localhost:3210`
 
 ### Stop the server (port 3210)
 
+Press `Ctrl + C` in the terminal where it's running.
+
+Or kill it from another git bash window:
+
 ```bash
-fuser -k 3210/tcp
+# 1. Find the PID listening on port 3210 (last column of the output)
+netstat -ano | grep ':3210 .*LISTENING'
+
+# 2. Kill it (double slashes stop git bash from mangling /PID into a path)
+taskkill //PID <PID> //F
 ```
 
-Or press `Ctrl + C` in the terminal where it's running.
+One-liner:
+
+```bash
+netstat -ano | grep ':3210 .*LISTENING' | awk '{print $5}' | xargs -r -I{} taskkill //PID {} //F
+```
 
 ---
 
@@ -203,7 +232,7 @@ Copy `orilink_backup.sql` to the new computer.
 Create the database first:
 
 ```bash
-sudo mysql -u root -p
+mysql -u root -p
 ```
 
 ```sql
@@ -217,7 +246,7 @@ Then restore the data:
 mysql -u root -p orilink < orilink_backup.sql
 ```
 
-> **Note:** After transferring, make sure the MySQL password in `server/db.js` matches the password on the new computer. If it's different, update the `password` field in `db.js` to the new one.
+> **Note:** After transferring, make sure `DB_PASSWORD` in `server/.env` matches the MySQL password for user 'kevin' on the new computer. If it's different, update `DB_PASSWORD` in `.env`.
 
 ---
 

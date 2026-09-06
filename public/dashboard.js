@@ -1,10 +1,10 @@
 const MBTI_TYPES = ['INFJ', 'INFP', 'INTJ', 'INTP', 'ISFJ', 'ISFP', 'ISTJ', 'ISTP', 'ENFJ', 'ENFP', 'ENTJ', 'ENTP', 'ESFJ', 'ESFP', 'ESTJ', 'ESTP'];
 const MAX_CHARS = 20;
 const INVITATION_TYPES = [
-  { value: 'play/sports', label: 'Sports/Play 运动/玩耍' },
-  { value: 'teammate finding', label: 'Teammate Finding 寻找队友' },
-  { value: 'tutoring', label: 'Tutoring 辅导' },
-  { value: 'other', label: 'Other 其他' }
+  { value: 'play/sports', label: 'Sports/Play' },
+  { value: 'teammate finding', label: 'Teammate Finding' },
+  { value: 'tutoring', label: 'Tutoring' },
+  { value: 'other', label: 'Other' }
 ];
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 300;
@@ -13,6 +13,7 @@ const DESCRIPTION_TRUNCATE_LENGTH = 50;
 let invitationsSort = 'event';
 let myInvitationsSort = 'event';
 let joinedInvitationsSort = 'event';
+let invitationsFilter = null;
 
 function getTokenExpiry() {
   const token = localStorage.getItem('token');
@@ -33,11 +34,11 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-const typeColors = {
-  'play/sports': 'bg-emerald-500/80',
-  'teammate finding': 'bg-blue-500/80',
-  'tutoring': 'bg-violet-500/80',
-  'other': 'bg-gray-500/80'
+const typeBadgeClasses = {
+  'play/sports': 'badge-type-sports',
+  'teammate finding': 'badge-type-teammate',
+  'tutoring': 'badge-type-tutoring',
+  'other': 'badge-type-other'
 };
 
 function getTypeLabel(type) {
@@ -47,30 +48,16 @@ function getTypeLabel(type) {
 
 const pages = {
   invitations: {
-    title: "Others' Invitations 他人邀请",
+    title: "Invitations",
     render: renderInvitationsPage
   },
   joined: {
-    title: "Joined Invitations 参与邀请",
+    title: "Ongoing",
     render: renderJoinedPage
   },
   account: {
-    title: "My Account 账号",
+    title: "Profile",
     render: renderAccountPage
-  },
-  about: {
-    title: "About OriLink 关于元联",
-    description: `OriLink or 元联 is an in-school 
-    online social platform founded and developed by a student who sought the need to 
-    develop a more efficient method to connect students with similar needs/wants and interests to promote 
-    socializing and build a stronger community. Compared to other online social platforms, our platform is unique in that it prioritizes offline/real-world socializing, as stated in our motto: “Promoting offline social interactions through online methods 用线上方式促进线下社交“. Whether it's finding someone to play sports with, 
-    finding a student tutor or seeking teammates for competitions, you can do all these things on this platform. 
-    <br></br>
-    Founder, Developer & Maintainer: Kevin Kaiwen Chai <br>
-    Co-founders, Past Contributors (Planning & Surveying): Jiayi Xiao, Maoyuan Sun, Renyong Huang, 
-    <br></br>
-    <h3 class="text-white font-semibold text-sm mt-4 mb-2">Terms and Conditions</h3>
-    <div id="aboutTermsText" class="text-white/70 text-xs whitespace-pre-wrap"></div>`
   }
 };
 
@@ -94,95 +81,88 @@ function countWords(text) {
 function renderUserTypeBadge(userType, personalityType) {
   const safeType = escapeHtml(userType || 'normal');
   const safeMbti = escapeHtml(personalityType || 'N/A');
-  
+
   if (safeType === 'verified') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-500/80 text-white whitespace-nowrap">Verified 已验证</span>';
+    return'<span class="badge badge-verified">Verified</span>';
   }
   if (safeType === 'organization') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/80 text-white whitespace-nowrap">Organization 组织</span>';
+    return'<span class="badge badge-organization">Organization</span>';
   }
-  return `<span class="text-white/80 text-xs whitespace-nowrap">${safeMbti}</span>`;
+  return `<span class="user-type-mbti">${safeMbti}</span>`;
 }
 
 function createInvitationCard(invitation, isOwn = false, showChat = false, showReport = false) {
   const { text: truncatedDesc, truncated } = truncateText(invitation.description, DESCRIPTION_TRUNCATE_LENGTH);
-  const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[invitation.type] || 'bg-gray-500/80'}">${getTypeLabel(invitation.type)}</span>`;
-  
+
   const safeInvitation = {
     ...invitation,
     title: escapeHtml(invitation.title),
     description: escapeHtml(invitation.description),
-    username: escapeHtml(invitation.username || 'Unknown 未知'),
+    username: escapeHtml(invitation.username || 'Unknown'),
     personality_type: escapeHtml(invitation.personality_type || 'N/A'),
     user_type: escapeHtml(invitation.user_type || 'normal')
   };
 
   const isInviterPrivileged = invitation.user_type === 'verified' || invitation.user_type === 'organization';
-  
-  const descriptionHtml = truncated 
-    ? `<p class="text-white text-sm mt-1 cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="text-white/70 hover:text-white">View More 查看更多</span></p>`
-    : `<p class="text-white text-sm mt-1">${truncatedDesc}</p>`;
-  
-  let metaInfo = '';
-  if (invitation.max_participants !== undefined || invitation.event_start || invitation.event_end) {
-    metaInfo += '<div class="mt-2 flex flex-wrap gap-2">';
-    if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
-      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
-      const isFull = joinedCount >= invitation.max_participants;
-      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full 已满)' : ''}</span>`;
-    } else if (invitation.max_participants === null) {
-      const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
-      metaInfo += `<span class="text-white/60 text-xs">👤 ${joinedCount}/∞</span>`;
-    }
-    if (invitation.event_start && invitation.event_end) {
-      const cstOpts = { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
-      const startDate = new Date(invitation.event_start);
-      const endDate = new Date(invitation.event_end);
-      const startStr = startDate.toLocaleString('zh-CN', cstOpts);
-      const endStr = endDate.toLocaleString('zh-CN', cstOpts);
-      metaInfo += `<span class="text-white/60 text-xs">📅 Start 开始: ${startStr} - End 结束: ${endStr}</span>`;
-    }
-    metaInfo += '</div>';
+
+  const descriptionHtml = truncated
+    ? `<p class="card-desc cursor-pointer expand-desc" data-inv='${JSON.stringify(safeInvitation).replace(/'/g, "&#39;")}'>${truncatedDesc} <span class="card-desc-more">View More</span></p>`
+    : `<p class="card-desc">${truncatedDesc}</p>`;
+
+  let timeHtml = '';
+  if (invitation.event_start && invitation.event_end) {
+    const cstOpts = { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+    const startDate = new Date(invitation.event_start);
+    const endDate = new Date(invitation.event_end);
+    const startStr = startDate.toLocaleString('zh-CN', cstOpts);
+    const endStr = endDate.toLocaleString('zh-CN', cstOpts);
+    timeHtml = `<p class="card-meta"><strong>Time:</strong> ${startStr} - ${endStr}</p>`;
   }
-  
+
+  let participantsHtml = '';
+  const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
+  if (invitation.max_participants !== undefined && invitation.max_participants !== null) {
+    const isFull = joinedCount >= invitation.max_participants;
+    participantsHtml = `<p class="card-meta"><strong>Participants:</strong> ${joinedCount}/${invitation.max_participants}${isFull ? ' (Full)' : ''}</p>`;
+  } else if (invitation.max_participants === null) {
+    participantsHtml = `<p class="card-meta"><strong>Participants:</strong> ${joinedCount}/∞</p>`;
+  }
+
   let actionButtons = '';
   if (isOwn) {
     actionButtons = `
-      <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="delete-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Delete 删除</button>
+      <div class="card-manage-actions">
+        <button class="chat-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat</button>
+        <button class="members-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members</button>
+        <button class="delete-btn" data-id="${invitation.id}">Delete</button>
       </div>`;
   } else if (showChat) {
     actionButtons = `
-      <div class="flex gap-2 mt-3">
-        <button class="chat-btn flex-1 px-3 py-1.5 rounded-lg bg-blue-500/60 hover:bg-blue-500/80 text-white text-xs font-medium transition-all" onclick="openChatModal({target: this})" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat 临时聊天</button>
-        <button class="members-btn flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/60 hover:bg-emerald-500/80 text-white text-xs font-medium transition-all" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members 成员</button>
-        <button class="leave-btn flex-1 px-3 py-1.5 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition-all" data-id="${invitation.id}">Leave 退出</button>
+      <div class="card-manage-actions">
+        <button class="chat-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Temp Chat</button>
+        <button class="members-btn" data-id="${invitation.id}" data-title="${escapeHtml(invitation.title)}">Members</button>
+        <button class="leave-btn" data-id="${invitation.id}">Leave</button>
       </div>`;
   } else {
-    const joinedCount = (invitation.joined_count || 0) + (isInviterPrivileged ? 0 : 1);
     const isFull = invitation.max_participants !== null && invitation.max_participants !== undefined && joinedCount >= invitation.max_participants;
-    const reportBtn = showReport ? `<button class="report-btn mt-2 px-3 py-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Report 举报</button>` : '';
-    actionButtons = isFull
-      ? `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-gray-500/40 text-white/70 text-xs font-medium cursor-not-allowed w-full" disabled data-id="${invitation.id}">Full 已满</button>${reportBtn}`
-      : `<button class="join-btn mt-3 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-all w-full" data-id="${invitation.id}">Join 加入</button>${reportBtn}`;
+    const reportBtn = showReport ? `<button class="report-btn" data-id="${invitation.id}">Report</button>` : '';
+    actionButtons = `
+      <div class="card-actions">
+        ${isFull
+          ? `<button class="join-btn" disabled data-id="${invitation.id}">Full</button>`
+          : `<button class="join-btn" data-id="${invitation.id}">Join</button>`}
+        ${reportBtn}
+      </div>`;
   }
 
   return `
-    <div class="invitation-card glass-panel rounded-xl p-4 mb-3">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-1 min-w-0">
-          <h3 class="text-white font-semibold text-sm truncate">${safeInvitation.title}</h3>
-          ${descriptionHtml}
-          <div class="mt-2">${typeBadge}</div>
-          ${metaInfo}
-        </div>
-        <div class="text-right">
-          <p class="text-white text-xs whitespace-nowrap">@${safeInvitation.username}</p>
-          ${renderUserTypeBadge(safeInvitation.user_type, safeInvitation.personality_type)}
-        </div>
-      </div>
+    <div class="dashboard-invitation-card">
+      <h3>${safeInvitation.title}</h3>
+      ${descriptionHtml}
+      <p class="card-meta"><strong>Type:</strong> ${getTypeLabel(invitation.type)}</p>
+      ${timeHtml}
+      ${participantsHtml}
+      <p class="card-meta"><strong>Organizer:</strong> @${safeInvitation.username} ${renderUserTypeBadge(safeInvitation.user_type, safeInvitation.personality_type)}</p>
       ${actionButtons}
     </div>
   `;
@@ -220,11 +200,11 @@ function checkForChanges() {
                      currentClass !== accountOriginalValues.classField;
 
   if (hasChanges) {
-    saveBtn.className = 'w-full py-2 rounded-lg bg-red-500/60 hover:bg-red-500/80 text-white text-sm font-medium transition-all';
-    saveBtn.textContent = '保存更改* Save Changes*';
+    saveBtn.className = 'w-full btn btn-danger text-sm py-2';
+    saveBtn.textContent = '* Save Changes*';
   } else {
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
-    saveBtn.textContent = '保存更改 Save Changes';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
+    saveBtn.textContent = ' Save Changes';
   }
 }
 
@@ -252,14 +232,14 @@ function initSocket() {
       appendMessageToChat({
         userId: 0,
         username: data.username,
-        content: `__SYSTEM__:${data.username} left the invitation 退出了邀请`,
+        content: `__SYSTEM__:${data.username} left the invitation`,
         created_at: new Date().toISOString()
       });
     }
   });
   socket.on('error', (data) => {
     console.error('Socket error:', data.message);
-    alert(data.message || 'Chat error 聊天出错');
+    alert(data.message || 'Chat error');
   });
 }
 
@@ -277,84 +257,87 @@ function getCurrentUser() {
 
 function renderInvitationsPage() {
   const container = document.getElementById('page-description');
-  container.innerHTML = `
-    <div class="flex justify-start items-center mb-5">
-      <div class="flex items-center gap-2">
-        <span class="text-white/60 text-xs">Sort by 排序:</span>
-        <select id="invSortSelect" class="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-          <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-          <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
-        </select>
-      </div>
-    </div>
-  `;
-
+  container.innerHTML ='<div class="dashboard-empty">Loading invitations...</div>';
   loadInvitationsList();
-
-  document.getElementById('invSortSelect').addEventListener('change', () => {
-    invitationsSort = document.getElementById('invSortSelect').value;
-    loadInvitationsList();
-  });
 }
 
 function loadInvitationsList() {
   const container = document.getElementById('page-description');
-  const sortHtml = container.querySelector('#invSortSelect')?.parentElement?.parentElement?.outerHTML || '';
 
   Promise.all([
     fetch(`/api/invitations?sort=${invitationsSort}`, { headers: getAuthHeader() }).then(res => res.json()),
     getCurrentUser()
   ])
     .then(([invitations, user]) => {
-      let html = sortHtml;
-      if (invitations.length === 0) {
-        html += '<p class="text-white text-sm text-center py-4">No invitations yet. Be the first to post one! 暂无邀请。来做第一个发布邀请的人吧！</p>';
-      } else {
-        html += invitations.map(inv => {
-          const isOwn = inv.username === user.username;
-          return createInvitationCard(inv, isOwn, false, !isOwn);
-        }).join('');
-      }
-      container.innerHTML = html;
+      const filtered = invitationsFilter
+        ? invitations.filter(inv => inv.type === invitationsFilter)
+        : invitations;
 
-      document.getElementById('invSortSelect').value = invitationsSort;
-      document.getElementById('invSortSelect').addEventListener('change', () => {
-        invitationsSort = document.getElementById('invSortSelect').value;
-        loadInvitationsList();
-      });
-      
-      document.querySelectorAll('.join-btn').forEach(btn => {
-        btn.addEventListener('click', handleJoin);
-      });
-      
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => handleDelete(e, 'invitations'));
-      });
-      
-      document.querySelectorAll('.report-btn').forEach(btn => {
-        btn.addEventListener('click', handleReport);
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      if (filtered.length === 0) {
+        const emptyMessage = invitationsFilter
+          ? 'No matching invitations for this category.'
+          : 'No invitations yet. Be the first to post one!';
+        container.innerHTML = `<p class="dashboard-empty">${emptyMessage}</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${filtered.map(inv => {
+            const isOwn = inv.username === user.username;
+            return createInvitationCard(inv, isOwn, false, !isOwn);
+          }).join('')}
+        </div>
+      `;
+
+      attachInvitationListeners(container);
     })
     .catch(err => {
       console.error(err);
-      container.innerHTML = '<p class="text-red-400 text-sm">Error loading invitations 加载邀请出错</p>';
+      container.innerHTML ='<p class="dashboard-empty">Error loading invitations</p>';
     });
+}
+
+function attachInvitationListeners(container) {
+  container.querySelectorAll('.join-btn').forEach(btn => {
+    btn.addEventListener('click', handleJoin);
+  });
+
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleDelete(e, 'invitations'));
+  });
+
+  container.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', handleReport);
+  });
+
+  container.querySelectorAll('.expand-desc').forEach(el => {
+    el.addEventListener('click', function() {
+      const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
+      showInviteModal(inv);
+    });
+  });
+
+  container.querySelectorAll('.chat-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => openChatModal(e));
+  });
+
+  container.querySelectorAll('.members-btn').forEach(btn => {
+    btn.addEventListener('click', () => showMembersModal(btn.dataset.id, btn.dataset.title));
+  });
+
+  container.querySelectorAll('.leave-btn').forEach(btn => {
+    btn.addEventListener('click', handleLeave);
+  });
 }
 
 function handleDelete(e, pageContext) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
-  if (!confirm('Sure to delete this invitation? 确定要删除此邀请吗？')) return;
-  
+  if (!confirm('Sure to delete this invitation?')) return;
+
   btn.disabled = true;
-  btn.textContent = 'Deleting... 删除中...';
+  btn.textContent = 'Deleting......';
 
   fetch(`/api/invitations/${invitationId}`, {
     method: 'DELETE',
@@ -372,7 +355,7 @@ function handleDelete(e, pageContext) {
       }
     })
     .catch(err => {
-      btn.textContent = '删除 Delete';
+      btn.textContent = ' Delete';
       btn.disabled = false;
     });
 }
@@ -408,20 +391,20 @@ function submitReport() {
   const confirmBtn = document.getElementById('reportConfirmBtn');
 
   if (!reason) {
-    errorEl.textContent = 'Please provide a reason 请提供举报原因';
+    errorEl.textContent = 'Please provide a reason';
     errorEl.classList.remove('hidden');
     return;
   }
 
   if (reason.length > 500) {
-    errorEl.textContent = 'Reason must be under 500 characters 原因不能超过500个字符';
+    errorEl.textContent = 'Reason must be under 500 characters500';
     errorEl.classList.remove('hidden');
     return;
   }
 
   errorEl.classList.add('hidden');
   confirmBtn.disabled = true;
-  confirmBtn.textContent = 'Submitting... 提交中...';
+  confirmBtn.textContent = 'Submitting......';
 
   const invitationId = btn.dataset.id;
 
@@ -436,35 +419,35 @@ function submitReport() {
         errorEl.textContent = data.error;
         errorEl.classList.remove('hidden');
         confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm Report 确认举报';
+        confirmBtn.textContent = 'Confirm Report';
         return;
       }
       closeReportModal();
       confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirm Report 确认举报';
-      btn.textContent = 'Reported 已举报';
+      confirmBtn.textContent = 'Confirm Report';
+      btn.textContent = 'Reported';
       btn.disabled = true;
       btn.classList.add('opacity-50', 'cursor-not-allowed');
     })
     .catch(err => {
-      errorEl.textContent = 'Report failed 举报失败';
+      errorEl.textContent = 'Report failed';
       errorEl.classList.remove('hidden');
       confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirm Report 确认举报';
+      confirmBtn.textContent = 'Confirm Report';
     });
 }
 
 function handleJoin(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
-  
+
   if (btn.disabled) return;
 
   fetch('/api/account', { headers: getAuthHeader() })
     .then(res => res.json())
     .then(user => {
       btn.disabled = true;
-      btn.textContent = 'Joining... 加入中...';
+      btn.textContent = 'Joining......';
 
       return fetch(`/api/invitations/${invitationId}/join`, {
         method: 'POST',
@@ -484,19 +467,19 @@ function handleJoin(e) {
         return;
       }
       const btn = e.target;
-      btn.textContent = 'Joined! 已加入！';
+      btn.textContent = 'Joined!';
       btn.classList.add('bg-green-500/80');
-      
+
       setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelector('[data-page="joined"]').classList.add('active');
+        document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.dashboard-rail-item[data-page="joined"]').classList.add('active');
         document.getElementById('page-title').innerHTML = pages.joined.title;
         renderJoinedPage();
       }, 1000);
     })
     .catch(err => {
       const btn = e.target;
-      btn.textContent = 'Join 加入';
+      btn.textContent = 'Join';
       btn.disabled = false;
     });
 }
@@ -504,10 +487,10 @@ function handleJoin(e) {
 function handleLeave(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
-  if (!confirm('Sure to leave this invitation? 确定要退出此邀请吗？')) return;
+  if (!confirm('Sure to leave this invitation?')) return;
 
   btn.disabled = true;
-  btn.textContent = 'Leaving... 退出中...';
+  btn.textContent = 'Leaving......';
 
   fetch(`/api/invitations/${invitationId}/leave`, {
     method: 'DELETE',
@@ -520,17 +503,17 @@ function handleLeave(e) {
         btn.classList.add('bg-red-500/80');
         return;
       }
-      btn.textContent = 'Left! 已退出！';
+      btn.textContent = 'Left!';
       btn.classList.add('bg-gray-500/60');
       setTimeout(() => {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelector('[data-page="invitations"]').classList.add('active');
+        document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.dashboard-rail-item[data-page="invitations"]').classList.add('active');
         document.getElementById('page-title').innerHTML = pages.invitations.title;
         renderInvitationsPage();
       }, 1000);
     })
     .catch(() => {
-      btn.textContent = 'Leave 退出';
+      btn.textContent = 'Leave';
       btn.disabled = false;
     });
 }
@@ -538,29 +521,29 @@ function handleLeave(e) {
 function openChatModal(e) {
   const btn = e.target;
   const invitationId = btn.dataset.id;
-  const title = btn.dataset.title || 'Temp Chat 临时聊天';
+  const title = btn.dataset.title || 'Temp Chat';
   currentChatInvitationId = invitationId;
-  
+
   const modal = document.getElementById('chatModal');
   const modalTitle = document.getElementById('chatModalTitle');
   const chatMessages = document.getElementById('chatMessages');
-  
+
   modalTitle.textContent = title;
-  chatMessages.innerHTML = '<div class="text-white/60 text-sm text-center py-4">Loading messages... 加载消息中...</div>';
+  chatMessages.innerHTML ='<div class="text-white/60 text-sm text-center py-4">Loading messages......</div>';
   modal.classList.remove('hidden');
-  
+
   if (socket) {
     socket.emit('join_invitation', invitationId);
   }
-  
+
   loadChatMessages(invitationId);
 }
 
 function renderSystemMessage(content, time) {
   const text = content.replace(/^__SYSTEM__:/, '');
   return `
-    <div class="text-center my-2">
-      <p class="text-white/40 text-xs font-mono italic">[system] ${escapeHtml(text)} · ${time}</p>
+    <div class="chat-system">
+      [system] ${escapeHtml(text)} · ${time}
     </div>
   `;
 }
@@ -569,19 +552,19 @@ function loadChatMessages(invitationId) {
   fetch(`/api/messages/${invitationId}`, { headers: getAuthHeader() })
     .then(res => {
       if (!res.ok) {
-        return res.json().then(err => { throw new Error(err.error || 'Failed to load messages 加载消息失败'); });
+        return res.json().then(err => { throw new Error(err.error || 'Failed to load messages'); });
       }
       return res.json();
     })
     .then(messages => {
       const container = document.getElementById('chatMessages');
       if (!container) return;
-      
+
       if (messages.length === 0) {
-        container.innerHTML = '<p class="text-white/60 text-sm text-center py-4">No messages yet. Start chatting! 暂无消息。开始聊天吧！</p>';
+        container.innerHTML ='<p class="dashboard-empty">No messages yet. Start chatting!</p>';
         return;
       }
-      
+
       container.innerHTML = messages.map(msg => {
         const isOwn = msg.user_id == currentUserId;
         const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -589,21 +572,21 @@ function loadChatMessages(invitationId) {
           return renderSystemMessage(msg.content, time);
         }
         return `
-          <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
-            <div class="inline-block max-w-[80%]">
-              <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(msg.username)} · ${time}</p>
-              <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(msg.content)}</p>
+          <div style="margin-bottom:0.75rem;text-align:${isOwn ? 'right' : 'left'};">
+            <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
+              <p class="chat-meta">${isOwn ? 'You' : '@' + escapeHtml(msg.username)} · ${time}</p>
+              <p class="chat-bubble-message">${escapeHtml(msg.content)}</p>
             </div>
           </div>
         `;
       }).join('');
-      
+
       container.scrollTop = container.scrollHeight;
     })
     .catch(err => {
       const container = document.getElementById('chatMessages');
       if (container) {
-        container.innerHTML = `<p class="text-red-400 text-sm">${err.message || 'Error loading messages 加载消息出错'}</p>`;
+        container.innerHTML = `<p class="text-red-400 text-sm">${err.message || 'Error loading messages'}</p>`;
       }
     });
 }
@@ -611,29 +594,29 @@ function loadChatMessages(invitationId) {
 function appendMessageToChat(data) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
-  
+
   const isOwn = data.userId == currentUserId;
   const time = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
+
   let html;
   if (data.content.startsWith('__SYSTEM__:')) {
     html = renderSystemMessage(data.content, time);
   } else {
     html = `
-      <div class="mb-3 ${isOwn ? 'text-right' : 'text-left'}">
-        <div class="inline-block max-w-[80%]">
-          <p class="text-white/70 text-xs">${isOwn ? 'You 你' : '@' + escapeHtml(data.username)} · ${time}</p>
-          <p class="text-white text-sm bg-white/10 rounded-lg px-3 py-2 break-words ${isOwn ? 'bg-blue-500/40' : ''}">${escapeHtml(data.content)}</p>
+      <div style="margin-bottom:0.75rem;text-align:${isOwn ? 'right' : 'left'};">
+        <div class="chat-bubble ${isOwn ? 'chat-bubble-own' : ''}">
+          <p class="chat-meta">${isOwn ? 'You' : '@' + escapeHtml(data.username)} · ${time}</p>
+          <p class="chat-bubble-message">${escapeHtml(data.content)}</p>
         </div>
       </div>
     `;
   }
-  
-  const placeholder = container.querySelector('p.text-white\\/60');
+
+  const placeholder = container.querySelector('.dashboard-empty');
   if (placeholder) {
-    container.innerHTML = '';
+    placeholder.remove();
   }
-  container.innerHTML += html;
+  container.insertAdjacentHTML('beforeend', html);
   container.scrollTop = container.scrollHeight;
 }
 
@@ -645,11 +628,11 @@ function sendChatMessage() {
   const input = document.getElementById('chatInput');
   const content = input.value.trim();
   if (!content || !currentChatInvitationId) return;
-  
+
   const originalValue = input.value;
   input.value = '';
   input.style.height = 'auto';
-  
+
   fetch(`/api/messages/${currentChatInvitationId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
@@ -657,22 +640,17 @@ function sendChatMessage() {
   })
     .then(res => {
       if (!res.ok) {
-        return res.json().then(err => { throw new Error(err.error || 'Failed to send message 发送消息失败'); });
+        return res.json().then(err => { throw new Error(err.error || 'Failed to send message'); });
       }
       return res.json();
     })
     .then(() => {
-      appendMessageToChat({
-        userId: currentUserId,
-        username: currentUsername,
-        content: content,
-        created_at: new Date().toISOString()
-      });
+      // Message will appear via the socket 'new_message' broadcast
     })
     .catch(err => {
-      console.error('Error sending message:', err || '发送消息出错');
+      console.error('Error sending message:', err || '');
       input.value = originalValue;
-      alert(err.message || 'Failed to send message 发送消息失败');
+      alert(err.message || 'Failed to send message');
     });
 }
 
@@ -690,92 +668,87 @@ function renderJoinedPage() {
   getCurrentUser().then(() => {
     const isPrivileged = currentUserType === 'verified' || currentUserType === 'organization';
     const participantsLabel = isPrivileged
-      ? 'People needed (excl. yourself) 所需人数（不含自己）'
-      : 'Participants (incl. yourself) 所需人数（含自己）';
+      ? 'People needed (excl. yourself)'
+      : 'Participants (incl. yourself)';
     container.innerHTML = `
-    <button id="showPostForm" class="w-full py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all mb-4">
-      Post Invitation 发布邀请
+    <button id="showPostForm" class="w-full btn btn-primary text-sm py-2_5 mb-4">
+      Post Invitation
     </button>
-    <p id="invitationCount" class="text-white/60 text-xs text-center mb-2"></p>
-    <div id="postForm" class="hidden mb-4 p-4 rounded-xl bg-white/10 border border-white/20 relative">
-      <button id="closePostForm" class="absolute top-3 right-3 text-white/60 hover:text-white">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <p id="invitationCount" class="dashboard-empty" style="padding:0 0 1rem;"></p>
+    <div id="postForm" class="hidden dashboard-post-form relative mb-4">
+      <button id="closePostForm" class="dashboard-post-close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <form id="invitationForm" class="space-y-3">
         <div>
-          <label class="block text-white/80 text-xs mb-1">Title (max 15 words) 标题（最多 15 个字）</label>
+          <label class="form-label">Title (max 15 words)</label>
           <input type="text" id="invTitle" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
-            placeholder="e.g., Need tennis partner 例如：需要网球搭档">
-          <p class="text-white/60 text-xs text-right mt-1"><span id="titleCount">0</span>/15 words 字</p>
+            class="form-input"
+            placeholder="e.g., Need tennis partner">
+          <p class="form-hint text-right"><span id="titleCount">0</span>/15 words</p>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Description (max ${MAX_DESCRIPTION_LENGTH} chars) 描述（最多${MAX_DESCRIPTION_LENGTH}字）</label>
+          <label class="form-label">Description (max ${MAX_DESCRIPTION_LENGTH} chars)${MAX_DESCRIPTION_LENGTH}</label>
           <textarea id="invDescription" required maxlength="${MAX_DESCRIPTION_LENGTH}" rows="3"
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40 resize-none"
-            placeholder="Describe your invitation... 描述你的邀请..."></textarea>
-          <p class="text-white/60 text-xs text-right mt-1"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
+            class="form-input resize-none"
+            placeholder="Describe your invitation......"></textarea>
+          <p class="form-hint text-right"><span id="descCount">0</span>/${MAX_DESCRIPTION_LENGTH}</p>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Type 类型</label>
-          <select id="invType" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-            <option value="">Select type... 选择类型...</option>
+          <label class="form-label">Type</label>
+          <select id="invType" required class="form-select">
+            <option value="">Select type......</option>
             ${INVITATION_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
           </select>
         </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">${participantsLabel}</label>
+          <label class="form-label">${participantsLabel}</label>
           ${isPrivileged
             ? `<input type="number" id="invMaxParticipants" min="1"
-                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40"
-                 placeholder="Leave blank if unlimited 留空表示不限">`
-            : `<select id="invMaxParticipants"
-                 class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-                 <option value="">Select... 选择...</option>
-                 ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people 人</option>`).join('')}
+                 class="form-input"
+                 placeholder="Leave blank if unlimited">`
+            : `<select id="invMaxParticipants" class="form-select">
+                 <option value="">Select......</option>
+                 ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} people</option>`).join('')}
                </select>`}
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="dashboard-datetime-row">
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event Start Time (Required) 活动开始时间（必填）</label>
-            <input type="datetime-local" id="invEventStart" required
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Event Start Time (Required)</label>
+            <input type="datetime-local" id="invEventStart" required class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Event End Time (Required) 活动结束时间（必填）</label>
-            <input type="datetime-local" id="invEventEnd" required
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Event End Time (Required)</label>
+            <input type="datetime-local" id="invEventEnd" required class="form-input">
           </div>
         </div>
-        <button type="submit" id="postBtn"
-          class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-          Post Invitation 发布邀请
+        <button type="submit" id="postBtn" class="w-full btn btn-primary text-sm py-2">
+          Post Invitation
         </button>
-        <p id="postMessage" class="text-center text-xs mt-2"></p>
+        <p id="postMessage" class="form-message"></p>
       </form>
     </div>
     <div id="myInvitations">
-      <div class="flex justify-between items-center mb-2">
-        <p class="text-white text-xs">My Invitations 我的邀请</p>
-        <div class="flex items-center gap-2">
-          <span class="text-white/60 text-xs">Sort by 排序:</span>
-          <select id="myInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
+      <div class="dashboard-section-header">
+        <p>My Invitations</p>
+        <div class="dashboard-section-sort">
+          <span>Sorted by:</span>
+          <select id="myInvSortSelect" class="dashboard-sort-select">
+            <option value="event">start time</option>
+            <option value="newest">post time</option>
           </select>
         </div>
       </div>
       <div id="myInvitationsList"></div>
     </div>
-    <div id="joinedInvitations" class="mt-6 pt-6 border-t border-white/10">
-      <div class="flex justify-between items-center mb-2">
-        <p class="text-white text-xs">Joined Invitations 已参与的邀请</p>
-        <div class="flex items-center gap-2">
-          <span class="text-white/60 text-xs">Sort by 排序:</span>
-          <select id="joinedInvSortSelect" class="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/40">
-            <option value="event" class="bg-white text-gray-900">Event time 活动时间</option>
-            <option value="newest" class="bg-white text-gray-900">Post time 发布时间</option>
+    <div id="joinedInvitations" class="dashboard-joined-section">
+      <div class="dashboard-section-header">
+        <p>Joined Invitations</p>
+        <div class="dashboard-section-sort">
+          <span>Sorted by:</span>
+          <select id="joinedInvSortSelect" class="dashboard-sort-select">
+            <option value="event">start time</option>
+            <option value="newest">post time</option>
           </select>
         </div>
       </div>
@@ -790,8 +763,8 @@ function renderJoinedPage() {
       if (invitations.length >= 4) {
         messageEl = document.getElementById('postMessage');
         if (messageEl) {
-          messageEl.textContent = 'You have reached the maximum of 4 active invitations 您已达到4个活跃邀请的上限';
-          messageEl.className = 'text-center text-xs mt-2 text-red-400';
+          messageEl.textContent = 'You have reached the maximum of 4 active invitations4';
+          messageEl.className = 'form-message form-message-error';
         }
         return;
       }
@@ -846,39 +819,23 @@ function loadMyInvitations() {
       if (!container) return;
       const countEl = document.getElementById('invitationCount');
       if (countEl) {
-        countEl.textContent = `${invitations.length}/4 active invitations 活跃邀请`;
+        countEl.textContent = `${invitations.length}/4 active invitations`;
       }
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t posted any invitations yet. 你还没有发布任何邀请。</p>';
+        container.innerHTML ='<p class="dashboard-empty">You haven\'t posted any invitations yet.</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: 'You 你' }, true, true, false)).join('');
-      
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => handleDelete(e, 'joined'));
-      });
-      
-      document.querySelectorAll('.chat-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => openChatModal(e));
-      });
-
-      document.querySelectorAll('.members-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          showMembersModal(btn.dataset.id, btn.dataset.title);
-        });
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${invitations.map(inv => createInvitationCard({ ...inv, username: 'You' }, true, true, false)).join('')}
+        </div>
+      `;
+      attachInvitationListeners(container);
     })
     .catch(err => {
       const container = document.getElementById('myInvitationsList');
       if (container) {
-        container.innerHTML = '<p class="text-red-400 text-sm">Error loading my invitations 加载我的邀请出错</p>';
+        container.innerHTML ='<p class="dashboard-empty">Error loading my invitations</p>';
       }
     });
 }
@@ -890,36 +847,20 @@ function loadJoinedInvitations() {
       const container = document.getElementById('joinedInvitationsList');
       if (!container) return;
       if (invitations.length === 0) {
-        container.innerHTML = '<p class="text-white text-sm text-center py-4">You haven\'t joined any invitations yet. 你还没有参与任何邀请。</p>';
+        container.innerHTML ='<p class="dashboard-empty">You haven\'t joined any invitations yet.</p>';
         return;
       }
-      container.innerHTML = invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true, false)).join('');
-      
-      document.querySelectorAll('.chat-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => openChatModal(e));
-      });
-      
-      document.querySelectorAll('.leave-btn').forEach(btn => {
-        btn.addEventListener('click', handleLeave);
-      });
-      
-      document.querySelectorAll('.members-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          showMembersModal(btn.dataset.id, btn.dataset.title);
-        });
-      });
-      
-      document.querySelectorAll('.expand-desc').forEach(el => {
-        el.addEventListener('click', function() {
-          const inv = JSON.parse(this.dataset.inv.replace(/&#39;/g, "'"));
-          showInviteModal(inv);
-        });
-      });
+      container.innerHTML = `
+        <div class="dashboard-invitation-grid">
+          ${invitations.map(inv => createInvitationCard({ ...inv, username: inv.username }, false, true, false)).join('')}
+        </div>
+      `;
+      attachInvitationListeners(container);
     })
     .catch(err => {
       const container = document.getElementById('joinedInvitationsList');
       if (container) {
-        container.innerHTML = '<p class="text-red-400 text-sm">Error loading joined invitations 加载已参与的邀请出错</p>';
+        container.innerHTML ='<p class="dashboard-empty">Error loading joined invitations</p>';
       }
     });
 }
@@ -938,14 +879,14 @@ function handlePostInvitation(e) {
   const event_end = document.getElementById('invEventEnd').value;
 
   if (!title || !description || !type) {
-    messageEl.textContent = 'Please fill in all required fields 请填写所有必填字段';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Please fill in all required fields';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (!event_start || !event_end) {
-    messageEl.textContent = 'Event start and end times are required 活动开始和结束时间为必填项';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Event start and end times are required';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -953,49 +894,49 @@ function handlePostInvitation(e) {
   const endDate = new Date(event_end + '+08:00');
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    messageEl.textContent = 'Invalid date format 日期格式无效';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Invalid date format';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (startDate <= new Date()) {
-    messageEl.textContent = 'Event start time must be in the future 活动开始时间必须在当前时间之后';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Event start time must be in the future';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (endDate <= startDate) {
-    messageEl.textContent = 'Event end time must be after start time 活动结束时间必须在开始时间之后';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Event end time must be after start time';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   const maxDurationMs = isPrivileged ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
   if (endDate - startDate > maxDurationMs) {
     messageEl.textContent = isPrivileged
-      ? 'Event duration cannot exceed 7 days 活动时长不能超过7天'
-      : 'Event duration cannot exceed 24 hours 活动时长不能超过24小时';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      ? 'Event duration cannot exceed 7 days7'
+      : 'Event duration cannot exceed 24 hours24';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (isPrivileged) {
     if (!isNaN(max_participants) && max_participants < 1) {
-      messageEl.textContent = 'Number of people must be at least 1 (leave blank for unlimited) 人数至少为1（留空表示不限）';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.textContent = 'Number of people must be at least 1 (leave blank for unlimited)1';
+      messageEl.className = 'form-message form-message-error';
       return;
     }
   } else {
     if (isNaN(max_participants) || max_participants < 1 || max_participants > 10) {
-      messageEl.textContent = 'Number of people must be between 1 and 10 人数必须在1到10之间';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.textContent = 'Number of people must be between 1 and 10110';
+      messageEl.className = 'form-message form-message-error';
       return;
     }
   }
 
   if (countWords(title) > 15) {
-    messageEl.textContent = 'Title cannot exceed 15 words 标题不能超过 15 个字';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Title cannot exceed 15 words 15';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -1003,7 +944,7 @@ function handlePostInvitation(e) {
     .then(res => res.json())
     .then(user => {
       postBtn.disabled = true;
-      postBtn.textContent = 'Posting... 发布中...';
+      postBtn.textContent = 'Posting......';
 
       const submittedMaxParticipants = (max_participants === 0 || isNaN(max_participants)) ? null : max_participants;
       return fetch('/api/invitations', {
@@ -1019,51 +960,51 @@ function handlePostInvitation(e) {
     .then(result => {
       if (!result) return;
       if (!result.ok) {
-        messageEl.textContent = result.data.error || 'Failed to post invitation 发布邀请失败';
-        messageEl.className = 'text-center text-xs mt-2 text-red-400';
+        messageEl.textContent = result.data.error || 'Failed to post invitation';
+        messageEl.className = 'form-message form-message-error';
         return;
       }
       const data = result.data;
-      messageEl.textContent = 'Invitation posted successfully! 邀请发布成功！';
-      messageEl.className = 'text-center text-xs mt-2 text-green-400';
+      messageEl.textContent = 'Invitation posted successfully!';
+      messageEl.className = 'form-message form-message-success';
       document.getElementById('invitationForm').reset();
       document.getElementById('titleCount').textContent = '0';
       document.getElementById('descCount').textContent = '0';
       document.getElementById('postForm').classList.add('hidden');
       document.getElementById('showPostForm').classList.remove('hidden');
       loadMyInvitations();
-      
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.querySelector('[data-page="joined"]').classList.add('active');
+
+      document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+      document.querySelector('.dashboard-rail-item[data-page="joined"]').classList.add('active');
       document.getElementById('page-title').innerHTML = pages.joined.title;
       renderJoinedPage();
     })
     .catch(err => {
-      messageEl.textContent = err.message || 'Failed to post invitation 发布邀请失败';
-      messageEl.className = 'text-center text-xs mt-2 text-red-400';
+      messageEl.textContent = err.message || 'Failed to post invitation';
+      messageEl.className = 'form-message form-message-error';
     })
     .finally(() => {
       postBtn.disabled = false;
-      postBtn.textContent = 'Post Invitation 发布邀请';
+      postBtn.textContent = 'Post Invitation';
     });
 }
 
 function showInviteModal(inv) {
   const modal = document.getElementById('inviteModal');
   const modalBody = document.getElementById('modalBody');
-  const typeBadge = `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${typeColors[inv.type] || 'bg-gray-500/80'}">${getTypeLabel(inv.type)}</span>`;
-  
+  const typeBadge = `<span class="badge ${typeBadgeClasses[inv.type] || 'badge-type-other'}">${getTypeLabel(inv.type)}</span>`;
+
   modalBody.innerHTML = `
-    <p class="text-white/80 text-xs">@${inv.username || 'Unknown 未知'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
-    <h3 class="text-white font-bold text-lg mt-1">${inv.title}</h3>
-    <p class="text-white text-sm mt-3 break-words">${inv.description}</p>
+    <p class="text-sm text-slate-500">@${inv.username || 'Unknown'} · ${renderUserTypeBadge(inv.user_type, inv.personality_type)}</p>
+    <h3 class="modal-title mt-1">${inv.title}</h3>
+    <p class="text-sm mt-3" style="word-break:break-word;">${inv.description}</p>
     <div class="mt-3">${typeBadge}</div>
-    <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>
+    <button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close</button>
   `;
   modal.classList.remove('hidden');
-  
+
   modal.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
-  
+
   document.getElementById('closeModal').onclick = hideInviteModal;
 }
 
@@ -1076,8 +1017,8 @@ function showMembersModal(invitationId, title) {
   const modalBody = document.getElementById('modalBody');
 
   modalBody.innerHTML = `
-    <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
-    <p class="text-white/60 text-xs mt-1 mb-3">Loading members... 加载成员中...</p>
+    <h3 class="modal-title">${escapeHtml(title)} — Members</h3>
+    <p class="text-xs text-slate-500 mt-1 mb-3">Loading members......</p>
   `;
   modal.classList.remove('hidden');
   document.getElementById('closeModal').onclick = hideInviteModal;
@@ -1085,42 +1026,42 @@ function showMembersModal(invitationId, title) {
   fetch(`/api/invitations/${invitationId}/members`, { headers: getAuthHeader() })
     .then(res => {
       if (!res.ok) {
-        return res.json().then(err => { throw new Error(err.error || 'Failed to load members 加载成员失败'); });
+        return res.json().then(err => { throw new Error(err.error || 'Failed to load members'); });
       }
       return res.json();
     })
     .then(data => {
-      let html = `<h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>`;
-      html += `<p class="text-white/60 text-xs mt-1 mb-3">Creator 发布者: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
+      let html = `<h3 class="modal-title">${escapeHtml(title)} — Members</h3>`;
+      html += `<p class="text-xs text-slate-500 mt-1 mb-3">Creator: @${escapeHtml(data.creator.username)} (${escapeHtml(data.creator.full_name || 'N/A')}) · ${renderUserTypeBadge(data.creator.user_type, data.creator.personality_type)}</p>`;
 
       if (data.members.length === 0) {
-        html += '<p class="text-white/60 text-sm">No members have joined yet 暂无成员加入</p>';
+        html +='<p class="dashboard-empty">No members have joined yet</p>';
       } else {
-        html += '<div class="space-y-2">';
+        html +='<div class="dashboard-members-list">';
         data.members.forEach(m => {
           const joinedTime = new Date(m.joined_at).toLocaleString();
           html += `
-            <div class="flex items-center justify-between p-2 rounded-lg bg-white/10">
+            <div class="dashboard-member-row">
               <div>
-                <p class="text-white text-sm font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
-                <p class="text-white/60 text-xs">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
+                <p class="font-medium">@${escapeHtml(m.username)} (${escapeHtml(m.full_name || 'N/A')})</p>
+                <p class="text-xs text-slate-500">${renderUserTypeBadge(m.user_type, m.personality_type)}</p>
               </div>
-              <p class="text-white/40 text-xs">${joinedTime}</p>
+              <p class="text-xs text-slate-400">${joinedTime}</p>
             </div>
           `;
         });
-        html += '</div>';
+        html +='</div>';
       }
 
-      html += `<button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>`;
+      html += `<button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close</button>`;
       modalBody.innerHTML = html;
       modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
     })
     .catch(err => {
       modalBody.innerHTML = `
-        <h3 class="text-white font-bold text-lg">${escapeHtml(title)} — Members 成员</h3>
-        <p class="text-red-400 text-sm mt-2">${escapeHtml(err.message)}</p>
-        <button class="close-modal-btn mt-4 w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">Close 关闭</button>
+        <h3 class="modal-title">${escapeHtml(title)} — Members</h3>
+        <p class="form-message-error text-sm mt-2">${escapeHtml(err.message)}</p>
+        <button class="close-modal-btn mt-4 w-full btn btn-primary text-sm py-2">Close</button>
       `;
       modalBody.querySelector('.close-modal-btn').addEventListener('click', hideInviteModal);
     });
@@ -1129,78 +1070,69 @@ function showMembersModal(invitationId, title) {
 function renderAccountPage() {
   fetch('/api/account', { headers: getAuthHeader() })
     .then(res => {
-      if (!res.ok) throw new Error('Failed to load account info 加载账号信息失败');
+      if (!res.ok) throw new Error('Failed to load account info');
       return res.json();
     })
     .then(user => {
-      const mbtiOptions = MBTI_TYPES.map(t => 
+      const mbtiOptions = MBTI_TYPES.map(t =>
         `<option value="${t}" ${user.personality_type === t ? 'selected' : ''}>${t}</option>`
       ).join('');
 
       document.getElementById('page-description').innerHTML = `
-        <form id="accountForm" class="space-y-4">
-          <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
-            <h3 class="text-white/60 text-xs font-semibold uppercase tracking-wide">Account Info 账号信息</h3>
+        <form id="accountForm" class="space-y-4 dashboard-account-form">
+          <div class="dashboard-account-section">
+            <h3>Account Info</h3>
             <div>
-              <label class="block text-white/80 text-xs mb-1">Full Name (max 100 chars) 姓名（最多100字）</label>
-              <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}"
-                class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+              <label class="form-label">Full Name (max 100 chars)</label>
+              <input type="text" id="fullName" name="fullName" maxlength="100" value="${escapeHtml(user.full_name || '')}" class="form-input">
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="dashboard-account-row">
               <div>
-                <label class="block text-white/80 text-xs mb-1">Grade (max 2 chars) 年级（最多2字）</label>
-                <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}"
-                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                <label class="form-label">Grade (max 2 chars)</label>
+                <input type="text" id="grade" name="grade" maxlength="2" value="${escapeHtml(user.grade || '')}" class="form-input">
               </div>
               <div>
-                <label class="block text-white/80 text-xs mb-1">Class (max 2 chars) 班级（最多2字）</label>
-                <input type="text" id="classField" name="classField" maxlength="2" value="${escapeHtml(user.class || '')}"
-                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+                <label class="form-label">Class (max 2 chars)</label>
+                <input type="text" id="classField" name="classField" maxlength="2" value="${escapeHtml(user.class || '')}" class="form-input">
               </div>
             </div>
             <div>
-              <label class="block text-white/50 text-xs mb-1">Warning Count 警告次数</label>
-              <input type="text" value="${user.warning_count || 0}" disabled
-                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-red-400 text-sm cursor-not-allowed">
+              <label class="form-label">Warning Count</label>
+              <input type="text" value="${user.warning_count || 0}" disabled class="form-input">
             </div>
-            <p class="text-white/60 text-xs italic mt-2">Contact admin for other inquiries. 联系管理员进行其他查询。</p>
+            <p class="form-hint italic mt-2">Contact admin for other inquiries.</p>
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Username (max ${MAX_CHARS} chars) 用户名（最多${MAX_CHARS}字）</label>
-            <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">Username (max ${MAX_CHARS} chars)</label>
+            <input type="text" id="username" name="username" maxlength="${MAX_CHARS}" value="${user.username}" class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">New password (max ${MAX_CHARS} chars, leave empty to keep current) 新密码（最多${MAX_CHARS}字，留空保持当前密码）</label>
-            <input type="password" id="password" name="password" maxlength="${MAX_CHARS}"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+            <label class="form-label">New password (max ${MAX_CHARS} chars, leave empty to keep current)</label>
+            <input type="password" id="password" name="password" maxlength="${MAX_CHARS}" class="form-input">
           </div>
           <div>
-            <label class="block text-white/80 text-xs mb-1">Personality Type (MBTI) 性格类型（MBTI）</label>
+            <label class="form-label">Personality Type (MBTI)</label>
             ${user.user_type === 'normal' ? `
-            <select id="personalityType" name="personalityType"
-              class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
-<option value="">Select type... 选择类型...</option>
-            ${mbtiOptions}
-          </select>` : `
-            <div class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+            <select id="personalityType" name="personalityType" class="form-select">
+              <option value="">Select type......</option>
+              ${mbtiOptions}
+            </select>` : `
+            <div class="form-input">
               ${renderUserTypeBadge(user.user_type, user.personality_type)}
             </div>
-            <p class="text-white/60 text-xs italic mt-1">Verified and organization accounts cannot change their type. 已验证和组织账户不能更改其类型。</p>`}
+            <p class="form-hint italic mt-1">Verified and organization accounts cannot change their type.</p>`}
           </div>
         <div>
-          <label class="block text-white/80 text-xs mb-1">Current password (required to save) 当前密码（保存时必填）</label>
-          <input type="password" id="currentPassword" name="currentPassword" required
-            class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-white/40">
+          <label class="form-label">Current password (required to save)</label>
+          <input type="password" id="currentPassword" name="currentPassword" required class="form-input">
         </div>
-        <button type="submit" id="saveBtn"
-          class="w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all">
-保存更改 Save Changes
+        <button type="submit" id="saveBtn" class="w-full btn btn-primary text-sm py-2">
+          Save Changes
         </button>
-        <p id="accountMessage" class="text-center text-xs mt-2"></p>
+        <p id="accountMessage" class="form-message"></p>
         </form>
-        <div class="mt-8 pt-4 border-t border-white/10 text-center">
-          <button id="deleteAccountBtn" class="text-white/30 hover:text-red-400 text-xs transition-all">Delete Account 删除账号</button>
+        <div class="dashboard-account-delete">
+          <button id="deleteAccountBtn">Delete Account</button>
         </div>
     `;
 
@@ -1228,7 +1160,7 @@ function renderAccountPage() {
       document.getElementById('deleteAccountBtn').addEventListener('click', showDeleteAccountModal);
     })
     .catch(err => {
-      document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info 加载账号信息出错</p>`;
+      document.getElementById('page-description').innerHTML = `<p class="text-red-400 text-sm">Error loading account info</p>`;
     });
 }
 
@@ -1236,7 +1168,7 @@ async function handleAccountSubmit(e) {
   e.preventDefault();
   const messageEl = document.getElementById('accountMessage');
   const saveBtn = document.getElementById('saveBtn');
-  
+
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const personalityTypeEl = document.getElementById('personalityType');
@@ -1247,8 +1179,8 @@ async function handleAccountSubmit(e) {
   const currentPassword = document.getElementById('currentPassword').value;
 
   if (!currentPassword) {
-    messageEl.textContent = 'Please enter current password 请输入当前密码';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Please enter current password';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
@@ -1256,19 +1188,19 @@ async function handleAccountSubmit(e) {
   const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:' ,./<>?]{5,}$/;
 
   if (username && !usernameRegex.test(username)) {
-    messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores or dots (max 20 chars) 用户名必须以字母开头，只能包含字母、数字、下划线或点（最多 20 个字符）';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Username must start with a letter and contain only letters, numbers, underscores or dots (max 20 chars)';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   if (password && !passwordRegex.test(password)) {
-    messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 密码至少 5 个字符，只能包含字母、数字和常用符号';
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.textContent = 'Password must be at least 5 characters, containing only letters, numbers, and common symbols 5';
+    messageEl.className = 'form-message form-message-error';
     return;
   }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving... 保存中...';
+  saveBtn.textContent = 'Saving......';
 
   try {
     const res = await fetch('/api/account', {
@@ -1277,13 +1209,13 @@ async function handleAccountSubmit(e) {
       body: JSON.stringify({ username, password, personality_type, full_name, grade, class: classValue, currentPassword })
     });
     const data = await res.json();
-    
+
     if (!res.ok) {
-      throw new Error(data.error || 'Update failed 更新失败');
+      throw new Error(data.error || 'Update failed');
     }
-    
-    messageEl.textContent = 'Account updated successfully! 账号更新成功！';
-    messageEl.className = 'text-center text-xs mt-2 text-green-400';
+
+    messageEl.textContent = 'Account updated successfully!';
+    messageEl.className = 'form-message form-message-success';
     document.getElementById('password').value = '';
     document.getElementById('currentPassword').value = '';
     accountOriginalValues.username = username;
@@ -1292,34 +1224,34 @@ async function handleAccountSubmit(e) {
     accountOriginalValues.fullName = full_name;
     accountOriginalValues.grade = grade;
     accountOriginalValues.classField = classValue;
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
-    saveBtn.textContent = '保存更改 Save Changes';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
+    saveBtn.textContent = ' Save Changes';
   } catch (err) {
     messageEl.textContent = err.message;
-    messageEl.className = 'text-center text-xs mt-2 text-red-400';
+    messageEl.className = 'form-message form-message-error';
   } finally {
     saveBtn.disabled = false;
-    saveBtn.className = 'w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all';
-    saveBtn.textContent = '保存更改 Save Changes';
+    saveBtn.className = 'w-full btn btn-primary text-sm py-2';
+    saveBtn.textContent = ' Save Changes';
     checkForChanges();
   }
 }
 
 function showDeleteAccountModal() {
   const modalOverlay = document.createElement('div');
-  modalOverlay.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50';
+  modalOverlay.className = 'modal-overlay z-50 bg-black-70';
   modalOverlay.innerHTML = `
-    <div class="bg-gray-900 border border-red-500/50 rounded-xl p-6 max-w-sm w-full mx-4">
-      <h3 class="text-red-400 font-bold text-lg mb-2">Delete Account 删除账号</h3>
-      <p class="text-white/70 text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted. 确定要删除吗？此操作不可撤销，所有数据将被永久删除。</p>
+    <div class="delete-modal">
+      <h3 class="text-red-600 font-bold text-lg mb-2">Delete Account</h3>
+      <p class="text-sm mb-4">Are you sure? This action cannot be undone. All your data will be permanently deleted.</p>
       <div class="mb-4">
-        <label class="block text-white/80 text-xs mb-1">Current password 当前密码</label>
-        <input type="password" id="deleteConfirmPassword" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:border-red-400">
+        <label class="form-label">Current password</label>
+        <input type="password" id="deleteConfirmPassword" class="form-input">
         <p id="deleteMessage" class="text-xs mt-1"></p>
       </div>
       <div class="flex gap-3">
-        <button id="cancelDeleteBtn" class="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all">Cancel 取消</button>
-        <button id="confirmDeleteBtn" class="flex-1 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-sm font-medium transition-all">Delete 删除</button>
+        <button id="cancelDeleteBtn" class="flex-1 btn btn-secondary text-sm py-2">Cancel</button>
+        <button id="confirmDeleteBtn" class="flex-1 btn btn-danger text-sm py-2">Delete</button>
       </div>
     </div>
   `;
@@ -1338,13 +1270,13 @@ function showDeleteAccountModal() {
     const confirmBtn = document.getElementById('confirmDeleteBtn');
 
     if (!password) {
-      deleteMessage.textContent = 'Please enter your current password 请输入当前密码';
-      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      deleteMessage.textContent = 'Please enter your current password';
+      deleteMessage.className = 'form-message-error text-xs mt-1';
       return;
     }
 
     confirmBtn.disabled = true;
-    confirmBtn.textContent = 'Deleting... 删除中...';
+    confirmBtn.textContent = 'Deleting......';
 
     try {
       const res = await fetch('/api/account', {
@@ -1355,80 +1287,66 @@ function showDeleteAccountModal() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Delete failed 删除失败');
+        throw new Error(data.error || 'Delete failed');
       }
 
       localStorage.removeItem('token');
       localStorage.removeItem('username');
-      window.location.href = '/';
+      window.location.href ='/';
     } catch (err) {
       deleteMessage.textContent = err.message;
-      deleteMessage.className = 'text-xs mt-1 text-red-400';
+      deleteMessage.className = 'form-message-error text-xs mt-1';
       confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Delete 删除';
+      confirmBtn.textContent = 'Delete';
     }
   });
 }
 
-document.querySelectorAll('.nav-item').forEach(item => {
+document.querySelectorAll('.dashboard-rail-item').forEach(item => {
   item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    
+
     const page = item.dataset.page;
     document.getElementById('page-title').innerHTML = pages[page].title;
-    
+
     if (pages[page].render) {
       pages[page].render();
-    } else {
-      document.getElementById('page-description').innerHTML = pages[page].description;
-      if (page === 'about') {
-        const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const termsText = `Effective Date: ${currentDate}
-
-Welcome to the OriLink 元联 social platform. By creating an account, you agree to follow these rules. This platform is built for our community, and staying on it is a privilege, not a right.
-
-1. Security and "No Hacking" Policy
-We take the security of our community seriously. By using this site, you agree to the following:
-
-No Unauthorized Access: You may not attempt to access, "hack," or bypass any security features of this website. This includes trying to guess passwords, using automated "brute force" tools, or exploiting bugs.
-
-No Data Mining: You are prohibited from using scripts, crawlers, or "scrapers" to extract user data or site content.
-
-Reporting Vulnerabilities: If you find a security flaw or a "glitch," you must report it to the Site Administrator immediately. Exploiting a known flaw for fun or profit will result in an immediate permanent ban and referral to school administration.
-
-Account Integrity: You are responsible for your login credentials. Sharing your password or "lending" your account to others is strictly prohibited.
-
-2. Intellectual Property
-This website, including its layout, design, custom code, and graphics, is the property of OriLink 元联.
-
-No Cloning: You may not copy the source code, CSS, or design elements to create a "clone" or a competing site.
-
-Content Ownership: While you own the posts you make, the "look and feel" of the platform belongs to us. Redistribution of any site assets without written permission is a violation of these terms.
-
-3. User Conduct
-Since this is a school-only platform, the school's Student Code of Conduct applies here 24/7.
-
-No Harassment: Cyberbullying, hate speech, and harassment will not be tolerated.
-
-School Use Only: This site is for Shanghai New Epoch Bilingual School students and staff. Do not invite or share access with people outside of our school.
-
-4. Consequences
-Failure to follow these rules—especially those regarding hacking or intellectual property theft—may result in:
-
-Immediate account suspension or deletion.
-
-Disciplinary action through the School Administration.
-
-Legal action, if the "hacking" results in data breaches or significant damage to the system.
-
-Note: By clicking "Sign Up," you acknowledge that you have read and agreed to these terms. Stay safe and be respectful!`;
-        const termsEl = document.getElementById('aboutTermsText');
-        if (termsEl) {
-          termsEl.textContent = termsText;
-        }
-      }
     }
+  });
+});
+
+document.getElementById('globalSortSelect').addEventListener('change', () => {
+  invitationsSort = document.getElementById('globalSortSelect').value;
+  myInvitationsSort = invitationsSort;
+  joinedInvitationsSort = invitationsSort;
+
+  const activeItem = document.querySelector('.dashboard-rail-item.active');
+  const page = activeItem ? activeItem.dataset.page : 'invitations';
+
+  if (page === 'invitations') {
+    loadInvitationsList();
+  } else if (page === 'joined') {
+    loadMyInvitations();
+    loadJoinedInvitations();
+  }
+});
+
+document.querySelectorAll('.tagline-action').forEach(action => {
+  action.addEventListener('click', (e) => {
+    e.preventDefault();
+    const filter = action.dataset.filter;
+    invitationsFilter = filter === invitationsFilter ? null : filter;
+
+    document.querySelectorAll('.tagline-action').forEach(a => a.classList.remove('active'));
+    if (invitationsFilter) {
+      action.classList.add('active');
+    }
+
+    document.querySelectorAll('.dashboard-rail-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('.dashboard-rail-item[data-page="invitations"]').classList.add('active');
+    document.getElementById('page-title').innerHTML = pages.invitations.title;
+    renderInvitationsPage();
   });
 });
 
@@ -1439,7 +1357,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   }
   localStorage.removeItem('token');
   localStorage.removeItem('username');
-  window.location.href = '/login.html';
+  window.location.href ='/login.html';
 });
 
 let sessionWarningShown = false;
@@ -1451,7 +1369,7 @@ function forceLogout() {
   }
   localStorage.removeItem('token');
   localStorage.removeItem('username');
-  window.location.href = '/login.html';
+  window.location.href ='/login.html';
 }
 
 function showSessionExpiryModal(timeLeft) {

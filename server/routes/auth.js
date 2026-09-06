@@ -59,19 +59,19 @@ router.post('/extend', async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({ error: 'Unauthorized 未授权' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
-      return res.status(401).json({ error: 'Token expired or invalid 令牌已过期或无效' });
+      return res.status(401).json({ error: 'Token expired or invalid' });
     }
 
     const [users] = await pool.query('SELECT id, username FROM users WHERE id = ?', [decoded.id]);
     if (users.length === 0) {
-      return res.status(401).json({ error: 'User not found 用户未找到' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
     const newToken = jwt.sign(
@@ -83,7 +83,7 @@ router.post('/extend', async (req, res) => {
     res.json({ token: newToken });
   } catch (error) {
     console.error('Extend token error:', error);
-    res.status(500).json({ error: 'Server error 服务器错误' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -96,12 +96,12 @@ router.get('/check-username', async (req, res) => {
     }
 
     if (!USERNAME_REGEX.test(username)) {
-      return res.json({ available: false, error: 'Username must start with a letter and contain only letters, numbers, underscores, or periods (max 20 characters) 用户名必须以字母开头，仅限字母/数字/下划线/点（最多20个字符）' });
+      return res.json({ available: false, error: 'Username must start with a letter and contain only letters, numbers, underscores, or periods (max 20 characters)///20' });
     }
 
     const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
     if (existing.length > 0) {
-      return res.json({ available: false, error: 'Username already taken 用户名已被占用' });
+      return res.json({ available: false, error: 'Username already taken' });
     }
 
     res.json({ available: true });
@@ -141,7 +141,7 @@ router.post('/register', async (req, res) => {
     }
 
     const nameValue = fullName ? fullName.trim() : '';
-    
+
     if (!nameValue || nameValue.length < 2) {
       return res.status(400).json({ error: 'Please enter your full name' });
     }

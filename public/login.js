@@ -3,51 +3,13 @@ async function parseJSON(res) {
   try {
     return JSON.parse(text);
   } catch {
-    if (res.status === 429) throw new Error('Too many requests, please try again later 请求次数过多，请稍后再试');
-    throw new Error('Server error 服务器错误');
+    if (res.status === 429) throw new Error('Too many requests, please try again later');
+    throw new Error('Server error');
   }
 }
 
 const loginForm = document.getElementById('loginForm');
-const signupForm = document.getElementById('signupForm');
-const authSwitch = document.getElementById('authSwitch');
-const authSwitchLoggedIn = document.getElementById('authSwitchLoggedIn');
-const showSignup = document.getElementById('showSignup');
-const showLogin = document.getElementById('showLogin');
 const loginMessage = document.getElementById('loginMessage');
-
-function showLoginPanel() {
-  loginForm.classList.remove('hidden');
-  signupForm.classList.add('hidden');
-  authSwitch.classList.remove('hidden');
-  authSwitchLoggedIn.classList.add('hidden');
-  loginMessage.textContent = '';
-}
-
-function showSignupPanel() {
-  loginForm.classList.add('hidden');
-  signupForm.classList.remove('hidden');
-  authSwitch.classList.add('hidden');
-  authSwitchLoggedIn.classList.remove('hidden');
-  loginMessage.textContent = '';
-}
-
-function initCaptchas() {
-  loadCaptcha('login');
-  loadCaptcha('signup');
-}
-
-showSignup.addEventListener('click', (e) => {
-  e.preventDefault();
-  showSignupPanel();
-  loadCaptcha('signup');
-});
-
-showLogin.addEventListener('click', (e) => {
-  e.preventDefault();
-  showLoginPanel();
-  loadCaptcha('login');
-});
 
 document.getElementById('toggleLoginPassword').addEventListener('click', function() {
   const input = document.getElementById('loginPassword');
@@ -64,27 +26,12 @@ document.getElementById('toggleLoginPassword').addEventListener('click', functio
   }
 });
 
-document.getElementById('toggleSignupPassword').addEventListener('click', function() {
-  const input = document.getElementById('signupPassword');
-  const eyeIcon = document.getElementById('signupEyeIcon');
-  const eyeOffIcon = document.getElementById('signupEyeOffIcon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    eyeIcon.classList.add('hidden');
-    eyeOffIcon.classList.remove('hidden');
-  } else {
-    input.type = 'password';
-    eyeIcon.classList.remove('hidden');
-    eyeOffIcon.classList.add('hidden');
-  }
-});
-
 async function loadCaptcha(form) {
   const svgEl = document.getElementById(form + 'CaptchaSvg');
   const tokenEl = document.getElementById(form + 'CaptchaToken');
   const inputEl = document.getElementById(form + 'CaptchaInput');
   if (!svgEl || !tokenEl) return;
-  svgEl.innerHTML = '<span class="text-white/50 text-sm">Loading... 加载中...</span>';
+  svgEl.innerHTML ='<span class="captcha-loading">Loading...</span>';
   if (inputEl) inputEl.value = '';
   try {
     const res = await fetch('/api/captcha');
@@ -95,7 +42,7 @@ async function loadCaptcha(form) {
     svgEl.querySelector('svg').style.height = 'auto';
     svgEl.querySelector('svg').style.display = 'block';
   } catch (err) {
-    svgEl.innerHTML = '<span class="text-red-400 text-sm">Load failed, click to retry 加载失败，点击重试</span>';
+    svgEl.innerHTML ='<span class="captcha-error">Load failed, click to retry</span>';
   }
 }
 
@@ -111,16 +58,16 @@ function getCaptchaValue(form) {
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   loginMessage.textContent = '';
-  loginMessage.className = 'text-center mt-4 text-sm';
-  
+  loginMessage.className = 'auth-message';
+
   const loginBtn = loginForm.querySelector('button[type="submit"]');
   const username = document.getElementById('loginUsername').value;
   const password = document.getElementById('loginPassword').value;
-  
+
   const captcha = getCaptchaValue('login');
 
   loginBtn.disabled = true;
-  loginBtn.textContent = 'Logging in... 登录中...';
+  loginBtn.textContent = 'Logging in...';
 
   try {
     const res = await fetch('/api/login', {
@@ -131,156 +78,39 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await parseJSON(res);
 
     if (!res.ok) {
-      throw new Error(data.error || 'Login failed 登录失败');
+      throw new Error(data.error || 'Login failed');
     }
 
     localStorage.setItem('token', data.token);
     localStorage.setItem('username', data.username);
-    window.location.href = '/dashboard.html';
+    window.location.href ='/dashboard.html';
   } catch (err) {
     loginMessage.textContent = err.message;
-    loginMessage.className = 'text-center mt-4 text-sm text-red-400';
+    loginMessage.className = 'auth-message error';
   } finally {
     loginBtn.disabled = false;
-    loginBtn.textContent = '登录 Login';
+    loginBtn.textContent = 'Enter';
   }
 });
 
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  loginMessage.textContent = '';
-  loginMessage.className = 'text-center mt-4 text-sm';
-  
-  const signupBtn = signupForm.querySelector('button[type="submit"]');
-  const fullName = document.getElementById('fullName').value;
-  const username = document.getElementById('signupUsername').value;
-  const password = document.getElementById('signupPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  const grade = document.getElementById('grade').value;
-  const classNum = document.getElementById('classNum').value;
-  
-  const captcha = getCaptchaValue('signup');
+document.getElementById('refreshLoginCaptchaLink').addEventListener('click', () => loadCaptcha('login'));
 
-  signupBtn.disabled = true;
-  signupBtn.textContent = 'Creating account... 创建账号中...';
+loadCaptcha('login');
 
+async function loadUserCount() {
+  const el = document.getElementById('userCount');
+  if (!el) return;
   try {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, confirmPassword, fullName, grade, class: classNum, ...captcha })
-    });
+    const res = await fetch('/api/stats/users');
     const data = await parseJSON(res);
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Registration failed 注册失败');
-    }
-
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('username', data.username);
-    window.location.href = '/dashboard.html';
+    if (!res.ok) throw new Error(data.error || 'Error');
+    el.textContent = `${data.count} Registered`;
   } catch (err) {
-    loginMessage.textContent = err.message;
-    loginMessage.className = 'text-center mt-4 text-sm text-red-400';
-  } finally {
-    signupBtn.disabled = false;
-    signupBtn.textContent = '注册 Sign Up';
+    el.textContent = 'Error';
   }
-});
+}
 
-const termsTextContent = `Effective Date: {DATE}
-
-Welcome to the OriLink 元联 social platform. By creating an account, you agree to follow these rules. This platform is built for our community, and staying on it is a privilege, not a right.
-
-1. Security and "No Hacking" Policy
-We take the security of our community seriously. By using this site, you agree to the following:
-
-No Unauthorized Access: You may not attempt to access, "hack," or bypass any security features of this website. This includes trying to guess passwords, using automated "brute force" tools, or exploiting bugs.
-
-No Data Mining: You are prohibited from using scripts, crawlers, or "scrapers" to extract user data or site content.
-
-Reporting Vulnerabilities: If you find a security flaw or a "glitch," you must report it to the Site Administrator immediately. Exploiting a known flaw for fun or profit will result in an immediate permanent ban and referral to school administration.
-
-Account Integrity: You are responsible for your login credentials. Sharing your password or "lending" your account to others is strictly prohibited.
-
-2. Intellectual Property
-This website, including its layout, design, custom code, and graphics, is the property of OriLink 元联.
-
-No Cloning: You may not copy the source code, CSS, or design elements to create a "clone" or a competing site.
-
-Content Ownership: While you own the posts you make, the "look and feel" of the platform belongs to us. Redistribution of any site assets without written permission is a violation of these terms.
-
-3. User Conduct
-Since this is a school-only platform, the school's Student Code of Conduct applies here 24/7.
-
-No Harassment: Cyberbullying, hate speech, and harassment will not be tolerated.
-
-School Use Only: This site is for Shanghai New Epoch Bilingual School students and staff. Do not invite or share access with people outside of our school.
-
-4. Consequences
-Failure to follow these rules—especially those regarding hacking or intellectual property theft—may result in:
-
-Immediate account suspension or deletion.
-
-Disciplinary action through the School Administration.
-
-Legal action, if the "hacking" results in data breaches or significant damage to the system.
-
-Note: By clicking "Sign Up," you acknowledge that you have read and agreed to these terms. Stay safe and be respectful!`;
-
-const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-document.getElementById('termsText').textContent = termsTextContent.replace('{DATE}', currentDate);
-
-document.getElementById('showTerms').addEventListener('click', function(e) {
-  e.preventDefault();
-  const termsSection = document.getElementById('termsSection');
-  if (termsSection.classList.contains('hidden')) {
-    termsSection.classList.remove('hidden');
-  } else {
-    termsSection.classList.add('hidden');
-  }
-});
-
-document.getElementById('refreshLoginCaptchaBtn').addEventListener('click', () => loadCaptcha('login'));
-document.getElementById('refreshSignupCaptchaBtn').addEventListener('click', () => loadCaptcha('signup'));
-
-initCaptchas();
-
-let usernameCheckTimeout = null;
-const signupUsernameInput = document.getElementById('signupUsername');
-const usernameStatus = document.getElementById('usernameStatus');
-
-signupUsernameInput.addEventListener('input', () => {
-  clearTimeout(usernameCheckTimeout);
-  usernameStatus.classList.add('hidden');
-  usernameStatus.textContent = '';
-
-  const username = signupUsernameInput.value.trim();
-  if (username.length < 3) return;
-
-  usernameCheckTimeout = setTimeout(async () => {
-    try {
-      const res = await fetch(`/api/check-username?username=${encodeURIComponent(username)}`);
-      const data = await parseJSON(res);
-
-      usernameStatus.classList.remove('hidden');
-      if (!res.ok) {
-        usernameStatus.textContent = data.error || 'Check failed 检查失败';
-        usernameStatus.className = 'text-xs mt-1 text-red-400';
-      } else if (data.available) {
-        usernameStatus.textContent = 'Username available 用户名可用';
-        usernameStatus.className = 'text-xs mt-1 text-green-400';
-      } else {
-        usernameStatus.textContent = data.error || 'Username not available 用户名不可用';
-        usernameStatus.className = 'text-xs mt-1 text-red-400';
-      }
-    } catch (err) {
-      usernameStatus.classList.remove('hidden');
-      usernameStatus.textContent = 'Check failed 检查失败';
-      usernameStatus.className = 'text-xs mt-1 text-red-400';
-    }
-  }, 500);
-});
+loadUserCount();
 
 // ============================================================
 // Admin Panel
@@ -344,13 +174,13 @@ async function loadRateLimits() {
     const authPct = data.auth.max > 0 ? Math.min((data.auth.totalHits / data.auth.max) * 100, 100) : 0;
     authCount.textContent = `${data.auth.totalHits} / ${data.auth.max}`;
     authBar.style.width = `${authPct}%`;
-    authBar.className = `h-2 rounded-full transition-all ${authPct > 80 ? 'bg-red-400' : authPct > 50 ? 'bg-yellow-400' : 'bg-green-400'}`;
+    authBar.className = `progress-bar-fill ${authPct > 80 ? 'red' : authPct > 50 ? 'yellow' : 'green'}`;
     authMaxEl.textContent = data.auth.max;
 
     const generalPct = data.general.max > 0 ? Math.min((data.general.totalHits / data.general.max) * 100, 100) : 0;
     generalCount.textContent = `${data.general.totalHits} / ${data.general.max}`;
     generalBar.style.width = `${generalPct}%`;
-    generalBar.className = `h-2 rounded-full transition-all ${generalPct > 80 ? 'bg-red-400' : generalPct > 50 ? 'bg-yellow-400' : 'bg-blue-400'}`;
+    generalBar.className = `progress-bar-fill ${generalPct > 80 ? 'red' : generalPct > 50 ? 'yellow' : 'blue'}`;
     generalMaxEl.textContent = data.general.max;
 
     const allIps = [...data.auth.ips, ...data.general.ips];
@@ -369,16 +199,16 @@ async function loadRateLimits() {
     const sortedIps = Object.values(merged).sort((a, b) => (b.authHits + b.generalHits) - (a.authHits + a.generalHits));
 
     if (sortedIps.length === 0) {
-      ipsEl.innerHTML = '<p class="text-white/40 text-xs text-center py-3">No request data yet 暂无请求数据</p>';
+      ipsEl.innerHTML ='<p class="text-white/40 text-xs text-center py-3">No request data yet</p>';
     } else {
       ipsEl.innerHTML = `
         <table class="w-full text-xs">
           <thead class="sticky top-0 bg-white/10">
             <tr class="text-white/60">
               <th class="px-2 py-1 text-left">IP</th>
-              <th class="px-2 py-1 text-right">Auth 认证</th>
-              <th class="px-2 py-1 text-right">General 通用</th>
-              <th class="px-2 py-1 text-right">Resets 重置</th>
+              <th class="px-2 py-1 text-right">Auth</th>
+              <th class="px-2 py-1 text-right">General</th>
+              <th class="px-2 py-1 text-right">Resets</th>
             </tr>
           </thead>
           <tbody>
@@ -395,8 +225,8 @@ async function loadRateLimits() {
       `;
     }
   } catch (err) {
-    authCount.textContent = 'Error 错误';
-    generalCount.textContent = 'Error 错误';
+    authCount.textContent = 'Error';
+    generalCount.textContent = 'Error';
   }
 }
 
@@ -426,7 +256,7 @@ async function adminLogin(password) {
     body: JSON.stringify({ password })
   });
   const data = await parseJSON(res);
-  if (!res.ok) throw new Error(data.error || 'Login failed 登录失败');
+  if (!res.ok) throw new Error(data.error || 'Login failed');
   localStorage.setItem('adminToken', data.token);
   return data.token;
 }
@@ -442,7 +272,7 @@ async function adminApi(endpoint, options = {}) {
     }
   });
   const data = await parseJSON(res);
-  if (!res.ok) throw new Error(data.error || 'Request failed 请求失败');
+  if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
 
@@ -450,7 +280,7 @@ adminLoginBtn.addEventListener('click', async () => {
   const password = adminPasswordInput.value;
   if (!password) return;
   adminLoginBtn.disabled = true;
-  adminLoginBtn.textContent = 'Logging in... 登录中...';
+  adminLoginBtn.textContent = 'Logging in......';
   adminLoginError.classList.add('hidden');
   try {
     await adminLogin(password);
@@ -460,7 +290,7 @@ adminLoginBtn.addEventListener('click', async () => {
     adminLoginError.classList.remove('hidden');
   } finally {
     adminLoginBtn.disabled = false;
-    adminLoginBtn.textContent = '登录 Login';
+    adminLoginBtn.textContent = ' Login';
   }
 });
 
@@ -473,18 +303,18 @@ document.getElementById('adminRefreshUsers').addEventListener('click', loadAdmin
 function renderUserTypeBadge(userType) {
   const safeType = escapeHtml(userType || 'normal');
   if (safeType === 'verified') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-500/80 text-white whitespace-nowrap">Verified 已验证</span>';
+    return'<span class="badge badge-verified">Verified</span>';
   }
   if (safeType === 'organization') {
-    return '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/80 text-white whitespace-nowrap">Organization 组织</span>';
+    return'<span class="badge badge-organization">Organization</span>';
   }
-  return '<span class="text-white/60 text-xs">Normal 普通</span>';
+  return'<span class="text-white-60 text-xs">Normal</span>';
 }
 
 async function loadAdminUsers() {
   adminUserListError.classList.add('hidden');
   adminNoUsers.classList.add('hidden');
-  adminUserList.innerHTML = '<tr><td colspan="10" class="text-center text-white/50 py-6">Loading... 加载中...</td></tr>';
+  adminUserList.innerHTML ='<tr><td colspan="10" class="text-center text-white-50 py-6">Loading......</td></tr>';
   try {
     const users = await adminApi('/users');
     adminUserList.innerHTML = '';
@@ -494,28 +324,28 @@ async function loadAdminUsers() {
     }
     users.forEach(user => {
       const tr = document.createElement('tr');
-      tr.className = 'border-t border-white/10 hover:bg-white/5';
+      tr.className = '';
       const created = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const fullName = user.full_name || '-';
       tr.innerHTML = `
-        <td class="px-3 py-2 text-white/60">${user.id}</td>
-        <td class="px-3 py-2">${escapeHtml(user.username)}</td>
-        <td class="px-3 py-2 hidden md:table-cell"><span class="editable-fullname" data-id="${user.id}" data-value="${escapeHtml(fullName)}">${escapeHtml(fullName)}</span></td>
-        <td class="px-3 py-2">
+        <td class="text-white-60">${user.id}</td>
+        <td>${escapeHtml(user.username)}</td>
+        <td class="hidden md:table-cell"><span class="editable-fullname" data-id="${user.id}" data-value="${escapeHtml(fullName)}">${escapeHtml(fullName)}</span></td>
+        <td>
           <span class="editable-grade" data-id="${user.id}" data-value="${escapeHtml(user.grade)}">${escapeHtml(user.grade)}</span>
         </td>
-        <td class="px-3 py-2">
+        <td>
           <span class="editable-class" data-id="${user.id}" data-value="${escapeHtml(user.class)}">${escapeHtml(user.class)}</span>
         </td>
-        <td class="px-3 py-2">${renderUserTypeBadge(user.user_type)}</td>
-        <td class="px-3 py-2 text-white/50 text-xs hidden lg:table-cell">${created}</td>
-        <td class="px-3 py-2">
-          <span class="text-white/80">${user.warning_count || 0}</span>
-          <button class="view-profile-btn ml-1 text-xs text-blue-400 hover:text-blue-300" data-id="${user.id}">Profile 资料</button>
+        <td>${renderUserTypeBadge(user.user_type)}</td>
+        <td class="text-white-50 text-xs hidden lg:table-cell">${created}</td>
+        <td>
+          <span class="text-white-80">${user.warning_count || 0}</span>
+          <button class="view-profile-btn ml-1 text-xs text-blue-400 hover:text-blue-300" data-id="${user.id}">Profile</button>
         </td>
-        <td class="px-3 py-2 text-right">
-          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-grade="${escapeHtml(user.grade)}" data-class="${escapeHtml(user.class)}" data-user-type="${escapeHtml(user.user_type || 'normal')}">Edit 编辑</button>
-          <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete 删除</button>
+        <td class="text-right">
+          <button class="admin-edit-btn text-xs text-blue-400 hover:text-blue-300 mr-2" data-id="${user.id}" data-grade="${escapeHtml(user.grade)}" data-class="${escapeHtml(user.class)}" data-user-type="${escapeHtml(user.user_type || 'normal')}">Edit</button>
+          <button class="admin-delete-btn text-xs text-red-400 hover:text-red-300" data-username="${escapeHtml(user.username)}">Delete</button>
         </td>
       `;
       adminUserList.appendChild(tr);
@@ -538,16 +368,16 @@ function bindUserRowActions() {
   document.querySelectorAll('.admin-delete-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const username = btn.dataset.username;
-      if (!confirm('Sure to delete user "${username}"? This cannot be undone. 确定删除用户 "${username}"？此操作不可撤销。')) return;
+      if (!confirm('Sure to delete user "${username}"? This cannot be undone. "${username}"')) return;
       btn.disabled = true;
-      btn.textContent = 'Deleting... 删除中...';
+      btn.textContent = 'Deleting......';
       try {
         await adminApi(`/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
         loadAdminUsers();
       } catch (err) {
-        alert('Delete failed: ' + err.message || 'Delete failed 删除失败');
+        alert('Delete failed: ' + err.message || 'Delete failed');
         btn.disabled = false;
-        btn.textContent = '删除 Delete';
+        btn.textContent = ' Delete';
       }
     });
   });
@@ -574,43 +404,45 @@ function bindUserRowActions() {
 
 function openEditModal(userId, currentGrade, currentClass, currentUserType, currentFullName) {
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4';
+  modal.className = 'modal-overlay z-60';
   modal.innerHTML = `
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="editModalBackdrop"></div>
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-sm relative z-10">
-      <h3 class="text-white font-bold text-lg mb-4">Edit User #${userId} 编辑用户</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-white/70 text-xs mb-1">Full Name 姓名</label>
-          <input type="text" id="editFullName" value="${escapeHtml(currentFullName)}" maxlength="100" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+    <div class="modal-backdrop" id="editModalBackdrop"></div>
+    <div class="modal glass-panel rounded-2xl p-6 relative z-10">
+      <h3 class="modal-title mb-4">Edit User #${userId}</h3>
+      <div class="space-y-4">
+        <div class="auth-form-row">
+          <label class="form-label-light">Full Name</label>
+          <input type="text" id="editFullName" value="${escapeHtml(currentFullName)}" maxlength="100" class="pill-input w-full px-5 py-3 text-base">
         </div>
-        <div>
-          <label class="block text-white/70 text-xs mb-1">New password (leave empty to keep current) 新密码（留空保持当前密码）</label>
-          <input type="password" id="editPassword" placeholder="New password 新密码" maxlength="20" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+        <div class="auth-form-row">
+          <label class="form-label-light">New password (leave empty to keep current)</label>
+          <input type="password" id="editPassword" placeholder="New password" maxlength="20" class="pill-input w-full px-5 py-3 text-base">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="auth-form-row two-col">
           <div>
-            <label class="block text-white/70 text-xs mb-1">Grade 年级</label>
-            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <label class="form-label-light">Grade</label>
+            <input type="text" id="editGrade" value="${escapeHtml(currentGrade)}" class="pill-input w-full px-5 py-3 text-base">
           </div>
           <div>
-            <label class="block text-white/70 text-xs mb-1">Class 班级</label>
-            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+            <label class="form-label-light">Class</label>
+            <input type="text" id="editClass" value="${escapeHtml(currentClass)}" class="pill-input w-full px-5 py-3 text-base">
           </div>
         </div>
-        <div>
-          <label class="block text-white/70 text-xs mb-1">User Type 用户类型</label>
-          <select id="editUserType" class="input-field w-full px-3 py-2 rounded-lg text-sm">
-            <option value="normal" ${currentUserType === 'normal' ? 'selected' : ''}>Normal 普通</option>
-            <option value="verified" ${currentUserType === 'verified' ? 'selected' : ''}>Verified 已验证</option>
-            <option value="organization" ${currentUserType === 'organization' ? 'selected' : ''}>Organization 组织</option>
+        <div class="auth-form-row">
+          <label class="form-label-light text-sm">User Type</label>
+          <select id="editUserType" class="pill-input w-full px-5 py-3 text-base bg-transparent">
+            <option value="normal" ${currentUserType === 'normal' ? 'selected' : ''}>Normal</option>
+            <option value="verified" ${currentUserType === 'verified' ? 'selected' : ''}>Verified</option>
+            <option value="organization" ${currentUserType === 'organization' ? 'selected' : ''}>Organization</option>
           </select>
         </div>
       </div>
-      <div id="editError" class="text-red-400 text-sm mt-2 hidden"></div>
-      <div class="flex gap-3 mt-5">
-        <button id="editCancel" class="flex-1 py-2 rounded-lg text-sm font-semibold border border-white/30 text-white/70 hover:bg-white/10 transition-colors">Cancel 取消</button>
-        <button id="editSave" class="flex-1 py-2 rounded-lg text-sm font-semibold login-btn" data-id="${userId}">Save Changes 保存更改</button>
+      <div id="editError" class="auth-message error hidden"></div>
+      <div class="auth-link-row">
+        <button id="editSave" class="btn-link btn-link-xl" data-id="${userId}">Save Changes</button>
+      </div>
+      <div class="text-center mt-2">
+        <button id="editCancel" class="btn-link text-xs text-white/70 hover:text-white">Cancel</button>
       </div>
     </div>
   `;
@@ -631,7 +463,7 @@ function openEditModal(userId, currentGrade, currentClass, currentUserType, curr
 
     editError.classList.add('hidden');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving... 保存中...';
+    saveBtn.textContent = 'Saving......';
 
     const body = {};
     if (password) body.password = password;
@@ -651,7 +483,7 @@ function openEditModal(userId, currentGrade, currentClass, currentUserType, curr
       editError.textContent = err.message;
       editError.classList.remove('hidden');
       saveBtn.disabled = false;
-      saveBtn.textContent = '保存更改 Save Changes';
+      saveBtn.textContent = ' Save Changes';
     }
   });
 }
@@ -667,30 +499,30 @@ async function openProfileModal(userId) {
 
     document.getElementById('profileContent').innerHTML = `
       <div class="space-y-4">
-        <div class="bg-white/5 rounded-lg p-4 space-y-2">
-          <p class="text-white/60 text-xs">Username 用户名</p>
+        <div class="card space-y-2">
+          <p class="form-label-light text-sm">Username</p>
           <p class="text-white font-semibold">${escapeHtml(user.username)}</p>
-          <p class="text-white/60 text-xs">Grade 年级</p>
-          <p class="text-white">${escapeHtml(user.grade)} - Class 班级 ${escapeHtml(user.class)}</p>
-          <p class="text-white/60 text-xs">User Type 用户类型</p>
+          <p class="form-label-light text-sm">Grade</p>
+          <p class="text-white">${escapeHtml(user.grade)} - Class ${escapeHtml(user.class)}</p>
+          <p class="form-label-light text-sm">User Type</p>
           <p>${renderUserTypeBadge(user.user_type)}</p>
-          <p class="text-white/60 text-xs">Days with OriLink 加入元联天数</p>
-          <p class="text-white">${daysSince} days 天</p>
-          <p class="text-white/60 text-xs">Warning Count 警告次数</p>
+          <p class="form-label-light text-sm">Days with OriLink</p>
+          <p class="text-white">${daysSince} days</p>
+          <p class="form-label-light text-sm">Warning Count</p>
           <p class="text-red-400 font-semibold">${user.warning_count || 0}</p>
         </div>
         ${warnings.length > 0 ? `
           <div>
-            <p class="text-white/60 text-xs mb-2">Warning History 警告记录</p>
+            <p class="form-label-light text-sm mb-2">Warning History</p>
             ${warnings.map(w => `
-              <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-2">
+              <div class="warning-card">
                 <p class="text-white text-xs font-medium">${escapeHtml(w.invitation_title)}</p>
                 <p class="text-red-400/70 text-xs">${escapeHtml(w.reason)}</p>
                 <p class="text-white/40 text-xs">${new Date(w.created_at).toLocaleDateString()}</p>
               </div>
             `).join('')}
           </div>
-        ` : '<p class="text-white/50 text-sm text-center py-4">No warnings 无警告</p>'}
+        ` :'<p class="text-white-50 text-sm text-center py-4">No warnings</p>'}
       </div>
     `;
 
@@ -716,34 +548,32 @@ adminAddUserForm.addEventListener('submit', async (e) => {
   const userType = document.getElementById('adminNewUserType').value;
 
   const msg = adminAddUserMsg;
-  msg.className = 'text-center text-sm mt-2 hidden';
+  msg.className = 'form-message hidden';
 
   const submitBtn = adminAddUserForm.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Adding... 添加中...';
+  submitBtn.textContent = 'Adding......';
 
   try {
     const data = await adminApi('/users', {
       method: 'POST',
       body: JSON.stringify({ username, password, grade, class: cls, user_type: userType })
     });
-    msg.textContent = `User "${data.user.username}" created successfully! 用户 "${data.user.username}" 创建成功！`;
-    msg.className = 'text-center text-sm mt-2 text-green-400';
+    msg.textContent = `User "${data.user.username}" created successfully! "${data.user.username}"`;
+    msg.className = 'auth-message';
     adminAddUserForm.reset();
     loadAdminUsers();
   } catch (err) {
     msg.textContent = err.message;
-    msg.className = 'text-center text-sm mt-2 text-red-400';
+    msg.className = 'auth-message error';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Add User 添加用户';
+    submitBtn.textContent = 'Add User';
   }
 });
 
 const PROFANITY_LIST = [
-  'fuck', 'shit', 'bitch', 'ass', 'damn', 'dick', 'pussy', 'bastard', 'crap', 'hell',
-  '操', '他妈的', '傻逼', '草泥马', '日', '贱', '滚', '死', '废物', '脑残'
-];
+  'fuck', 'shit', 'bitch', 'ass', 'damn', 'dick', 'pussy', 'bastard', 'crap', 'hell'];
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -756,7 +586,7 @@ function highlightProfanity(text) {
     const regex = new RegExp(escapeRegExp(word), 'gi');
     if (regex.test(result)) {
       found.push(word);
-      result = result.replace(regex, match => `<span class="text-red-400 font-bold bg-red-500/20 px-1 rounded">${match}</span>`);
+      result = result.replace(regex, match => `<span class="text-red-400 font-bold bg-red-500-20 px-1 rounded">${match}</span>`);
     }
   });
   return { html: result, flagged: found };
@@ -769,15 +599,15 @@ function setupProfanityPanelHandlers() {
     const userId = btn.dataset.userId;
     const invitationId = btn.dataset.invitationId;
     const isFromReportedList = !!btn.closest('#reportedList');
-    if (!confirm('Warn this user and delete the invitation? 警告此用户并删除邀请？')) return;
+    if (!confirm('Warn this user and delete the invitation?')) return;
 
     btn.disabled = true;
-    btn.textContent = 'Processing... 处理中...';
+    btn.textContent = 'Processing......';
 
     try {
       await adminApi('/warn-and-delete', {
         method: 'POST',
-        body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation 不当内容' })
+        body: JSON.stringify({ userId, invitationId, reason: 'Profanity violation' })
       });
       scanInvitations();
       loadAdminUsers();
@@ -787,7 +617,7 @@ function setupProfanityPanelHandlers() {
     } catch (err) {
       alert('Failed: ' + err.message);
       btn.disabled = false;
-      btn.textContent = 'Warn & Delete 警告并删除';
+      btn.textContent = 'Warn & Delete';
     }
   };
 
@@ -799,10 +629,10 @@ function bindIgnoreButtons() {
   document.querySelectorAll('.ignore-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const invitationId = btn.dataset.invitationId;
-      if (!confirm('Ignore and clear all reports for this invitation? 忽略并清除此邀请的所有举报？')) return;
+      if (!confirm('Ignore and clear all reports for this invitation?')) return;
 
       btn.disabled = true;
-      btn.textContent = 'Ignoring... 忽略中...';
+      btn.textContent = 'Ignoring......';
 
       try {
         await adminApi(`/reports/${invitationId}`, { method: 'DELETE' });
@@ -810,12 +640,12 @@ function bindIgnoreButtons() {
         if (card) card.remove();
         const results = document.getElementById('reportedList');
         if (results.children.length === 0) {
-          results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No reported invitations 暂无被举报邀请</p>';
+          results.innerHTML ='<p class="text-white/50 text-sm text-center py-4">No reported invitations</p>';
         }
       } catch (err) {
         alert('Failed: ' + err.message);
         btn.disabled = false;
-        btn.textContent = 'Ignore 忽略';
+        btn.textContent = 'Ignore';
       }
     });
   });
@@ -827,15 +657,15 @@ async function scanInvitations() {
   const scanBtn = document.getElementById('scanInvitationsBtn');
 
   scanBtn.disabled = true;
-  scanBtn.textContent = 'Scanning... 扫描中...';
-  results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">Loading invitations... 加载邀请中...</p>';
+  scanBtn.textContent = 'Scanning......';
+  results.innerHTML ='<p class="text-white-50 text-sm text-center py-4">Loading invitations......</p>';
   summary.classList.add('hidden');
 
   try {
     const invitations = await adminApi('/invitations');
 
     if (invitations.length === 0) {
-      results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No invitations found. 暂无邀请。</p>';
+      results.innerHTML ='<p class="text-white-50 text-sm text-center py-4">No invitations found.</p>';
       return;
     }
 
@@ -851,43 +681,43 @@ async function scanInvitations() {
       if (isFlagged) {
         flaggedCount++;
         html += `
-          <div class="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+          <div class="scan-card scan-card-flagged">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/30 text-red-300">⚠️ Flagged 标记</span>
+              <span class="text-white-60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+              <span class="badge badge-flagged">⚠️ Flagged</span>
             </div>
             <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
-            <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
-            <p class="text-red-400/70 text-xs mt-2">Flagged words: ${[...new Set([...titleCheck.flagged, ...descCheck.flagged])].join(', ')}</p>
-            <button class="warn-delete-btn mt-2 w-full py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
-              Warn & Delete 警告并删除
+            <p class="text-white-80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+            <p class="text-red-400-70 text-xs mt-2">Flagged words: ${[...new Set([...titleCheck.flagged, ...descCheck.flagged])].join(',')}</p>
+            <button class="warn-delete-btn mt-2 w-full btn bg-red-500-30 hover:bg-red-500-50 text-xs py-1_5" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
+              Warn & Delete
             </button>
           </div>
         `;
       } else {
         cleanCount++;
         html += `
-          <div class="mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
+          <div class="scan-card scan-card-clean">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">✓ Clean 正常</span>
+              <span class="text-white-60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+              <span class="badge badge-clean">✓ Clean</span>
             </div>
             <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
-            <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+            <p class="text-white-80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
           </div>
         `;
       }
     });
 
     results.innerHTML = html;
-    summary.textContent = `Total 总计: ${invitations.length} | Flagged 标记: ${flaggedCount} | Clean 正常: ${cleanCount}`;
+    summary.textContent = `Total: ${invitations.length} | Flagged: ${flaggedCount} | Clean: ${cleanCount}`;
     summary.classList.remove('hidden');
 
   } catch (err) {
-    results.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${err.message}</p>`;
+    results.innerHTML = `<p class="form-message-error text-sm text-center py-4">Error: ${err.message}</p>`;
   } finally {
     scanBtn.disabled = false;
-    scanBtn.textContent = 'Scan Invitations 扫描邀请';
+    scanBtn.textContent = 'Scan Invitations';
   }
 }
 
@@ -896,13 +726,13 @@ async function loadReportedInvitations() {
   const container = document.getElementById('reportedResults');
 
   container.classList.remove('hidden');
-  results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">Loading... 加载中...</p>';
+  results.innerHTML ='<p class="text-white-50 text-sm text-center py-4">Loading......</p>';
 
   try {
     const reported = await adminApi('/reported');
 
     if (reported.length === 0) {
-      results.innerHTML = '<p class="text-white/50 text-sm text-center py-4">No reported invitations 暂无被举报邀请</p>';
+      results.innerHTML ='<p class="text-white-50 text-sm text-center py-4">No reported invitations</p>';
       return;
     }
 
@@ -910,28 +740,28 @@ async function loadReportedInvitations() {
     reported.forEach(inv => {
       const titleCheck = highlightProfanity(inv.title);
       const descCheck = highlightProfanity(inv.description);
-      const reasons = inv.reasons ? inv.reasons.split(' ||| ').map(r => escapeHtml(r.trim())).filter(Boolean) : [];
+      const reasons = inv.reasons ? inv.reasons.split(' |||').map(r => escapeHtml(r.trim())).filter(Boolean) : [];
 
       html += `
-        <div class="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30" data-invitation-id="${inv.id}">
+        <div class="scan-card scan-card-reported" data-invitation-id="${inv.id}">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-white/60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
-            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/30 text-yellow-300">⚠️ ${inv.report_count} report${inv.report_count > 1 ? 's' : ''} 举报</span>
+            <span class="text-white-60 text-xs">@${escapeHtml(inv.username)} · ${new Date(inv.created_at).toLocaleDateString()}</span>
+            <span class="badge badge-report">⚠️ ${inv.report_count} report${inv.report_count > 1 ? 's' : ''}</span>
           </div>
           <h4 class="text-white font-semibold text-sm mb-1">${titleCheck.html}</h4>
-          <p class="text-white/80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
+          <p class="text-white-80 text-xs whitespace-pre-wrap">${descCheck.html}</p>
           ${reasons.length > 0 ? `
             <div class="mt-2 mb-2">
-              <p class="text-white/60 text-xs mb-1">Report reasons 举报原因:</p>
-              ${reasons.map(r => `<p class="text-yellow-300/80 text-xs ml-2">• ${r}</p>`).join('')}
+              <p class="text-white-60 text-xs mb-1">Report reasons:</p>
+              ${reasons.map(r => `<p class="text-yellow-300-80 text-xs ml-2">• ${r}</p>`).join('')}
             </div>
           ` : ''}
           <div class="flex gap-2 mt-2">
-            <button class="warn-delete-btn flex-1 py-1.5 rounded-lg bg-red-500/30 hover:bg-red-500/50 text-white text-xs font-medium transition-all" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
-              Warn & Delete 警告并删除
+            <button class="warn-delete-btn flex-1 btn bg-red-500-30 hover:bg-red-500-50 text-xs py-1_5" data-user-id="${inv.user_id}" data-invitation-id="${inv.id}">
+              Warn & Delete
             </button>
-            <button class="ignore-btn flex-1 py-1.5 rounded-lg bg-gray-500/30 hover:bg-gray-500/50 text-white text-xs font-medium transition-all" data-invitation-id="${inv.id}">
-              Ignore 忽略
+            <button class="ignore-btn flex-1 btn bg-gray-500-30 hover:bg-gray-500-50 text-xs py-1_5" data-invitation-id="${inv.id}">
+              Ignore
             </button>
           </div>
         </div>
@@ -971,20 +801,5 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
-
-async function loadUserCount() {
-  const el = document.getElementById('userCount');
-  if (!el) return;
-  try {
-    const res = await fetch('/api/stats/users');
-    const data = await parseJSON(res);
-    if (!res.ok) throw new Error(data.error || 'Error 错误');
-    el.textContent = `${data.count} Registered Users 注册用户`;
-  } catch (err) {
-    el.textContent = 'Error 错误';
-  }
-}
-
-loadUserCount();
 
 setupProfanityPanelHandlers();
